@@ -4,7 +4,7 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 import ErrorBoundary from "./components/ErrorBoundary";
-import { installGlobalDebug } from "./lib/debug";
+import { installGlobalDebug, showErrorOverlay } from "./lib/debug";
 
 installGlobalDebug();
 
