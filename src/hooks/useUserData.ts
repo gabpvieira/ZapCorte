@@ -1,0 +1,137 @@
+import { useState, useEffect, useCallback } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { getUserProfile, getUserBarbershop, getUserBarbershopServices } from '@/lib/supabase-queries';
+import type { Barbershop, Service } from '@/lib/supabase';
+
+interface UserProfile {
+  id: string;
+  user_id: string;
+  email: string;
+  full_name: string | null;
+  plan_type: string;
+  subscription_status: string;
+  last_payment_date: string | null;
+  expires_at: string | null;
+  payment_method: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+interface UseUserDataReturn {
+  profile: UserProfile | null;
+  barbershop: Barbershop | null;
+  services: Service[];
+  loading: boolean;
+  error: string | null;
+  refetch: () => Promise<void>;
+}
+
+export const useUserData = (): UseUserDataReturn => {
+  const { user, loading: authLoading } = useAuth();
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [barbershop, setBarbershop] = useState<Barbershop | null>(null);
+  const [services, setServices] = useState<Service[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchUserData = useCallback(async () => {
+    const withTimeout = async <T,>(promise: Promise<T>, ms = 7000): Promise<T> => {
+      return Promise.race([
+        promise,
+        new Promise<T>((_, reject) => setTimeout(() => reject(new Error('timeout')), ms))
+      ]) as Promise<T>;
+    };
+
+    if (!user) {
+      console.log('❌ fetchUserData: Nenhum usuário');
+      setProfile(null);
+      setBarbershop(null);
+      setServices([]);
+      setLoading(false);
+      return;
+    }
+
+    console.log('🚀 fetchUserData: Iniciando para usuário', user.email);
+    setLoading(true);
+    setError(null);
+
+    try {
+      console.log('👤 Buscando profile...');
+      console.log('🔄 Buscando dados do usuário:', user.id);
+
+      // Buscar perfil do usuário
+      const userProfile = await withTimeout(getUserProfile(user.id));
+      console.log('✅ Profile encontrado:', userProfile?.email);
+      console.log('👤 Perfil encontrado:', userProfile);
+      setProfile(userProfile);
+
+      console.log('🏪 Buscando barbershop...');
+      // Buscar barbearia do usuário
+      const userBarbershop = await withTimeout(getUserBarbershop(user.id));
+      console.log('✅ Barbershop:', userBarbershop?.name || 'Não encontrada');
+      console.log('🏪 Barbearia encontrada:', userBarbershop);
+      setBarbershop(userBarbershop);
+
+      // Buscar serviços da barbearia
+      if (userBarbershop) {
+        console.log('🔧 Buscando serviços...');
+        const barbershopServices = await withTimeout(getUserBarbershopServices(user.id));
+        console.log('✅ Serviços encontrados:', barbershopServices?.length || 0);
+        console.log('✂️ Serviços encontrados:', barbershopServices);
+        setServices(barbershopServices);
+      } else {
+        setServices([]);
+      }
+      
+      console.log('🎉 fetchUserData: Concluído com sucesso');
+    } catch (err) {
+      console.error('💥 Error fetching user data:', err);
+      console.error('❌ Erro ao buscar dados do usuário:', err);
+      const isTimeout = (err as Error).message === 'timeout';
+      setError(isTimeout ? 'Tempo esgotado ao carregar dados do usuário' : 'Erro ao carregar dados do usuário');
+    } finally {
+      console.log('🏁 fetchUserData: Finalizando (loading = false)');
+      setLoading(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    console.log('🔄 useUserData useEffect:', {
+      user: user?.email,
+      authLoading,
+      localLoading: loading,
+    });
+
+    // Quando a autenticação finalizar, sempre executa fetchUserData.
+    // Se não houver usuário, o próprio fetchUserData finaliza o loading.
+    if (!authLoading) {
+      console.log('📊 Auth finalizada, executando fetchUserData...');
+      fetchUserData();
+    } else {
+      console.log('⏳ Aguardando auth:', { hasUser: !!user, authLoading });
+    }
+  }, [authLoading, fetchUserData]);
+
+  // Fallback: evita loading infinito em casos de rede lenta/erro silencioso
+  useEffect(() => {
+    if (authLoading) return;
+    if (!loading) return;
+
+    const timeout = setTimeout(() => {
+      console.warn('⏱️ Timeout ao carregar dados do usuário. Encerrando loading.');
+      setError((prev) => prev ?? 'Tempo esgotado ao carregar dados do usuário');
+      setLoading(false);
+    }, 8000);
+
+    return () => clearTimeout(timeout);
+  }, [authLoading, loading]);
+
+  return {
+    profile,
+    barbershop,
+    services,
+    loading,
+    error,
+    refetch: fetchUserData
+  };
+};

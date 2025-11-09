@@ -1,0 +1,20 @@
+{
+  "name": "zapcorte-server",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Servidor backend para integração Cakto - ZapCorte",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "@supabase/supabase-js": "^2.78.0"
+  },
+  "keywords": ["cakto", "payment", "webhook", "supabase"],
+  "author": "ZapCorte Team",
+  "license": "MIT"
+}
