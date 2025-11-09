@@ -23,38 +23,32 @@ import { supabase } from "@/lib/supabase";
 declare global {
   interface Window {
     OneSignal: any;
+    OneSignalDeferred: any[];
   }
 }
 
 const queryClient = new QueryClient();
 
-// Componente de fallback visual para autenticação
-const AuthFallback = () => {
+// Componente para proteger rotas privadas
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
-  
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Carregando usuário...</p>
+          <p className="text-muted-foreground">Carregando...</p>
         </div>
       </div>
     );
   }
-  
+
   if (!user) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
-        <div className="text-center">
-          <p className="text-muted-foreground mb-4">Usuário não autenticado</p>
-          <a href="/login" className="text-primary hover:underline">Fazer login</a>
-        </div>
-      </div>
-    );
+    return <Navigate to="/login" replace />;
   }
-  
-  return null;
+
+  return <>{children}</>;
 };
 
 const AppContent = () => {
@@ -103,31 +97,77 @@ const AppContent = () => {
     });
   }, [user, loading]);
 
-  // Mostrar fallback visual se estiver carregando ou usuário não autenticado
-  if (loading || !user) {
-    return <AuthFallback />;
-  }
-
   return (
     <>
       {isHomePage && <Navbar />}
       <Routes>
+        {/* Rotas públicas - não precisam de autenticação */}
         <Route path="/" element={<Home />} />
         <Route path="/barbershop/:slug" element={<Barbershop />} />
         <Route path="/booking/:slug/:serviceId" element={<Booking />} />
         <Route path="/my-appointments" element={<MyAppointments />} />
-        {/* Dashboard and nested sections */}
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/dashboard/services" element={<Services />} />
-        <Route path="/dashboard/appointments" element={<Appointments />} />
-        <Route path="/dashboard/barbershop" element={<BarbershopSettings />} />
-        <Route path="/dashboard/plan" element={<Plan />} />
-
-        {/* Legacy paths (optional) */}
-        <Route path="/services" element={<Services />} />
-        <Route path="/appointments" element={<Appointments />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        
+        {/* Rotas protegidas - precisam de autenticação */}
+        <Route 
+          path="/dashboard" 
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/dashboard/services" 
+          element={
+            <ProtectedRoute>
+              <Services />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/dashboard/appointments" 
+          element={
+            <ProtectedRoute>
+              <Appointments />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/dashboard/barbershop" 
+          element={
+            <ProtectedRoute>
+              <BarbershopSettings />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/dashboard/plan" 
+          element={
+            <ProtectedRoute>
+              <Plan />
+            </ProtectedRoute>
+          } 
+        />
+
+        {/* Legacy paths - protegidas */}
+        <Route 
+          path="/services" 
+          element={
+            <ProtectedRoute>
+              <Services />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/appointments" 
+          element={
+            <ProtectedRoute>
+              <Appointments />
+            </ProtectedRoute>
+          } 
+        />
         
         {/* Redirects for common mistyped URLs */}
         <Route path="/plan" element={<Navigate to="/dashboard/plan" replace />} />

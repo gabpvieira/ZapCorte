@@ -4,12 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Check, Calendar, Smartphone, Zap, Clock, Star, Users, ArrowRight, Play, CheckCircle, MessageSquare, Globe, Headphones } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
 import { motion } from "framer-motion";
 import { useState } from "react";
 
 const Home = () => {
-  const { user } = useAuth();
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
   const [consultPhone, setConsultPhone] = useState("");
 

@@ -7,10 +7,19 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencies
 node_modules
 dist
 dist-ssr
 *.local
+
+# Environment variables (IMPORTANTE: nunca commitar!)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env*.local
 
 # Editor directories and files
 .vscode/*
@@ -22,3 +31,15 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Build files
+*.tsbuildinfo
+.cache
+
+# Lock files (opcional - alguns projetos preferem commitar)
+# package-lock.json
+# bun.lockb
