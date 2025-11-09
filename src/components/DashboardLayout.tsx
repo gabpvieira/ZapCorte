@@ -44,7 +44,13 @@ export const DashboardLayout = ({
             <div className="border-b border-border bg-background/95 backdrop-blur-sm sticky top-0 z-30">
               <div className="container mx-auto px-4 py-6 md:px-6">
                 <div className="flex items-center justify-between">
-                  <div className="ml-12 md:ml-0">
+                  <div className="flex items-center gap-4 ml-12 md:ml-0">
+                    {/* Logo no header do dashboard */}
+                    <img
+                      src="/midia/logotipo-zapcorte.png"
+                      alt="ZapCorte"
+                      className="h-8 w-auto hidden md:block"
+                    />
                     {title && (
                       <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
                         {title}
