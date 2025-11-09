@@ -201,14 +201,16 @@ const MyAppointments = () => {
   };
 
   const fetchAvailableSlots = async (barbershopId: string, serviceId: string, date: string) => {
-    try {
-      const response = await fetch(`/api/available-slots?barbershopId=${barbershopId}&serviceId=${serviceId}&date=${date}`);
-      const data = await response.json();
-      return data.slots || [];
-    } catch (error) {
-      console.error('Erro ao buscar horários disponíveis:', error);
-      return [];
-    }
+    // try {
+    //   const response = await fetch(`/api/available-slots?barbershopId=${barbershopId}&serviceId=${serviceId}&date=${date}`);
+    //   const data = await response.json();
+    //   return data.slots || [];
+    // } catch (error) {
+    //   console.error('Erro ao buscar horários disponíveis:', error);
+    //   return [];
+    // }
+    console.warn('fetchAvailableSlots está desabilitado temporariamente');
+    return Promise.resolve([]);
   };
 
   const openRescheduleDialog = async (appointment: Appointment) => {
