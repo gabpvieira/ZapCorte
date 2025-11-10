@@ -56,7 +56,8 @@ async function findUserByEmail(email) {
     if (profile && !profileError) {
       console.log('👤 Usuário encontrado na tabela profiles:', profile);
       return {
-        userId: profile.id,
+        userId: profile.id, // ID do profile
+        user_id: profile.user_id, // ID do auth.users (se existir)
         email: profile.email,
         name: profile.full_name || profile.name,
         plan: profile.plan_type,
@@ -76,8 +77,29 @@ async function findUserByEmail(email) {
     const user = authUsers.users.find(u => u.email === email);
     if (user) {
       console.log('👤 Usuário encontrado no auth:', user);
+      
+      // Tentar encontrar o profile correspondente
+      const { data: linkedProfile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (linkedProfile) {
+        console.log('👤 Profile vinculado encontrado:', linkedProfile);
+        return {
+          userId: linkedProfile.id,
+          user_id: user.id,
+          email: user.email,
+          name: linkedProfile.full_name || user.user_metadata?.name || user.email,
+          plan: linkedProfile.plan_type || 'free',
+          subscription_status: linkedProfile.subscription_status || 'inactive'
+        };
+      }
+      
       return {
         userId: user.id,
+        user_id: user.id,
         email: user.email,
         name: user.user_metadata?.name || user.email,
         plan: 'free'
@@ -175,13 +197,18 @@ export async function processPaymentApproved(webhookData) {
       expirationDate.setMonth(expirationDate.getMonth() + 1);
       updateData.expires_at = expirationDate.toISOString();
 
+      // Usar user_id se existir, senão usar id
+      const profileIdField = user.user_id ? 'user_id' : 'id';
+      const profileIdValue = user.user_id || userId;
+
       const { error: updateError } = await supabase
         .from('profiles')
         .update(updateData)
-        .eq('id', userId);
+        .eq(profileIdField, profileIdValue);
 
       if (updateError) {
         console.error('❌ Erro ao atualizar perfil:', updateError);
+        console.error('Tentando com campo:', profileIdField, '=', profileIdValue);
       } else {
         console.log(`✅ Perfil atualizado para ${planType}`);
       }
@@ -189,10 +216,13 @@ export async function processPaymentApproved(webhookData) {
 
     // Salvar histórico de pagamento (se usuário real)
     if (user && !isTestUser) {
+      // Usar o ID correto do perfil (profiles.id, não auth.users.id)
+      const profileUserId = user.user_id || userId;
+      
       const { error: historyError } = await supabase
         .from('payment_history')
         .insert({
-          user_id: userId,
+          user_id: profileUserId,
           transaction_id: transactionId,
           amount: amount,
           status: 'completed',
@@ -204,6 +234,8 @@ export async function processPaymentApproved(webhookData) {
 
       if (historyError) {
         console.error('❌ Erro ao salvar histórico:', historyError);
+        console.error('Detalhes do erro:', historyError);
+        console.error('user_id usado:', profileUserId);
       } else {
         console.log('✅ Histórico de pagamento salvo');
       }
@@ -258,6 +290,9 @@ export async function processRefund(webhookData) {
     }
 
     // Cancelar assinatura (voltar para free)
+    const profileIdField = user.user_id ? 'user_id' : 'id';
+    const profileIdValue = user.user_id || user.userId;
+    
     const { error: updateError } = await supabase
       .from('profiles')
       .update({ 
@@ -266,7 +301,7 @@ export async function processRefund(webhookData) {
         expires_at: null,
         updated_at: new Date().toISOString()
       })
-      .eq('id', user.userId);
+      .eq(profileIdField, profileIdValue);
 
     if (updateError) {
       console.error('❌ Erro ao cancelar assinatura:', updateError);
@@ -275,10 +310,12 @@ export async function processRefund(webhookData) {
     }
 
     // Registrar reembolso no histórico
+    const profileUserId = user.user_id || user.userId;
+    
     const { error: historyError } = await supabase
       .from('payment_history')
       .insert({
-        user_id: user.userId,
+        user_id: profileUserId,
         transaction_id: `refund_${transactionId}`,
         amount: -amount, // Valor negativo para reembolso
         status: 'refunded',
@@ -336,6 +373,9 @@ export async function processSubscriptionCancelled(webhookData) {
     }
 
     // Cancelar assinatura (voltar para free)
+    const profileIdField = user.user_id ? 'user_id' : 'id';
+    const profileIdValue = user.user_id || user.userId;
+    
     const { error: updateError } = await supabase
       .from('profiles')
       .update({ 
@@ -344,7 +384,7 @@ export async function processSubscriptionCancelled(webhookData) {
         expires_at: null,
         updated_at: new Date().toISOString()
       })
-      .eq('id', user.userId);
+      .eq(profileIdField, profileIdValue);
 
     if (updateError) {
       console.error('❌ Erro ao cancelar assinatura:', updateError);
@@ -353,10 +393,12 @@ export async function processSubscriptionCancelled(webhookData) {
     }
 
     // Registrar cancelamento no histórico
+    const profileUserId = user.user_id || user.userId;
+    
     const { error: historyError } = await supabase
       .from('payment_history')
       .insert({
-        user_id: user.userId,
+        user_id: profileUserId,
         transaction_id: `cancel_${transactionId}`,
         amount: 0,
         status: 'cancelled',

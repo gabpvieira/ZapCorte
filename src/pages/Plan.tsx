@@ -1,6 +1,7 @@
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { UpgradeButton } from "@/components/UpgradeButton";
 import { useUserData } from "@/hooks/useUserData";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { AlertCircle, CheckCircle, Clock, Users } from "lucide-react";
@@ -112,9 +113,9 @@ const Plan = () => {
               )}
               
               <div className="flex gap-2 pt-4">
-                <Button asChild>
-                  <Link to="/register?upgrade=true">Fazer Upgrade</Link>
-                </Button>
+                <UpgradeButton planType="starter">
+                  Fazer Upgrade
+                </UpgradeButton>
                 <Button variant="outline" disabled>Gerenciar Pagamento</Button>
               </div>
             </CardContent>
@@ -164,16 +165,14 @@ const Plan = () => {
                     ))}
                   </ul>
                   
-                  {currentPlan !== planKey && (
-                    <Button 
+                  {currentPlan !== planKey && planKey !== 'freemium' && (
+                    <UpgradeButton 
                       className="w-full" 
-                      variant={currentPlan === planKey ? "default" : "outline"}
-                      asChild
+                      variant="outline"
+                      planType={planKey as 'starter' | 'pro'}
                     >
-                      <Link to="/register?upgrade=true&plan=starter">
-                        {currentPlan === 'freemium' ? 'Assinar Agora' : 'Mudar de Plano'}
-                      </Link>
-                    </Button>
+                      {currentPlan === 'freemium' ? 'Assinar Agora' : 'Mudar de Plano'}
+                    </UpgradeButton>
                   )}
                   
                   {currentPlan === planKey && (

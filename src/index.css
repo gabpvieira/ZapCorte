@@ -83,7 +83,29 @@ All colors MUST be HSL.
     @apply border-border;
   }
 
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Custom scrollbar for webkit browsers */
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Glassmorphism effect */
+  .glass-effect {
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
   }
 }

@@ -10,7 +10,8 @@ import {
   LogOut, 
   Menu, 
   X,
-  User
+  User,
+  MessageCircle
 } from "lucide-react";
 import logotipo from "@/assets/zapcorte-icon.png";
 import { Button } from "@/components/ui/button";
@@ -49,6 +50,13 @@ const sidebarItems: SidebarItem[] = [
     label: "Personalizar Barbearia",
     icon: Store,
     href: "/dashboard/barbershop"
+  },
+  {
+    id: "whatsapp",
+    label: "WhatsApp",
+    icon: MessageCircle,
+    href: "/dashboard/whatsapp",
+    badge: "Novo"
   },
   {
     id: "plan",

@@ -38,12 +38,46 @@ export async function createAppointment(appointment: Omit<Appointment, 'id' | 'c
   const { data, error } = await supabase
     .from('appointments')
     .insert([appointment])
-    .select()
+    .select(`
+      *,
+      service:services(id, name, duration, price),
+      barbershop:barbershops(id, name, user_id)
+    `)
     .single()
 
   if (error) {
     console.error('Error creating appointment:', error)
     throw error
+  }
+
+  // Enviar notificação OneSignal e WhatsApp + Criar lembretes
+  if (data) {
+    try {
+      // Buscar player_id do barbeiro para OneSignal
+      const { data: barberData } = await supabase
+        .from('barbershops')
+        .select('player_id')
+        .eq('id', appointment.barbershop_id)
+        .single();
+
+      if (barberData?.player_id) {
+        await (await import('@/lib/notifications')).notificarNovoAgendamento({
+          playerId: barberData.player_id,
+          customerName: appointment.customer_name,
+          scheduledAt: appointment.scheduled_at,
+          customerPhone: appointment.customer_phone,
+          serviceName: data.service?.name,
+          barbershopId: appointment.barbershop_id,
+        });
+      }
+
+      // Criar lembretes automáticos
+      const reminderModule = await import('@/lib/reminderScheduler');
+      await reminderModule.ReminderScheduler.createRemindersForAppointment(data.id);
+    } catch (notifyError) {
+      console.warn('Erro ao enviar notificações ou criar lembretes:', notifyError);
+      // Não falhar a criação do agendamento por causa da notificação
+    }
   }
 
   return data as Appointment
@@ -300,3 +334,4 @@ export async function checkSlugAvailability(slug: string, excludeBarbershopId?: 
   // Se encontrou um registro, slug não está disponível
   return !data
 }
+

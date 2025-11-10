@@ -53,6 +53,20 @@ app.post('/api/webhooks/cakto', async (req, res) => {
   console.log('Body type:', typeof req.body);
   console.log('Body:', req.body);
 
+  // Salvar log no Supabase
+  const logWebhook = async (eventType, payload, status, errorMessage = null) => {
+    try {
+      await supabase.from('webhook_logs').insert({
+        event_type: eventType || 'unknown',
+        payload: payload,
+        status: status,
+        error_message: errorMessage
+      });
+    } catch (err) {
+      console.error('Erro ao salvar log de webhook:', err);
+    }
+  };
+
   try {
     let webhookData;
 
@@ -96,6 +110,7 @@ app.post('/api/webhooks/cakto', async (req, res) => {
       console.log('❌ Assinatura do webhook inválida');
       console.log('Secret esperado:', process.env.CAKTO_WEBHOOK_SECRET);
       console.log('Secret recebido:', webhookData.secret);
+      await logWebhook(webhookData.event, webhookData, 'failed', 'Assinatura inválida');
       return res.status(400).json({ error: 'Assinatura inválida' });
     }
 
@@ -123,10 +138,12 @@ app.post('/api/webhooks/cakto', async (req, res) => {
 
       default:
         console.log(`⚠️ Evento não suportado: ${event}`);
+        await logWebhook(event, webhookData, 'failed', `Evento não suportado: ${event}`);
         return res.status(400).json({ error: `Evento não suportado: ${event}` });
     }
 
     console.log('✅ Webhook processado com sucesso:', result);
+    await logWebhook(event, webhookData, 'success');
 
     res.status(200).json({
       success: true,
@@ -136,6 +153,7 @@ app.post('/api/webhooks/cakto', async (req, res) => {
 
   } catch (error) {
     console.error('❌ Erro ao processar webhook:', error);
+    await logWebhook('error', req.body, 'failed', error.message);
     res.status(500).json({ 
       error: 'Erro interno do servidor',
       message: error.message 

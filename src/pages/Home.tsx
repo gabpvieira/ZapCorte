@@ -2,16 +2,45 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Calendar, Users, ArrowRight, Play, CheckCircle, MessageSquare, Globe, Menu, X } from "lucide-react";
+import { Calendar, Users, ArrowRight, Play, CheckCircle, MessageSquare, Globe, Menu, X, LogIn, UserPlus } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import logotipo from "@/assets/zapcorte-icon.png";
 
 const Home = () => {
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
   const [consultPhone, setConsultPhone] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(0);
+
+  // Scroll effects for floating header and progress
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollTop = window.scrollY;
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const scrollPercent = (scrollTop / docHeight) * 100;
+      
+      setIsScrolled(scrollTop > 50);
+      setScrollProgress(scrollPercent);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Smooth scroll function
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
+    setMobileMenuOpen(false);
+  };
 
   const testimonials = [
     {
@@ -52,61 +81,166 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-[#0C0C0C] text-white overflow-x-hidden">
-      {/* Header Mobile-First */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-[#0C0C0C]/95 backdrop-blur-sm border-b border-[#27272A]">
-        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            {/* Logo */}
-            <Link to="/" className="flex items-center gap-2 flex-shrink-0">
-              <img
-                src={logotipo}
-                alt="ZapCorte"
-                className="h-8 w-8 rounded-lg"
-              />
-              <span className="text-xl font-bold text-white">ZapCorte</span>
-            </Link>
+      {/* Floating Header with State Transitions */}
+      <motion.header 
+        className="fixed top-0 left-0 right-0 z-50"
+        initial={{ y: -100 }}
+        animate={{ y: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+      >
+        {/* Full-width background when not scrolled */}
+        <div className={`transition-all duration-500 ease-in-out ${
+          isScrolled 
+            ? 'bg-transparent' 
+            : 'w-full bg-[#0C0C0C] border-b border-[#27272A]'
+        }`}>
+          
+          {/* Floating container when scrolled */}
+          <div className={`transition-all duration-500 ease-in-out relative ${
+            isScrolled 
+              ? 'max-w-5xl mx-auto my-3 mx-4 sm:mx-6 lg:mx-8 bg-[#0C0C0C]/90 backdrop-blur-xl border border-[#27272A]/50 rounded-2xl shadow-2xl shadow-black/30' 
+              : 'w-full max-w-7xl mx-auto'
+          }`}>
+            {/* Scroll Progress Indicator */}
+            <div className={`absolute bottom-0 left-0 h-0.5 bg-[#24C36B] transition-all duration-300 ease-out ${
+              isScrolled ? 'rounded-full' : ''
+            }`}
+                 style={{ width: `${scrollProgress}%` }} />
+            
+            <div className={`transition-all duration-500 ${
+              isScrolled 
+                ? 'px-6 sm:px-8' 
+                : 'px-4 sm:px-6 lg:px-8'
+            }`}>
+            <div className="flex items-center justify-between h-16">
+              {/* Logo */}
+              <Link to="/" className="flex items-center gap-2 flex-shrink-0">
+                <img
+                  src={logotipo}
+                  alt="ZapCorte"
+                  className="h-8 w-8 rounded-lg"
+                />
+                <span className="text-xl font-bold text-white">ZapCorte</span>
+              </Link>
 
-            {/* Desktop CTA */}
-            <div className="hidden md:block">
-              <Button 
-                className="bg-[#24C36B] hover:bg-[#1ea557] text-black font-semibold px-6 py-2 rounded-xl"
-                asChild
+              {/* Desktop Navigation */}
+              <nav className="hidden lg:flex items-center space-x-8">
+                <button
+                  onClick={() => scrollToSection('funcionalidades')}
+                  className="text-gray-300 hover:text-[#24C36B] transition-colors font-medium"
+                >
+                  Funcionalidades
+                </button>
+                <button
+                  onClick={() => scrollToSection('planos')}
+                  className="text-gray-300 hover:text-[#24C36B] transition-colors font-medium"
+                >
+                  Planos
+                </button>
+                <button
+                  onClick={() => scrollToSection('contato')}
+                  className="text-gray-300 hover:text-[#24C36B] transition-colors font-medium"
+                >
+                  Contato
+                </button>
+              </nav>
+
+              {/* Desktop Auth & CTA - Simplified */}
+              <div className="hidden md:flex items-center space-x-4">
+                <Button 
+                  variant="ghost"
+                  className="text-gray-300 hover:text-white hover:bg-[#27272A] px-4 py-2 rounded-xl transition-all duration-300"
+                  asChild
+                >
+                  <Link to="/login" className="flex items-center gap-2">
+                    <LogIn className="w-4 h-4" />
+                    Entrar
+                  </Link>
+                </Button>
+
+                {/* Main CTA - Always visible */}
+                <Button 
+                  className="bg-[#24C36B] hover:bg-[#1ea557] text-black font-semibold px-6 py-2 rounded-xl transition-all duration-300"
+                  asChild
+                >
+                  <Link to="/register">Começar Agora</Link>
+                </Button>
+              </div>
+
+              {/* Mobile Menu Button */}
+              <button
+                className="md:hidden p-2 rounded-lg hover:bg-[#27272A] transition-colors"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               >
-                <Link to="/register">Começar Agora</Link>
-              </Button>
+                {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              </button>
             </div>
 
-            {/* Mobile Menu Button */}
-            <button
-              className="md:hidden p-2 rounded-lg hover:bg-[#27272A] transition-colors"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
-          </div>
-
-          {/* Mobile Menu */}
-          {mobileMenuOpen && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              className="md:hidden border-t border-[#27272A] py-4"
-            >
-              <Button 
-                className="w-full bg-[#24C36B] hover:bg-[#1ea557] text-black font-semibold py-3 rounded-xl"
-                asChild
-                onClick={() => setMobileMenuOpen(false)}
+            {/* Mobile Menu */}
+            {mobileMenuOpen && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+                className="md:hidden border-t border-[#27272A] py-4 space-y-4"
               >
-                <Link to="/register">Começar Agora</Link>
-              </Button>
-            </motion.div>
-          )}
+                {/* Mobile Navigation Links */}
+                <div className="space-y-2">
+                  <button
+                    onClick={() => scrollToSection('funcionalidades')}
+                    className="block w-full text-left px-4 py-2 text-gray-300 hover:text-[#24C36B] hover:bg-[#27272A] rounded-lg transition-colors"
+                  >
+                    Funcionalidades
+                  </button>
+                  <button
+                    onClick={() => scrollToSection('planos')}
+                    className="block w-full text-left px-4 py-2 text-gray-300 hover:text-[#24C36B] hover:bg-[#27272A] rounded-lg transition-colors"
+                  >
+                    Planos
+                  </button>
+                  <button
+                    onClick={() => scrollToSection('contato')}
+                    className="block w-full text-left px-4 py-2 text-gray-300 hover:text-[#24C36B] hover:bg-[#27272A] rounded-lg transition-colors"
+                  >
+                    Contato
+                  </button>
+                </div>
+
+                {/* Mobile Auth Buttons - Simplified */}
+                <div className="space-y-3 pt-4 border-t border-[#27272A]">
+                  <Button 
+                    variant="outline"
+                    className="w-full border-[#24C36B] text-[#24C36B] hover:bg-[#24C36B] hover:text-black py-3 rounded-xl"
+                    asChild
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <Link to="/login" className="flex items-center justify-center gap-2">
+                      <LogIn className="w-4 h-4" />
+                      Entrar
+                    </Link>
+                  </Button>
+                  
+                  <Button 
+                    className="w-full bg-[#24C36B] hover:bg-[#1ea557] text-black font-semibold py-3 rounded-xl"
+                    asChild
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <Link to="/register" className="flex items-center justify-center gap-2">
+                      <UserPlus className="w-4 h-4" />
+                      Começar Agora
+                    </Link>
+                  </Button>
+                </div>
+              </motion.div>
+            )}
+            </div>
+          </div>
         </div>
-      </header>
+      </motion.header>
 
       {/* Hero Section - Mobile-First */}
-      <section className="relative min-h-screen flex items-center pt-16">
+      <section id="inicio" className="relative min-h-screen flex items-center pt-16">
         <div className="absolute inset-0 bg-gradient-to-br from-[#24C36B]/10 via-transparent to-transparent" />
         
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16">
@@ -298,12 +432,18 @@ const Home = () => {
 
       {/* Features Section - Mobile-First */}
       <motion.section 
+        id="funcionalidades"
         className="py-12 sm:py-16 lg:py-20"
         variants={staggerContainer}
         initial="initial"
         whileInView="whileInView"
       >
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div variants={fadeInUp} className="text-center mb-8 sm:mb-12">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-3 sm:mb-4">Funcionalidades</h2>
+            <p className="text-base sm:text-lg md:text-xl text-gray-300">Tudo que você precisa para modernizar sua barbearia</p>
+          </motion.div>
+
           <div className="grid gap-6 sm:gap-8 md:grid-cols-2 lg:grid-cols-3">
             {[
               {
@@ -437,6 +577,7 @@ const Home = () => {
 
       {/* Plans - Mobile-First */}
       <motion.section 
+        id="planos"
         className="py-12 sm:py-16 lg:py-20"
         variants={staggerContainer}
         initial="initial"
@@ -624,10 +765,22 @@ const Home = () => {
         </div>
       </motion.section>
 
-      {/* Footer - Mobile-First */}
-      <footer className="py-12 sm:py-16 border-t border-[#27272A]">
+      {/* Enhanced Footer with Contact - Mobile-First */}
+      <footer id="contato" className="py-12 sm:py-16 border-t border-[#27272A]">
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Contact Section Header */}
+          <motion.div 
+            className="text-center mb-8 sm:mb-12"
+            {...fadeInUp}
+          >
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 sm:mb-4">Entre em Contato</h2>
+            <p className="text-base sm:text-lg text-gray-300 max-w-2xl mx-auto">
+              Tem dúvidas? Nossa equipe está pronta para ajudar você a revolucionar sua barbearia.
+            </p>
+          </motion.div>
+
           <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+            {/* Company Info */}
             <div className="sm:col-span-2 lg:col-span-1">
               <div className="flex items-center gap-2 mb-4">
                 <img
@@ -637,38 +790,89 @@ const Home = () => {
                 />
                 <span className="text-xl font-bold">ZapCorte</span>
               </div>
-              <p className="text-gray-300 text-sm sm:text-base">
-                Sistema completo de agendamento para barbearias modernas.
+              <p className="text-gray-300 text-sm sm:text-base mb-4">
+                Sistema completo de agendamento para barbearias modernas. Profissionalize seu negócio hoje mesmo.
               </p>
+              <div className="space-y-2 text-sm text-gray-300">
+                <p>📧 contato@zapcorte.com</p>
+                <p>📱 (11) 99999-9999</p>
+                <p>🕒 Seg-Sex: 9h às 18h</p>
+              </div>
             </div>
+
+            {/* Quick Links */}
             <div>
-              <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Legal</h3>
+              <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Navegação</h3>
               <ul className="space-y-2 text-gray-300 text-sm sm:text-base">
-                <li><a href="#" className="hover:text-[#24C36B] transition-colors touch-manipulation">Termos de Uso</a></li>
-                <li><a href="#" className="hover:text-[#24C36B] transition-colors touch-manipulation">Política de Privacidade</a></li>
+                <li>
+                  <button 
+                    onClick={() => scrollToSection('inicio')}
+                    className="hover:text-[#24C36B] transition-colors touch-manipulation"
+                  >
+                    Início
+                  </button>
+                </li>
+                <li>
+                  <button 
+                    onClick={() => scrollToSection('funcionalidades')}
+                    className="hover:text-[#24C36B] transition-colors touch-manipulation"
+                  >
+                    Funcionalidades
+                  </button>
+                </li>
+                <li>
+                  <button 
+                    onClick={() => scrollToSection('planos')}
+                    className="hover:text-[#24C36B] transition-colors touch-manipulation"
+                  >
+                    Planos
+                  </button>
+                </li>
               </ul>
             </div>
+
+            {/* Legal & Support */}
             <div>
               <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Suporte</h3>
               <ul className="space-y-2 text-gray-300 text-sm sm:text-base">
-                <li><a href="#" className="hover:text-[#24C36B] transition-colors touch-manipulation">Contato</a></li>
+                <li><a href="#" className="hover:text-[#24C36B] transition-colors touch-manipulation">Central de Ajuda</a></li>
                 <li><a href="#" className="hover:text-[#24C36B] transition-colors touch-manipulation">FAQ</a></li>
+                <li><a href="#" className="hover:text-[#24C36B] transition-colors touch-manipulation">Termos de Uso</a></li>
+                <li><a href="#" className="hover:text-[#24C36B] transition-colors touch-manipulation">Privacidade</a></li>
               </ul>
             </div>
+
+            {/* Social & CTA */}
             <div>
-              <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Redes Sociais</h3>
-              <div className="flex gap-3 sm:gap-4">
-                <div className="w-10 h-10 bg-[#27272A] rounded-lg flex items-center justify-center hover:bg-[#24C36B] transition-colors cursor-pointer touch-manipulation">
+              <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Conecte-se</h3>
+              <div className="flex gap-3 sm:gap-4 mb-4">
+                <div className="w-10 h-10 bg-[#27272A] rounded-lg flex items-center justify-center hover:bg-[#24C36B] hover:text-black transition-colors cursor-pointer touch-manipulation">
                   <span className="text-sm font-bold">f</span>
                 </div>
-                <div className="w-10 h-10 bg-[#27272A] rounded-lg flex items-center justify-center hover:bg-[#24C36B] transition-colors cursor-pointer touch-manipulation">
+                <div className="w-10 h-10 bg-[#27272A] rounded-lg flex items-center justify-center hover:bg-[#24C36B] hover:text-black transition-colors cursor-pointer touch-manipulation">
                   <span className="text-sm font-bold">@</span>
                 </div>
+                <div className="w-10 h-10 bg-[#27272A] rounded-lg flex items-center justify-center hover:bg-[#24C36B] hover:text-black transition-colors cursor-pointer touch-manipulation">
+                  <span className="text-sm font-bold">in</span>
+                </div>
               </div>
+              <Button 
+                className="w-full bg-[#24C36B] hover:bg-[#1ea557] text-black font-semibold py-2 rounded-xl text-sm"
+                asChild
+              >
+                <Link to="/register">Começar Grátis</Link>
+              </Button>
             </div>
           </div>
-          <div className="border-t border-[#27272A] mt-8 sm:mt-12 pt-6 sm:pt-8 text-center text-gray-300">
-            <p className="text-sm sm:text-base">&copy; ZapCorte 2025. Todos os direitos reservados.</p>
+
+          {/* Bottom Bar */}
+          <div className="border-t border-[#27272A] mt-8 sm:mt-12 pt-6 sm:pt-8">
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-gray-300 text-sm sm:text-base">
+              <p>&copy; 2025 ZapCorte. Todos os direitos reservados.</p>
+              <p className="text-xs sm:text-sm">
+                Desenvolvido com ❤️ para barbeiros modernos
+              </p>
+            </div>
           </div>
         </div>
       </footer>

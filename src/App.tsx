@@ -17,8 +17,10 @@ import NotFound from "./pages/NotFound";
 import BarbershopSettings from "./pages/BarbershopSettings";
 import Plan from "./pages/Plan";
 import MyAppointments from "./pages/MyAppointments";
+import WhatsAppSettings from "./pages/WhatsAppSettings";
 import { useEffect } from "react";
 import { supabase } from "@/lib/supabase";
+import { useReminderScheduler } from "@/hooks/useReminderScheduler";
 
 declare global {
   interface Window {
@@ -55,6 +57,9 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 const AppContent = () => {
   const location = useLocation();
   const { user, loading } = useAuth();
+  
+  // Inicializar o scheduler de lembretes
+  useReminderScheduler();
   
   // Show navbar only on landing page (home)
   const isHomePage = location.pathname === "/";
@@ -117,7 +122,6 @@ const AppContent = () => {
 
   return (
     <>
-      {isHomePage && <Navbar />}
       <Routes>
         {/* Rotas públicas - não precisam de autenticação */}
         <Route path="/" element={<Home />} />
@@ -157,6 +161,14 @@ const AppContent = () => {
           element={
             <ProtectedRoute>
               <BarbershopSettings />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/dashboard/whatsapp" 
+          element={
+            <ProtectedRoute>
+              <WhatsAppSettings />
             </ProtectedRoute>
           } 
         />
