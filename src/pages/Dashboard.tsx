@@ -2,6 +2,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar, Clock, User, TrendingUp, ExternalLink, AlertCircle, Eye, SquarePen, Trash2, Phone } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { supabase } from "@/lib/supabase";
+import { format, parseISO } from "date-fns";
 import { useUserData } from "@/hooks/useUserData";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState, useEffect } from "react";
@@ -49,12 +51,31 @@ const Dashboard = () => {
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [statusUpdateLoading, setStatusUpdateLoading] = useState(false);
   const [notesUpdateLoading, setNotesUpdateLoading] = useState(false);
+  const [rescheduleLoading, setRescheduleLoading] = useState(false);
+  const [editDate, setEditDate] = useState<string>("");
+  const [editTime, setEditTime] = useState<string>("");
   
   // Dashboard render tracking removed for production
   
   // Funções para gerenciar o modal e ações
   const openViewModal = (appointment) => {
     setSelectedAppointment(appointment);
+    // Inicializa campos de edição com a data/hora atuais do agendamento
+    try {
+      const iso = appointment.scheduled_at;
+      setEditDate(format(parseISO(iso), "yyyy-MM-dd"));
+      setEditTime(format(parseISO(iso), "HH:mm"));
+    } catch (e) {
+      // fallback simples caso o parse falhe
+      const d = new Date(appointment.scheduled_at);
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, "0");
+      const dd = String(d.getDate()).padStart(2, "0");
+      const hh = String(d.getHours()).padStart(2, "0");
+      const mi = String(d.getMinutes()).padStart(2, "0");
+      setEditDate(`${yyyy}-${mm}-${dd}`);
+      setEditTime(`${hh}:${mi}`);
+    }
     setViewModalOpen(true);
   };
   
@@ -136,6 +157,29 @@ const Dashboard = () => {
     } catch (error) {
       console.error('Erro ao excluir agendamento:', error);
       alert('Erro ao excluir agendamento');
+    }
+  };
+
+  const rescheduleAppointment = async () => {
+    if (!selectedAppointment || !editDate || !editTime) return;
+    setRescheduleLoading(true);
+    try {
+      // Monta a data/hora com fuso -03:00 e salva em ISO
+      const scheduledAt = new Date(`${editDate}T${editTime}:00-03:00`);
+      const { error } = await supabase
+        .from("appointments")
+        .update({ scheduled_at: scheduledAt.toISOString() })
+        .eq("id", selectedAppointment.id);
+      if (error) throw error;
+      // Atualiza visualmente
+      selectedAppointment.scheduled_at = scheduledAt.toISOString();
+      refetchDashboard();
+      alert("Agendamento atualizado com sucesso.");
+    } catch (error) {
+      console.error("Erro ao reagendar:", error);
+      alert("Erro ao reagendar agendamento.");
+    } finally {
+      setRescheduleLoading(false);
     }
   };
 
@@ -390,24 +434,27 @@ const Dashboard = () => {
                 </div>
               </div>
               
-              {/* Data e Hora */}
+              {/* Data e Hora (Editar) */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Data</Label>
                   <Input 
-                    value={new Date(selectedAppointment.scheduled_at).toLocaleDateString('pt-BR')} 
-                    disabled 
+                    type="date"
+                    value={editDate}
+                    onChange={(e) => setEditDate(e.target.value)}
                   />
+                  <p className="text-xs text-gray-500 mt-1">
+                    {editDate ? format(new Date(`${editDate}T00:00:00`), "dd/MM/yyyy") : ""}
+                  </p>
                 </div>
                 <div>
                   <Label>Horário</Label>
                   <Input 
-                    value={new Date(selectedAppointment.scheduled_at).toLocaleTimeString('pt-BR', {
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })} 
-                    disabled 
+                    type="time"
+                    value={editTime}
+                    onChange={(e) => setEditTime(e.target.value)}
                   />
+                  <p className="text-xs text-gray-500 mt-1">{editTime}</p>
                 </div>
               </div>
               
@@ -452,6 +499,9 @@ const Dashboard = () => {
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={closeViewModal}>
               Fechar
+            </Button>
+            <Button onClick={rescheduleAppointment} disabled={rescheduleLoading}>
+              {rescheduleLoading ? "Salvando..." : "Salvar alterações"}
             </Button>
             <AlertDialog>
               <AlertDialogTrigger asChild>

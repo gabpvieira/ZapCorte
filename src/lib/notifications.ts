@@ -1,3 +1,5 @@
+import logotipo from "@/assets/zapcorte-icon.png";
+
 export async function notificarNovoAgendamento({
   playerId,
   customerName,
@@ -24,7 +26,7 @@ export async function notificarNovoAgendamento({
     headings: { en: titulo },
     contents: { en: corpo },
     url: import.meta.env.VITE_ONESIGNAL_CLICK_URL || "https://zapcorte.com/painel",
-    chrome_web_icon: import.meta.env.VITE_ONESIGNAL_ICON_URL || "https://zapcorte.com/logo.png",
+    chrome_web_icon: logotipo,
   };
 
   try {

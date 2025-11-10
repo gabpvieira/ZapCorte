@@ -24,6 +24,7 @@ declare global {
   interface Window {
     OneSignal: any;
     OneSignalDeferred: any[];
+    __ONESIGNAL_INIT_DONE?: boolean;
   }
 }
 
@@ -60,15 +61,32 @@ const AppContent = () => {
 
   // Initialize OneSignal and persist player_id for logged barber
   useEffect(() => {
+    // Evita inicializar na Landing Page
+    if (isHomePage) return;
     if (!user || loading) return;
     
+    const appId = import.meta.env.VITE_ONESIGNAL_APP_ID;
+    if (!appId) {
+      console.warn('[OneSignal v16] VITE_ONESIGNAL_APP_ID ausente. Pulando inicialização.');
+      return;
+    }
+
+    // Evita múltiplas inicializações em navegadores, HMR ou re-renders
+    if (window.__ONESIGNAL_INIT_DONE) {
+      console.log('[OneSignal v16] Já inicializado, não repetindo.');
+      return;
+    }
+
     // OneSignal v16+ initialization via Deferred
     window.OneSignalDeferred = window.OneSignalDeferred || [];
     window.OneSignalDeferred.push(async function (OneSignal: any) {
+      if (window.__ONESIGNAL_INIT_DONE) return;
+
       await OneSignal.init({
-        appId: import.meta.env.VITE_ONESIGNAL_APP_ID,
+        appId: appId,
         notifyButton: { enable: false },
       });
+      window.__ONESIGNAL_INIT_DONE = true;
       console.log('[OneSignal v16] Initialized');
 
       // Listen for subscription changes
@@ -95,7 +113,7 @@ const AppContent = () => {
         }
       });
     });
-  }, [user, loading]);
+  }, [user, loading, isHomePage]);
 
   return (
     <>

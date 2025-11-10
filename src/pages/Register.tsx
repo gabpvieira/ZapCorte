@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import logotipo from "@/assets/zapcorte-icon.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -123,11 +124,11 @@ const Register = () => {
           <Card>
           <CardHeader className="space-y-1">
             <div className="flex justify-center mb-4">
-              <img
-                src="/midia/logotipo-zapcorte.png"
-                alt="ZapCorte"
-                className="h-16 w-auto"
-              />
+                <img
+                  src={logotipo}
+                  alt="ZapCorte"
+                  className="h-16 w-auto"
+                />
             </div>
             <CardTitle className="text-2xl text-center">Cadastrar</CardTitle>
             <CardDescription className="text-center">
@@ -200,7 +201,7 @@ const Register = () => {
                 </div>
               </div>
               <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Cadastrando..." : "Cadastrar"}
+                {isLoading ? "Criando conta..." : "Cadastrar"}
               </Button>
             </form>
             <div className="mt-4 text-center text-sm">

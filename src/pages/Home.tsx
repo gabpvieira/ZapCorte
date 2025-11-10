@@ -2,14 +2,16 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Check, Calendar, Smartphone, Zap, Clock, Star, Users, ArrowRight, Play, CheckCircle, MessageSquare, Globe, Headphones } from "lucide-react";
+import { Calendar, Users, ArrowRight, Play, CheckCircle, MessageSquare, Globe, Menu, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useState } from "react";
+import logotipo from "@/assets/zapcorte-icon.png";
 
 const Home = () => {
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
   const [consultPhone, setConsultPhone] = useState("");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const testimonials = [
     {
@@ -49,21 +51,75 @@ const Home = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0C0C0C] text-white">
-      {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center overflow-hidden">
+    <div className="min-h-screen bg-[#0C0C0C] text-white overflow-x-hidden">
+      {/* Header Mobile-First */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-[#0C0C0C]/95 backdrop-blur-sm border-b border-[#27272A]">
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            {/* Logo */}
+            <Link to="/" className="flex items-center gap-2 flex-shrink-0">
+              <img
+                src={logotipo}
+                alt="ZapCorte"
+                className="h-8 w-8 rounded-lg"
+              />
+              <span className="text-xl font-bold text-white">ZapCorte</span>
+            </Link>
+
+            {/* Desktop CTA */}
+            <div className="hidden md:block">
+              <Button 
+                className="bg-[#24C36B] hover:bg-[#1ea557] text-black font-semibold px-6 py-2 rounded-xl"
+                asChild
+              >
+                <Link to="/register">Começar Agora</Link>
+              </Button>
+            </div>
+
+            {/* Mobile Menu Button */}
+            <button
+              className="md:hidden p-2 rounded-lg hover:bg-[#27272A] transition-colors"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+          </div>
+
+          {/* Mobile Menu */}
+          {mobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="md:hidden border-t border-[#27272A] py-4"
+            >
+              <Button 
+                className="w-full bg-[#24C36B] hover:bg-[#1ea557] text-black font-semibold py-3 rounded-xl"
+                asChild
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <Link to="/register">Começar Agora</Link>
+              </Button>
+            </motion.div>
+          )}
+        </div>
+      </header>
+
+      {/* Hero Section - Mobile-First */}
+      <section className="relative min-h-screen flex items-center pt-16">
         <div className="absolute inset-0 bg-gradient-to-br from-[#24C36B]/10 via-transparent to-transparent" />
         
-        <div className="w-full max-w-[80%] mx-auto px-4 py-16 lg:max-w-[80%] md:max-w-[90%] sm:max-w-[95%]">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16">
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+            {/* Content - Mobile-First */}
             <motion.div
-              initial={{ opacity: 0, x: -50 }}
-              animate={{ opacity: 1, x: 0 }}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
-              className="space-y-6"
+              className="text-center lg:text-left space-y-6 lg:space-y-8"
             >
               <motion.h1 
-                className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight"
+                className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight"
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
@@ -73,23 +129,23 @@ const Home = () => {
               </motion.h1>
               
               <motion.p 
-                 className="text-lg md:text-xl text-gray-300 leading-relaxed"
-                 initial={{ opacity: 0, y: 30 }}
-                 animate={{ opacity: 1, y: 0 }}
-                 transition={{ duration: 0.8, delay: 0.4 }}
-               >
-                 Crie sua barbearia online em poucos cliques, personalize com sua marca e receba agendamentos com total controle, do seu jeito.
-               </motion.p>
+                className="text-base sm:text-lg md:text-xl text-gray-300 leading-relaxed max-w-2xl mx-auto lg:mx-0"
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.4 }}
+              >
+                Crie sua barbearia online em poucos cliques, personalize com sua marca e receba agendamentos com total controle, do seu jeito.
+              </motion.p>
               
               <motion.div 
-                className="flex flex-col sm:flex-row gap-4"
+                className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.6 }}
               >
                 <Button 
                   size="lg" 
-                  className="bg-[#24C36B] hover:bg-[#1ea557] text-black font-semibold px-8 py-4 text-lg rounded-2xl"
+                  className="bg-[#24C36B] hover:bg-[#1ea557] text-black font-semibold px-8 py-4 text-lg rounded-2xl w-full sm:w-auto"
                   asChild
                 >
                   <Link to="/register">Começar Grátis</Link>
@@ -97,7 +153,7 @@ const Home = () => {
                 <Button 
                   size="lg" 
                   variant="outline" 
-                  className="border-[#24C36B] text-[#24C36B] hover:bg-[#24C36B] hover:text-black px-8 py-4 text-lg rounded-2xl"
+                  className="border-[#24C36B] text-[#24C36B] hover:bg-[#24C36B] hover:text-black px-8 py-4 text-lg rounded-2xl w-full sm:w-auto"
                 >
                   <Play className="w-5 h-5 mr-2" />
                   Ver Demonstração
@@ -105,15 +161,15 @@ const Home = () => {
               </motion.div>
             </motion.div>
             
+            {/* Interactive Demo - Hidden on small screens, visible on larger */}
             <motion.div
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.4 }}
-              className="relative"
+              className="hidden lg:block relative"
             >
-              {/* Simulação Interativa de Agendamento */}
               <motion.div 
-                className="bg-gradient-to-br from-[#18181B] to-[#27272A] rounded-2xl p-4 shadow-2xl border border-[#27272A] overflow-hidden"
+                className="bg-gradient-to-br from-[#18181B] to-[#27272A] rounded-2xl p-6 shadow-2xl border border-[#27272A] max-w-md mx-auto"
                 animate={{ y: [0, -10, 0] }}
                 transition={{ 
                   duration: 4, 
@@ -123,45 +179,40 @@ const Home = () => {
                 }}
               >
                 {/* Header do App */}
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-[#24C36B] rounded-xl flex items-center justify-center">
-                      <Calendar className="w-5 h-5 text-black" />
-                    </div>
+                    <img
+                      src={logotipo}
+                      alt="ZapCorte"
+                      className="h-10 w-10 rounded-xl"
+                    />
                     <div>
                       <h3 className="font-semibold text-sm">Barbearia do João</h3>
                       <p className="text-xs text-gray-400">Agendamento Online</p>
                     </div>
                   </div>
-                  <div className="flex gap-1">
-                    <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                    <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  </div>
                 </div>
 
-                {/* Calendário Interativo */}
-                <div className="space-y-3">
+                {/* Calendário Simplificado */}
+                <div className="space-y-4">
                   <div className="grid grid-cols-7 gap-1 text-xs">
                     {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((day, i) => (
                       <div key={i} className="text-center text-gray-400 py-1">{day}</div>
                     ))}
-                    {Array.from({ length: 21 }, (_, i) => {
-                      const isSelected = i === 10;
-                      const isAvailable = [3, 5, 8, 10, 12, 15, 17].includes(i);
+                    {Array.from({ length: 14 }, (_, i) => {
+                      const isSelected = i === 7;
+                      const isAvailable = [2, 4, 6, 7, 9, 11].includes(i);
                       return (
                         <motion.div
                           key={i}
                           className={`
-                            w-8 h-8 rounded-lg flex items-center justify-center text-xs cursor-pointer
+                            w-8 h-8 rounded-lg flex items-center justify-center text-xs
                             ${isSelected ? 'bg-[#24C36B] text-black font-bold' : 
-                              isAvailable ? 'bg-[#27272A] text-white hover:bg-[#3F3F46]' : 
+                              isAvailable ? 'bg-[#27272A] text-white' : 
                               'bg-[#1A1A1A] text-gray-600'}
                           `}
-                          whileHover={isAvailable ? { scale: 1.1 } : {}}
                           animate={isSelected ? { 
-                            scale: [1, 1.2, 1],
-                            boxShadow: ["0 0 0 0 rgba(36, 195, 107, 0.7)", "0 0 0 10px rgba(36, 195, 107, 0)", "0 0 0 0 rgba(36, 195, 107, 0)"]
+                            scale: [1, 1.1, 1]
                           } : {}}
                           transition={{ 
                             duration: 2, 
@@ -177,156 +228,83 @@ const Home = () => {
                     })}
                   </div>
 
-                  {/* Horários Disponíveis */}
-                  <motion.div 
-                    className="space-y-2"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 2 }}
-                  >
-                    <p className="text-xs text-gray-400 mb-2">Horários disponíveis:</p>
-                    <div className="grid grid-cols-3 gap-2">
-                      {['09:00', '10:30', '14:00', '15:30', '16:00', '17:30'].map((time, i) => (
-                        <motion.button
-                          key={time}
-                          className={`
-                            px-3 py-2 rounded-lg text-xs font-medium transition-all
-                            ${i === 1 ? 'bg-[#24C36B] text-black' : 'bg-[#27272A] text-white hover:bg-[#3F3F46]'}
-                          `}
-                          whileHover={{ scale: 1.05 }}
-                          animate={i === 1 ? {
-                            scale: [1, 1.1, 1],
-                            backgroundColor: ["#24C36B", "#1DB954", "#24C36B"]
-                          } : {}}
-                          transition={{ 
-                            duration: 2, 
-                            repeat: Infinity, 
-                            delay: 3,
-                            ease: "easeInOut",
-                            repeatType: "reverse"
-                          }}
-                        >
-                          {time}
-                        </motion.button>
-                      ))}
-                    </div>
-                  </motion.div>
+                  {/* Horários */}
+                  <div className="grid grid-cols-2 gap-2">
+                    {['09:00', '10:30', '14:00', '15:30'].map((time, i) => (
+                      <motion.button
+                        key={time}
+                        className={`
+                          px-3 py-2 rounded-lg text-xs font-medium
+                          ${i === 1 ? 'bg-[#24C36B] text-black' : 'bg-[#27272A] text-white'}
+                        `}
+                        animate={i === 1 ? {
+                          scale: [1, 1.05, 1]
+                        } : {}}
+                        transition={{ 
+                          duration: 2, 
+                          repeat: Infinity, 
+                          delay: 2,
+                          ease: "easeInOut",
+                          repeatType: "reverse"
+                        }}
+                      >
+                        {time}
+                      </motion.button>
+                    ))}
+                  </div>
 
-                  {/* Confirmação do Agendamento */}
+                  {/* Confirmação */}
                   <motion.div
                     className="bg-[#1A1A1A] rounded-xl p-4 border border-[#27272A]"
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 4 }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 3 }}
                   >
-                    <div className="flex items-center gap-3 mb-3">
-                      <motion.div 
-                        className="w-8 h-8 bg-[#24C36B] rounded-full flex items-center justify-center"
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 1, delay: 4.5 }}
-                      >
-                        <motion.div
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          transition={{ delay: 5 }}
-                        >
-                          ✓
-                        </motion.div>
-                      </motion.div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-[#24C36B] rounded-full flex items-center justify-center text-black font-bold">
+                        ✓
+                      </div>
                       <div>
                         <p className="text-xs font-semibold text-[#24C36B]">Agendamento Confirmado!</p>
                         <p className="text-xs text-gray-400">11/01 às 10:30</p>
                       </div>
                     </div>
-                    
-                    {/* Simulação WhatsApp */}
-                    <motion.div
-                      className="bg-[#075E54] rounded-lg p-3 mt-3"
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 6 }}
-                    >
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="w-4 h-4 bg-[#25D366] rounded-full flex items-center justify-center text-xs">
-                          📱
-                        </div>
-                        <span className="text-xs text-white font-medium">WhatsApp</span>
-                      </div>
-                      <motion.p 
-                        className="text-xs text-white bg-[#128C7E] rounded-lg p-2"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 6.5 }}
-                      >
-                        🔔 Lembrete: Seu corte é amanhã às 10:30 na Barbearia do João!
-                      </motion.p>
-                    </motion.div>
                   </motion.div>
                 </div>
               </motion.div>
-
-              {/* Efeitos de Partículas */}
-              <motion.div
-                className="absolute -top-4 -right-4 w-8 h-8 bg-[#24C36B] rounded-full opacity-20"
-                animate={{
-                  scale: [1, 1.5, 1],
-                  opacity: [0.2, 0.5, 0.2]
-                }}
-                transition={{ 
-                  duration: 3, 
-                  repeat: Infinity, 
-                  delay: 1,
-                  ease: "easeInOut",
-                  repeatType: "reverse"
-                }}
-              />
-              <motion.div
-                className="absolute -bottom-4 -left-4 w-6 h-6 bg-[#24C36B] rounded-full opacity-30"
-                animate={{
-                  scale: [1, 1.3, 1],
-                  opacity: [0.3, 0.6, 0.3]
-                }}
-                transition={{ 
-                  duration: 4, 
-                  repeat: Infinity, 
-                  delay: 2,
-                  ease: "easeInOut",
-                  repeatType: "reverse"
-                }}
-              />
             </motion.div>
           </div>
         </div>
       </section>
 
-      {/* Social Proof */}
-       <motion.section 
-         className="py-8 border-y border-[#27272A]"
-         {...fadeInUp}
-       >
-         <div className="w-full max-w-[80%] mx-auto px-4 text-center lg:max-w-[80%] md:max-w-[90%] sm:max-w-[95%]">
-          <p className="text-gray-300 text-lg mb-8">
+      {/* Social Proof - Mobile-First */}
+      <motion.section 
+        className="py-8 sm:py-12 border-y border-[#27272A]"
+        {...fadeInUp}
+      >
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <p className="text-gray-300 text-base sm:text-lg mb-6 sm:mb-8">
             +500 barbeiros já utilizam o ZapCorte diariamente
           </p>
-          <div className="flex justify-center items-center gap-8 opacity-60">
+          <div className="flex justify-center items-center gap-4 sm:gap-6 lg:gap-8 opacity-60">
             {Array.from({ length: 5 }, (_, i) => (
-              <div key={i} className="w-12 h-12 bg-[#27272A] rounded-full flex items-center justify-center">
-                <Users className="w-6 h-6" />
+              <div key={i} className="w-10 h-10 sm:w-12 sm:h-12 bg-[#27272A] rounded-full flex items-center justify-center">
+                <Users className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
             ))}
           </div>
         </div>
       </motion.section>
 
-      {/* Quick Benefits */}
-       <motion.section 
-         className="py-16"
-         variants={staggerContainer}
-         initial="initial"
-         whileInView="whileInView"
-       >
-         <div className="w-full max-w-[80%] mx-auto px-4 lg:max-w-[80%] md:max-w-[90%] sm:max-w-[95%]">
-          <div className="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+      {/* Features Section - Mobile-First */}
+      <motion.section 
+        className="py-12 sm:py-16 lg:py-20"
+        variants={staggerContainer}
+        initial="initial"
+        whileInView="whileInView"
+      >
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid gap-6 sm:gap-8 md:grid-cols-2 lg:grid-cols-3">
             {[
               {
                 icon: Globe,
@@ -349,13 +327,13 @@ const Home = () => {
                 variants={fadeInUp}
                 className="text-center"
               >
-                <Card className="bg-[#18181B] border-[#27272A] rounded-2xl hover:border-[#24C36B]/50 transition-colors">
-                  <CardContent className="p-6 md:p-8">
-                    <div className="w-16 h-16 bg-[#24C36B]/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                      <benefit.icon className="w-8 h-8 text-[#24C36B]" />
+                <Card className="bg-[#18181B] border-[#27272A] rounded-2xl hover:border-[#24C36B]/50 transition-colors h-full">
+                  <CardContent className="p-6 sm:p-8">
+                    <div className="w-14 h-14 sm:w-16 sm:h-16 bg-[#24C36B]/10 rounded-2xl flex items-center justify-center mx-auto mb-4 sm:mb-6">
+                      <benefit.icon className="w-7 h-7 sm:w-8 sm:h-8 text-[#24C36B]" />
                     </div>
-                    <h3 className="text-xl font-semibold mb-4">{benefit.title}</h3>
-                    <p className="text-gray-300">{benefit.description}</p>
+                    <h3 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">{benefit.title}</h3>
+                    <p className="text-gray-300 text-sm sm:text-base">{benefit.description}</p>
                   </CardContent>
                 </Card>
               </motion.div>
@@ -364,20 +342,20 @@ const Home = () => {
         </div>
       </motion.section>
 
-      {/* How It Works */}
-       <motion.section 
-         className="py-16 bg-[#18181B]/50"
-         variants={staggerContainer}
-         initial="initial"
-         whileInView="whileInView"
-       >
-         <div className="w-full max-w-[80%] mx-auto px-4 lg:max-w-[80%] md:max-w-[90%] sm:max-w-[95%]">
-          <motion.div variants={fadeInUp} className="text-center mb-12">
-             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">Como Funciona</h2>
-             <p className="text-lg md:text-xl text-gray-300">3 passos simples para começar</p>
-           </motion.div>
+      {/* How It Works - Mobile-First */}
+      <motion.section 
+        className="py-12 sm:py-16 lg:py-20 bg-[#18181B]/50"
+        variants={staggerContainer}
+        initial="initial"
+        whileInView="whileInView"
+      >
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div variants={fadeInUp} className="text-center mb-8 sm:mb-12">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-3 sm:mb-4">Como Funciona</h2>
+            <p className="text-base sm:text-lg md:text-xl text-gray-300">3 passos simples para começar</p>
+          </motion.div>
           
-          <div className="grid md:grid-cols-3 gap-12">
+          <div className="grid gap-8 sm:gap-10 md:grid-cols-3 md:gap-12">
             {[
               {
                 step: "1",
@@ -398,20 +376,21 @@ const Home = () => {
               <motion.div
                 key={index}
                 variants={{
-                  initial: { opacity: 0, x: -50 },
-                  whileInView: { opacity: 1, x: 0 },
-                  transition: { duration: 0.5, delay: index * 0.2 }
+                  initial: { opacity: 0, y: 30 },
+                  whileInView: { opacity: 1, y: 0 }
                 }}
+                transition={{ duration: 0.5, delay: index * 0.2 }}
                 className="text-center relative"
               >
-                <div className="w-20 h-20 bg-[#24C36B] rounded-full flex items-center justify-center mx-auto mb-6 text-2xl font-bold text-black">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-[#24C36B] rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6 text-xl sm:text-2xl font-bold text-black">
                   {step.step}
                 </div>
-                <h3 className="text-2xl font-semibold mb-4">{step.title}</h3>
-                <p className="text-gray-300 text-lg">{step.description}</p>
+                <h3 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4">{step.title}</h3>
+                <p className="text-gray-300 text-base sm:text-lg max-w-sm mx-auto">{step.description}</p>
                 
+                {/* Arrow only visible on desktop */}
                 {index < 2 && (
-                  <ArrowRight className="hidden md:block absolute top-10 -right-6 w-8 h-8 text-[#24C36B]" />
+                  <ArrowRight className="hidden lg:block absolute top-8 sm:top-10 -right-6 w-6 h-6 sm:w-8 sm:h-8 text-[#24C36B]" />
                 )}
               </motion.div>
             ))}
@@ -419,30 +398,30 @@ const Home = () => {
         </div>
       </motion.section>
 
-      {/* Consultar Agendamentos */}
+      {/* Consultar Agendamentos - Mobile-First */}
       <motion.section 
-        className="py-16 bg-[#18181B]"
+        className="py-12 sm:py-16 lg:py-20 bg-[#18181B]"
         variants={staggerContainer}
         initial="initial"
         whileInView="whileInView"
       >
-        <div className="w-full max-w-[80%] mx-auto px-4 lg:max-w-[80%] md:max-w-[90%] sm:max-w-[95%]">
-          <motion.div variants={fadeInUp} className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">Consultar Meus Agendamentos</h2>
-            <p className="text-lg md:text-xl text-gray-300">Digite seu telefone para visualizar seus agendamentos</p>
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div variants={fadeInUp} className="text-center mb-8 sm:mb-12">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-3 sm:mb-4">Consultar Meus Agendamentos</h2>
+            <p className="text-base sm:text-lg md:text-xl text-gray-300">Digite seu telefone para visualizar seus agendamentos</p>
           </motion.div>
           
           <motion.div variants={fadeInUp} className="max-w-md mx-auto">
-            <div className="flex gap-4">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
               <input
                 type="tel"
                 placeholder="Digite seu telefone"
-                className="flex-1 px-4 py-3 rounded-lg bg-[#0C0C0C] border border-[#27272A] text-white placeholder-gray-400 focus:border-[#24C36B] focus:outline-none"
+                className="flex-1 px-4 py-3 rounded-lg bg-[#0C0C0C] border border-[#27272A] text-white placeholder-gray-400 focus:border-[#24C36B] focus:outline-none text-base"
                 value={consultPhone}
                 onChange={(e) => setConsultPhone(e.target.value)}
               />
               <Button 
-                className="bg-[#24C36B] hover:bg-[#1ea557] text-black font-semibold px-6"
+                className="bg-[#24C36B] hover:bg-[#1ea557] text-black font-semibold px-6 py-3 rounded-lg w-full sm:w-auto"
                 onClick={() => {
                   if (consultPhone.trim()) {
                     window.location.href = `/my-appointments?phone=${encodeURIComponent(consultPhone.trim())}`;
@@ -456,20 +435,20 @@ const Home = () => {
         </div>
       </motion.section>
 
-      {/* Plans */}
-       <motion.section 
-         className="py-16 bg-[#18181B]"
-         variants={staggerContainer}
-         initial="initial"
-         whileInView="whileInView"
-       >
-         <div className="w-full max-w-[80%] mx-auto px-4 lg:max-w-[80%] md:max-w-[90%] sm:max-w-[95%]">
-          <motion.div variants={fadeInUp} className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">Planos</h2>
-            <p className="text-lg md:text-xl text-gray-300">Escolha o ideal para sua barbearia</p>
+      {/* Plans - Mobile-First */}
+      <motion.section 
+        className="py-12 sm:py-16 lg:py-20"
+        variants={staggerContainer}
+        initial="initial"
+        whileInView="whileInView"
+      >
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div variants={fadeInUp} className="text-center mb-8 sm:mb-12">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-3 sm:mb-4">Planos</h2>
+            <p className="text-base sm:text-lg md:text-xl text-gray-300">Escolha o ideal para sua barbearia</p>
           </motion.div>
           
-          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <div className="grid gap-6 sm:gap-8 md:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
             {[
               {
                 name: "Freemium",
@@ -520,7 +499,7 @@ const Home = () => {
               <motion.div
                 key={index}
                 variants={fadeInUp}
-                className="relative"
+                className="relative md:col-span-1 lg:col-span-1"
               >
                 <Card className={`bg-[#0C0C0C] rounded-2xl h-full ${
                   plan.highlighted 
@@ -528,28 +507,28 @@ const Home = () => {
                     : 'border-[#27272A]'
                 }`}>
                   {plan.highlighted && (
-                    <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                      <span className="bg-[#24C36B] text-black px-4 py-2 rounded-full text-sm font-bold">
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
+                      <span className="bg-[#24C36B] text-black px-3 py-1 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm font-bold">
                         Mais Popular
                       </span>
                     </div>
                   )}
-                  <CardContent className="p-8">
-                    <h3 className="text-2xl font-bold mb-4">{plan.name}</h3>
-                    <div className="mb-6">
-                      <span className="text-5xl font-bold">R$ {plan.price}</span>
-                      <span className="text-gray-300">{plan.period}</span>
+                  <CardContent className="p-6 sm:p-8">
+                    <h3 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4">{plan.name}</h3>
+                    <div className="mb-4 sm:mb-6">
+                      <span className="text-3xl sm:text-4xl lg:text-5xl font-bold">R$ {plan.price}</span>
+                      <span className="text-gray-300 text-sm sm:text-base">{plan.period}</span>
                     </div>
-                    <ul className="space-y-4 mb-8">
+                    <ul className="space-y-3 sm:space-y-4 mb-6 sm:mb-8">
                       {plan.features.map((feature, i) => (
                         <li key={i} className="flex items-start gap-3">
-                          <CheckCircle className="w-5 h-5 text-[#24C36B] mt-0.5 flex-shrink-0" />
-                          <span className="text-gray-300">{feature}</span>
+                          <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-[#24C36B] mt-0.5 flex-shrink-0" />
+                          <span className="text-gray-300 text-sm sm:text-base">{feature}</span>
                         </li>
                       ))}
                     </ul>
                     <Button 
-                      className={`w-full rounded-2xl py-6 text-lg font-semibold ${
+                      className={`w-full rounded-2xl py-4 sm:py-6 text-base sm:text-lg font-semibold ${
                         plan.highlighted
                           ? 'bg-[#24C36B] hover:bg-[#1ea557] text-black'
                           : 'bg-transparent border-[#24C36B] border-2 text-[#24C36B] hover:bg-[#24C36B] hover:text-black'
@@ -572,17 +551,17 @@ const Home = () => {
         </div>
       </motion.section>
 
-      {/* Testimonials */}
-       <motion.section 
-         className="py-16"
-         variants={staggerContainer}
-         initial="initial"
-         whileInView="whileInView"
-       >
-         <div className="w-full max-w-[80%] mx-auto px-4 lg:max-w-[80%] md:max-w-[90%] sm:max-w-[95%]">
-          <motion.div variants={fadeInUp} className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">Depoimentos</h2>
-            <p className="text-lg md:text-xl text-gray-300">O que nossos clientes dizem</p>
+      {/* Testimonials - Mobile-First */}
+      <motion.section 
+        className="py-12 sm:py-16 lg:py-20"
+        variants={staggerContainer}
+        initial="initial"
+        whileInView="whileInView"
+      >
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div variants={fadeInUp} className="text-center mb-8 sm:mb-12">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-3 sm:mb-4">Depoimentos</h2>
+            <p className="text-base sm:text-lg md:text-xl text-gray-300">O que nossos clientes dizem</p>
           </motion.div>
           
           <div className="max-w-4xl mx-auto">
@@ -595,25 +574,25 @@ const Home = () => {
               className="text-center"
             >
               <Card className="bg-[#18181B] border-[#27272A] rounded-2xl">
-                <CardContent className="p-12">
-                  <div className="w-20 h-20 bg-[#24C36B] rounded-full flex items-center justify-center mx-auto mb-6 text-xl font-bold text-black">
+                <CardContent className="p-6 sm:p-8 lg:p-12">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 bg-[#24C36B] rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6 text-lg sm:text-xl font-bold text-black">
                     {testimonials[currentTestimonial].avatar}
                   </div>
-                  <p className="text-xl text-gray-300 mb-6 italic">
+                  <p className="text-base sm:text-lg lg:text-xl text-gray-300 mb-4 sm:mb-6 italic leading-relaxed">
                     "{testimonials[currentTestimonial].text}"
                   </p>
-                  <h4 className="text-lg font-semibold">{testimonials[currentTestimonial].name}</h4>
-                  <p className="text-gray-300">{testimonials[currentTestimonial].role}</p>
+                  <h4 className="text-base sm:text-lg font-semibold">{testimonials[currentTestimonial].name}</h4>
+                  <p className="text-gray-300 text-sm sm:text-base">{testimonials[currentTestimonial].role}</p>
                 </CardContent>
               </Card>
             </motion.div>
             
-            <div className="flex justify-center gap-2 mt-8">
+            <div className="flex justify-center gap-2 mt-6 sm:mt-8">
               {testimonials.map((_, index) => (
                 <button
                   key={index}
                   onClick={() => setCurrentTestimonial(index)}
-                  className={`w-3 h-3 rounded-full transition-colors ${
+                  className={`w-3 h-3 rounded-full transition-colors touch-manipulation ${
                     index === currentTestimonial ? 'bg-[#24C36B]' : 'bg-[#27272A]'
                   }`}
                 />
@@ -623,21 +602,21 @@ const Home = () => {
         </div>
       </motion.section>
 
-      {/* Final CTA */}
-       <motion.section 
-         className="py-20 bg-black"
-         {...fadeInUp}
-       >
-         <div className="w-full max-w-[80%] mx-auto px-4 text-center lg:max-w-[80%] md:max-w-[90%] sm:max-w-[95%]">
-          <h2 className="text-4xl md:text-6xl font-bold mb-6">
+      {/* Final CTA - Mobile-First */}
+      <motion.section 
+        className="py-16 sm:py-20 lg:py-24 bg-black"
+        {...fadeInUp}
+      >
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold mb-4 sm:mb-6 leading-tight">
             Pronto para profissionalizar sua barbearia?
           </h2>
-          <p className="text-xl text-gray-300 mb-8">
+          <p className="text-base sm:text-lg md:text-xl text-gray-300 mb-6 sm:mb-8 max-w-2xl mx-auto">
             Leva menos de 2 minutos para começar
           </p>
           <Button 
             size="lg" 
-            className="bg-[#24C36B] hover:bg-[#1ea557] text-black font-bold px-12 py-6 text-xl rounded-2xl"
+            className="bg-[#24C36B] hover:bg-[#1ea557] text-black font-bold px-8 sm:px-12 py-4 sm:py-6 text-lg sm:text-xl rounded-2xl w-full sm:w-auto"
             asChild
           >
             <Link to="/register">Criar Minha Barbearia</Link>
@@ -645,44 +624,51 @@ const Home = () => {
         </div>
       </motion.section>
 
-      {/* Footer */}
-       <footer className="py-16 border-t border-[#27272A]">
-         <div className="w-full max-w-[80%] mx-auto px-4 lg:max-w-[80%] md:max-w-[90%] sm:max-w-[95%]">
-          <div className="grid md:grid-cols-4 gap-8">
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Sobre o ZapCorte</h3>
-              <p className="text-gray-300">
+      {/* Footer - Mobile-First */}
+      <footer className="py-12 sm:py-16 border-t border-[#27272A]">
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="sm:col-span-2 lg:col-span-1">
+              <div className="flex items-center gap-2 mb-4">
+                <img
+                  src={logotipo}
+                  alt="ZapCorte"
+                  className="h-8 w-8 rounded-lg"
+                />
+                <span className="text-xl font-bold">ZapCorte</span>
+              </div>
+              <p className="text-gray-300 text-sm sm:text-base">
                 Sistema completo de agendamento para barbearias modernas.
               </p>
             </div>
             <div>
-              <h3 className="text-lg font-semibold mb-4">Legal</h3>
-              <ul className="space-y-2 text-gray-300">
-                <li><a href="#" className="hover:text-[#24C36B] transition-colors">Termos de Uso</a></li>
-                <li><a href="#" className="hover:text-[#24C36B] transition-colors">Política de Privacidade</a></li>
+              <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Legal</h3>
+              <ul className="space-y-2 text-gray-300 text-sm sm:text-base">
+                <li><a href="#" className="hover:text-[#24C36B] transition-colors touch-manipulation">Termos de Uso</a></li>
+                <li><a href="#" className="hover:text-[#24C36B] transition-colors touch-manipulation">Política de Privacidade</a></li>
               </ul>
             </div>
             <div>
-              <h3 className="text-lg font-semibold mb-4">Suporte</h3>
-              <ul className="space-y-2 text-gray-300">
-                <li><a href="#" className="hover:text-[#24C36B] transition-colors">Contato</a></li>
-                <li><a href="#" className="hover:text-[#24C36B] transition-colors">FAQ</a></li>
+              <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Suporte</h3>
+              <ul className="space-y-2 text-gray-300 text-sm sm:text-base">
+                <li><a href="#" className="hover:text-[#24C36B] transition-colors touch-manipulation">Contato</a></li>
+                <li><a href="#" className="hover:text-[#24C36B] transition-colors touch-manipulation">FAQ</a></li>
               </ul>
             </div>
             <div>
-              <h3 className="text-lg font-semibold mb-4">Redes Sociais</h3>
-              <div className="flex gap-4">
-                <div className="w-10 h-10 bg-[#27272A] rounded-lg flex items-center justify-center hover:bg-[#24C36B] transition-colors cursor-pointer">
+              <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Redes Sociais</h3>
+              <div className="flex gap-3 sm:gap-4">
+                <div className="w-10 h-10 bg-[#27272A] rounded-lg flex items-center justify-center hover:bg-[#24C36B] transition-colors cursor-pointer touch-manipulation">
                   <span className="text-sm font-bold">f</span>
                 </div>
-                <div className="w-10 h-10 bg-[#27272A] rounded-lg flex items-center justify-center hover:bg-[#24C36B] transition-colors cursor-pointer">
+                <div className="w-10 h-10 bg-[#27272A] rounded-lg flex items-center justify-center hover:bg-[#24C36B] transition-colors cursor-pointer touch-manipulation">
                   <span className="text-sm font-bold">@</span>
                 </div>
               </div>
             </div>
           </div>
-          <div className="border-t border-[#27272A] mt-12 pt-8 text-center text-gray-300">
-            <p>&copy; ZapCorte 2025. Todos os direitos reservados.</p>
+          <div className="border-t border-[#27272A] mt-8 sm:mt-12 pt-6 sm:pt-8 text-center text-gray-300">
+            <p className="text-sm sm:text-base">&copy; ZapCorte 2025. Todos os direitos reservados.</p>
           </div>
         </div>
       </footer>

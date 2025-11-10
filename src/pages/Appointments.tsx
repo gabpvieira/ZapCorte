@@ -15,7 +15,7 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { useUserData } from "@/hooks/useUserData";
 import { supabase } from "@/lib/supabase";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { format, parseISO, isPast, isToday, addDays, startOfDay, endOfDay } from "date-fns";
+import { format, parseISO, parse, isPast, isToday, addDays, startOfDay, endOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 interface Service {
@@ -158,9 +158,20 @@ const Appointments = () => {
       });
       return;
     }
-
+  
     try {
-      const scheduledAt = new Date(`${formData.scheduled_date}T${formData.scheduled_time}`);
+      // Converter dd/MM/yyyy -> yyyy-MM-dd para compor ISO
+      const parsedDate = parse(formData.scheduled_date, 'dd/MM/yyyy', new Date());
+      if (isNaN(parsedDate.getTime())) {
+        toast({
+          title: "Data inválida",
+          description: "Use o formato dd/MM/yyyy.",
+          variant: "destructive",
+        });
+        return;
+      }
+      const isoDate = format(parsedDate, 'yyyy-MM-dd');
+      const scheduledAt = new Date(`${isoDate}T${formData.scheduled_time}`);
       
       const appointmentData = {
         customer_name: formData.customer_name,
@@ -215,7 +226,7 @@ const Appointments = () => {
     setFormData({
       customer_name: appointment.customer_name,
       customer_phone: appointment.customer_phone,
-      scheduled_date: scheduledDate.toISOString().split('T')[0],
+      scheduled_date: format(scheduledDate, 'dd/MM/yyyy'),
       scheduled_time: scheduledDate.toTimeString().slice(0, 5),
       service_id: appointment.service_id,
     });
@@ -274,7 +285,7 @@ const Appointments = () => {
 
   // Funções auxiliares para formatação e validação
   const formatDate = (dateString: string) => {
-    return format(parseISO(dateString), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
+    return format(parseISO(dateString), "dd/MM/yyyy", { locale: ptBR });
   };
 
   const formatTime = (dateString: string) => {
@@ -599,17 +610,20 @@ const Appointments = () => {
                   <Label htmlFor="scheduled_date">Data</Label>
                   <Input
                     id="scheduled_date"
-                    type="date"
+                    type="text"
+                    placeholder="dd/MM/yyyy"
                     value={formData.scheduled_date}
                     onChange={(e) => setFormData({ ...formData, scheduled_date: e.target.value })}
                     required
                   />
+                  <p className="text-xs text-gray-500 mt-1">Formato: dd/MM/yyyy</p>
                 </div>
                 <div>
                   <Label htmlFor="scheduled_time">Horário</Label>
                   <Input
                     id="scheduled_time"
                     type="time"
+                    lang="pt-BR"
                     value={formData.scheduled_time}
                     onChange={(e) => setFormData({ ...formData, scheduled_time: e.target.value })}
                     required
@@ -669,9 +683,13 @@ const Appointments = () => {
               <Input
                 id="date-filter"
                 type="date"
+                lang="pt-BR"
                 value={dateFilter}
                 onChange={(e) => setDateFilter(e.target.value)}
               />
+              <p className="text-xs text-gray-500 mt-1">
+                {dateFilter ? format(new Date(`${dateFilter}T00:00:00`), 'dd/MM/yyyy') : ''}
+              </p>
             </div>
             <div>
               <Label htmlFor="status-filter">Filtrar por Status</Label>

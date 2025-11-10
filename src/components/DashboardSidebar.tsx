@@ -12,6 +12,7 @@ import {
   X,
   User
 } from "lucide-react";
+import logotipo from "@/assets/zapcorte-icon.png";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
@@ -117,7 +118,7 @@ export const DashboardSidebar = ({ className }: DashboardSidebarProps) => {
       <div className="flex items-center justify-between p-6 border-b border-gray-800">
         <Link to="/" className="flex items-center space-x-2">
           <img
-            src="/midia/logotipo-zapcorte.png"
+            src={logotipo}
             alt="ZapCorte"
             className="h-8 w-auto"
           />

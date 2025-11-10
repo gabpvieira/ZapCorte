@@ -43,3 +43,9 @@ Thumbs.db
 # Lock files (opcional - alguns projetos preferem commitar)
 # package-lock.json
 # bun.lockb
+
+# MCP Configuration (nunca commitar tokens!)
+*.mcp.json
+mcp.json
+mcp.config.json
+.env.mcp

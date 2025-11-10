@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
 import { motion } from "framer-motion";
+import logotipo from "@/assets/zapcorte-icon.png";
 import { DashboardSidebar } from "./DashboardSidebar";
 
 interface DashboardLayoutProps {
@@ -47,7 +48,7 @@ export const DashboardLayout = ({
                   <div className="flex items-center gap-4 ml-12 md:ml-0">
                     {/* Logo no header do dashboard */}
                     <img
-                      src="/midia/logotipo-zapcorte.png"
+                      src={logotipo}
                       alt="ZapCorte"
                       className="h-8 w-auto hidden md:block"
                     />

@@ -355,11 +355,11 @@ const Barbershop = () => {
                           <div className="flex items-center gap-3 text-sm text-gray-300">
                             <div className="flex items-center">
                               <Calendar className="h-4 w-4 mr-2" />
-                              <span>{new Date(apt.scheduled_at).toLocaleDateString()}</span>
+                <span>{new Date(apt.scheduled_at).toLocaleDateString('pt-BR')}</span>
                             </div>
                             <div className="flex items-center">
                               <Clock className="h-4 w-4 mr-2" />
-                              <span>{new Date(apt.scheduled_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                <span>{new Date(apt.scheduled_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
                               {apt.service && (
                                 <>
                                   <span className="mx-2">•</span>

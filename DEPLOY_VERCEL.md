@@ -34,7 +34,7 @@ VITE_SUPABASE_ANON_KEY=sua_chave_anonima_do_supabase
 VITE_ONESIGNAL_APP_ID=seu_app_id_onesignal
 VITE_ONESIGNAL_REST_API_KEY=sua_chave_rest_api_onesignal
 VITE_ONESIGNAL_CLICK_URL=https://seu-dominio.com/painel
-VITE_ONESIGNAL_ICON_URL=https://seu-dominio.com/logo.png
+VITE_ONESIGNAL_ICON_URL=https://seu-dominio.com/logotipo.png
 VITE_CAKTO_CHECKOUT_STARTER=https://pay.cakto.com.br/seu_id_starter
 VITE_CAKTO_CHECKOUT_PRO=https://pay.cakto.com.br/seu_id_pro
 ```

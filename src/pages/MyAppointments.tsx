@@ -58,7 +58,7 @@ const MyAppointments = () => {
   const [selectedTime, setSelectedTime] = useState('');
 
   const formatDate = (dateString: string) => {
-    return format(parseISO(dateString), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
+    return format(parseISO(dateString), "dd/MM/yyyy", { locale: ptBR });
   };
 
   const formatTime = (dateString: string) => {

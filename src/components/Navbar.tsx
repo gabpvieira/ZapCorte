@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import logotipo from "@/assets/zapcorte-icon.png";
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -28,10 +29,10 @@ const Navbar = () => {
           {/* Logo */}
           <Link to="/" className="flex items-center">
             <img
-              src="/midia/logotipo-zapcorte.png"
-              alt="ZapCorte"
-              className="h-10 w-auto"
-            />
+            src={logotipo}
+            alt="ZapCorte"
+            className="h-10 w-auto"
+          />
           </Link>
 
           {/* Navigation Links */}
