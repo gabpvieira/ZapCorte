@@ -64,6 +64,25 @@ export const useWhatsAppSettings = () => {
 
       const updatedSettings = { ...settings, ...newSettings };
 
+      // Se está tentando ativar lembretes, verificar se há dias ativos
+      if (newSettings.reminders_enabled === true) {
+        const { data: barbershop, error: checkError } = await supabase
+          .from('barbershops')
+          .select('opening_hours')
+          .eq('user_id', user.id)
+          .single();
+
+        if (checkError) throw checkError;
+
+        // Verificar se há pelo menos um dia ativo
+        const openingHours = barbershop?.opening_hours || {};
+        const hasActiveDays = Object.values(openingHours).some(day => day !== null);
+
+        if (!hasActiveDays) {
+          throw new Error('Configure pelo menos um dia de funcionamento antes de ativar os lembretes');
+        }
+      }
+
       const { error } = await supabase
         .from('barbershops')
         .update({
@@ -78,7 +97,8 @@ export const useWhatsAppSettings = () => {
       setSettings(updatedSettings);
     } catch (error) {
       console.error('Erro ao salvar configurações:', error);
-      setError('Erro ao salvar configurações');
+      const errorMessage = error instanceof Error ? error.message : 'Erro ao salvar configurações';
+      setError(errorMessage);
       throw error;
     } finally {
       setSaving(false);

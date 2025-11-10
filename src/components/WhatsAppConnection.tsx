@@ -96,7 +96,8 @@ const WhatsAppConnection: React.FC = () => {
     try {
       await saveSettings({ [key]: value });
     } catch (error) {
-      // Error is handled in the hook
+      // Error is handled in the hook and displayed in the UI
+      console.error('Erro ao alterar configuração:', error);
     }
   };
 
