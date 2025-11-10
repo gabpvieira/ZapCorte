@@ -72,6 +72,22 @@ class EvolutionApiService {
   async createSession(barbershopId: string): Promise<EvolutionSession> {
     const sessionId = `barbershop-${barbershopId}`;
     
+    // Primeiro, verificar se a instância já existe
+    console.log(`Verificando se instância ${sessionId} já existe...`);
+    try {
+      const existingSession = await this.getSessionStatus(sessionId);
+      if (existingSession && existingSession.state !== 'close') {
+        console.log('Instância já existe, tentando obter QR Code...');
+        const qrcode = await this.getQRCode(sessionId);
+        return {
+          ...existingSession,
+          qrcode: qrcode || undefined,
+        };
+      }
+    } catch (error) {
+      console.log('Instância não existe ou erro ao verificar, tentando criar...');
+    }
+    
     // Tentar diferentes endpoints da Evolution API
     const endpoints = [
       {
@@ -121,10 +137,24 @@ class EvolutionApiService {
         
         return {
           id: sessionId,
-          qrcode: qrcode || null,
+          qrcode: qrcode || undefined,
           state: mapState(result.instance?.state || result.state || 'qr'),
         };
-      } catch (error) {
+      } catch (error: any) {
+        // Se o erro for que a instância já existe, tentar obter o QR Code
+        if (error?.message?.includes('already in use') || error?.message?.includes('já existe')) {
+          console.log('Instância já existe (erro capturado), tentando obter QR Code...');
+          try {
+            const qrcode = await this.getQRCode(sessionId);
+            const status = await this.getSessionStatus(sessionId);
+            return {
+              ...status,
+              qrcode: qrcode || undefined,
+            };
+          } catch (qrError) {
+            console.error('Erro ao obter QR Code da instância existente:', qrError);
+          }
+        }
         console.warn(`Endpoint ${endpoint.url} falhou:`, error);
         continue;
       }

@@ -48,6 +48,8 @@ const Services = () => {
     duration_minutes: "",
   });
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [canAddService, setCanAddService] = useState(true);
+  const [serviceLimitMessage, setServiceLimitMessage] = useState<string>("");
   const [uploading, setUploading] = useState(false);
 
   const { toast } = useToast();
@@ -70,6 +72,25 @@ const Services = () => {
 
       if (error) throw error;
       setServices(data || []);
+
+      // Verificar limite de serviços baseado no plano
+      if (barbershop) {
+        const activeServices = (data || []).filter(s => s.is_active !== false);
+        const planType = barbershop.plan_type || 'freemium';
+        const maxServices = planType === 'freemium' ? 4 : 999999;
+        
+        if (activeServices.length >= maxServices) {
+          setCanAddService(false);
+          setServiceLimitMessage(
+            `Seu Plano ${planType.toUpperCase()} permite no máximo ${maxServices} serviços cadastrados. ` +
+            `Você já possui ${activeServices.length} serviços ativos. ` +
+            `Faça upgrade para o plano Starter ou Pro para adicionar serviços ilimitados.`
+          );
+        } else {
+          setCanAddService(true);
+          setServiceLimitMessage("");
+        }
+      }
     } catch (error) {
       console.error("Erro ao buscar serviços:", error);
       toast({
@@ -197,13 +218,25 @@ const Services = () => {
       setIsDialogOpen(false);
       resetForm();
       fetchServices();
-    } catch (error) {
-      console.error("Erro ao salvar serviço:", error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível salvar o serviço.",
-        variant: "destructive",
-      });
+    } catch (error: any) {
+      // Verificar se é erro de limite de serviços
+      if (error?.message?.includes('LIMIT_EXCEEDED')) {
+        // Extrair mensagem personalizada do erro
+        const errorMessage = error.message.replace('LIMIT_EXCEEDED: ', '');
+        toast({
+          title: "Limite de Serviços Atingido",
+          description: errorMessage,
+          variant: "destructive",
+          duration: 8000, // 8 segundos para ler a mensagem
+        });
+      } else {
+        console.error("Erro ao salvar serviço:", error);
+        toast({
+          title: "Erro",
+          description: "Não foi possível salvar o serviço.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setUploading(false);
     }
@@ -293,13 +326,18 @@ const Services = () => {
       title="Meus Serviços"
       subtitle="Gerencie o catálogo da sua barbearia"
       action={
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={resetForm}>
-              <Plus className="mr-2 h-4 w-4" />
-              Adicionar Serviço
-            </Button>
-          </DialogTrigger>
+        <div className="flex flex-col items-end gap-2">
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button 
+                onClick={resetForm}
+                disabled={!canAddService}
+                title={!canAddService ? serviceLimitMessage : "Adicionar novo serviço"}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Adicionar Serviço
+              </Button>
+            </DialogTrigger>
           <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle>
@@ -381,6 +419,12 @@ const Services = () => {
             </form>
           </DialogContent>
         </Dialog>
+        {!canAddService && (
+          <div className="text-xs text-amber-600 bg-amber-50 px-3 py-2 rounded-md max-w-sm text-right border border-amber-200">
+            <strong>Limite atingido:</strong> {serviceLimitMessage}
+          </div>
+        )}
+      </div>
       }
     >
       {services.length === 0 ? (

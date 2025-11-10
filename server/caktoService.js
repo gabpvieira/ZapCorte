@@ -212,6 +212,20 @@ export async function processPaymentApproved(webhookData) {
       } else {
         console.log(`✅ Perfil atualizado para ${planType}`);
       }
+
+      // Atualizar também a tabela barbershops (se existir)
+      const { error: barbershopError } = await supabase
+        .from('barbershops')
+        .update({ 
+          plan_type: planType
+        })
+        .eq('user_id', profileIdValue);
+
+      if (barbershopError) {
+        console.warn('⚠️ Erro ao atualizar barbearia (pode não existir):', barbershopError);
+      } else {
+        console.log(`✅ Barbearia atualizada para ${planType}`);
+      }
     }
 
     // Salvar histórico de pagamento (se usuário real)
@@ -309,6 +323,20 @@ export async function processRefund(webhookData) {
       console.log('✅ Assinatura cancelada (voltou para free)');
     }
 
+    // Atualizar também a tabela barbershops
+    const { error: barbershopError } = await supabase
+      .from('barbershops')
+      .update({ 
+        plan_type: 'freemium'
+      })
+      .eq('user_id', profileIdValue);
+
+    if (barbershopError) {
+      console.warn('⚠️ Erro ao atualizar barbearia:', barbershopError);
+    } else {
+      console.log('✅ Barbearia atualizada para freemium');
+    }
+
     // Registrar reembolso no histórico
     const profileUserId = user.user_id || user.userId;
     
@@ -390,6 +418,20 @@ export async function processSubscriptionCancelled(webhookData) {
       console.error('❌ Erro ao cancelar assinatura:', updateError);
     } else {
       console.log('✅ Assinatura cancelada');
+    }
+
+    // Atualizar também a tabela barbershops
+    const { error: barbershopError } = await supabase
+      .from('barbershops')
+      .update({ 
+        plan_type: 'freemium'
+      })
+      .eq('user_id', profileIdValue);
+
+    if (barbershopError) {
+      console.warn('⚠️ Erro ao atualizar barbearia:', barbershopError);
+    } else {
+      console.log('✅ Barbearia atualizada para freemium');
     }
 
     // Registrar cancelamento no histórico
