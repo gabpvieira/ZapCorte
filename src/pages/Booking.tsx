@@ -192,6 +192,38 @@ const Booking = () => {
         status: 'pending'
       });
 
+      // Criar ou atualizar cliente automaticamente
+      try {
+        const cleanPhone = customerPhone.replace(/\D/g, '');
+        
+        // Verificar se cliente já existe
+        const { data: existingCustomer } = await supabase
+          .from('customers')
+          .select('id')
+          .eq('barbershop_id', barbershop.id)
+          .eq('phone', cleanPhone)
+          .single();
+
+        if (!existingCustomer) {
+          // Criar novo cliente
+          await supabase
+            .from('customers')
+            .insert({
+              barbershop_id: barbershop.id,
+              name: customerName,
+              phone: cleanPhone,
+              notes: `Cliente criado automaticamente via agendamento online em ${new Date().toLocaleDateString('pt-BR')}`
+            });
+          
+          console.log('✅ Cliente criado automaticamente:', customerName);
+        } else {
+          console.log('ℹ️ Cliente já existe:', customerName);
+        }
+      } catch (customerError) {
+        console.warn('⚠️ Erro ao criar cliente automaticamente:', customerError);
+        // Não bloqueia o agendamento se falhar
+      }
+
       // Registrar push do barbeiro e enviar notificação
       try {
         // Registrar player_id do barbeiro

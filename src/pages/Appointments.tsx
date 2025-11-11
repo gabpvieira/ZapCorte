@@ -60,12 +60,20 @@ const statusLabels = {
   cancelled: "Cancelado",
 };
 
+interface Customer {
+  id: string;
+  name: string;
+  phone: string;
+}
+
 const Appointments = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [services, setServices] = useState<Service[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
   const [formData, setFormData] = useState<AppointmentFormData>({
     customer_name: "",
     customer_phone: "",
@@ -97,8 +105,25 @@ const Appointments = () => {
     if (barbershop?.id) {
       fetchAppointments();
       fetchServices();
+      fetchCustomers();
+    } else if (barbershop === null) {
+      // Se barbershop é null (não undefined), significa que já foi carregado mas não existe
+      console.log('ℹ️ Nenhuma barbearia encontrada para este usuário');
+      setLoading(false);
     }
-  }, [barbershop?.id]);
+  }, [barbershop?.id, barbershop]);
+
+  // Fallback: evitar loading infinito
+  useEffect(() => {
+    const fallbackTimer = setTimeout(() => {
+      if (loading) {
+        console.warn('⚠️ Loading não finalizou em 10s, forçando finalização');
+        setLoading(false);
+      }
+    }, 10000);
+
+    return () => clearTimeout(fallbackTimer);
+  }, [loading]);
 
   const fetchServices = async () => {
     try {
@@ -111,6 +136,21 @@ const Appointments = () => {
       setServices(data || []);
     } catch (error) {
       console.error("Erro ao buscar serviços:", error);
+    }
+  };
+
+  const fetchCustomers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("customers")
+        .select("id, name, phone")
+        .eq("barbershop_id", barbershop?.id)
+        .order("name", { ascending: true });
+
+      if (error) throw error;
+      setCustomers(data || []);
+    } catch (error) {
+      console.error("Erro ao buscar clientes:", error);
     }
   };
 
@@ -148,6 +188,7 @@ const Appointments = () => {
       scheduled_time: "",
       service_id: "",
     });
+    setSelectedCustomerId("");
     setEditingAppointment(null);
   };
 
@@ -183,7 +224,7 @@ const Appointments = () => {
         scheduled_at: scheduledAt.toISOString(),
         service_id: formData.service_id,
         barbershop_id: barbershop.id,
-        status: "pending" as const,
+        status: "confirmed" as const, // Barbeiro cria já confirmado
       };
 
       if (editingAppointment) {
@@ -205,10 +246,32 @@ const Appointments = () => {
 
         if (error) throw error;
 
-        toast({
-          title: "Sucesso",
-          description: "Agendamento criado com sucesso!",
-        });
+        // Enviar mensagem de confirmação via WhatsApp
+        try {
+          const serviceName = services.find(s => s.id === formData.service_id)?.name || 'Serviço';
+          
+          const mensagemEnviada = await enviarLembreteWhatsApp({
+            barbershopId: barbershop.id,
+            customerName: formData.customer_name,
+            customerPhone: formData.customer_phone,
+            scheduledAt: scheduledAt.toISOString(),
+            serviceName,
+            tipo: 'confirmacao',
+          });
+
+          toast({
+            title: "Agendamento Criado! 📅",
+            description: mensagemEnviada 
+              ? "Agendamento criado e confirmação enviada via WhatsApp."
+              : "Agendamento criado com sucesso!",
+          });
+        } catch (whatsappError) {
+          console.warn('Erro ao enviar WhatsApp:', whatsappError);
+          toast({
+            title: "Sucesso",
+            description: "Agendamento criado com sucesso!",
+          });
+        }
       }
 
       setIsDialogOpen(false);
@@ -666,6 +729,42 @@ const Appointments = () => {
               </DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Seletor de Cliente */}
+              <div>
+                <Label htmlFor="customer_select">Cliente</Label>
+                <Select
+                  value={selectedCustomerId}
+                  onValueChange={(value) => {
+                    setSelectedCustomerId(value);
+                    if (value === "new") {
+                      setFormData({ ...formData, customer_name: "", customer_phone: "" });
+                    } else {
+                      const customer = customers.find(c => c.id === value);
+                      if (customer) {
+                        setFormData({ 
+                          ...formData, 
+                          customer_name: customer.name, 
+                          customer_phone: customer.phone 
+                        });
+                      }
+                    }
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um cliente ou digite novo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="new">+ Novo Cliente</SelectItem>
+                    {customers.map((customer) => (
+                      <SelectItem key={customer.id} value={customer.id}>
+                        {customer.name} ({customer.phone})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Campos de Nome e Telefone (editáveis) */}
               <div>
                 <Label htmlFor="customer_name">Nome do Cliente</Label>
                 <Input
@@ -751,34 +850,29 @@ const Appointments = () => {
         </Dialog>
       }
     >
-      {/* Filtros */}
-      <Card className="mb-4 md:mb-6">
-        <CardHeader>
-          <CardTitle className="flex items-center text-base md:text-lg">
-            <Filter className="mr-2 h-4 w-4 md:h-5 md:w-5" />
-            Filtros
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="filters-container grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="filter-item">
-              <Label htmlFor="date-filter" className="text-sm">Filtrar por Data</Label>
+      {/* Filtros Compactos */}
+      <Card className="mb-4">
+        <CardContent className="p-3 sm:p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Filter className="h-4 w-4 text-primary" />
+            <h3 className="font-semibold text-sm">Filtros</h3>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <Label htmlFor="date-filter" className="text-xs text-muted-foreground">Data</Label>
               <Input
                 id="date-filter"
                 type="date"
                 lang="pt-BR"
                 value={dateFilter}
                 onChange={(e) => setDateFilter(e.target.value)}
-                className="mt-1"
+                className="mt-1 h-9 text-sm"
               />
-              <p className="text-xs text-gray-500 mt-1">
-                {dateFilter ? format(new Date(`${dateFilter}T00:00:00`), 'dd/MM/yyyy') : ''}
-              </p>
             </div>
-            <div className="filter-item">
-              <Label htmlFor="status-filter" className="text-sm">Filtrar por Status</Label>
+            <div>
+              <Label htmlFor="status-filter" className="text-xs text-muted-foreground">Status</Label>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="mt-1">
+                <SelectTrigger className="mt-1 h-9 text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -838,195 +932,157 @@ const Appointments = () => {
                 exit="hidden"
                 layout
               >
-                <Card className="appointment-card hover:shadow-lg transition-shadow mobile-full-width">
-                  <CardContent className="p-4 md:p-6">
-                    <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
-                      <div className="appointment-info space-y-3 flex-1">
-                        <div className="flex flex-col md:flex-row md:items-center md:space-x-4 space-y-2 md:space-y-0">
-                          <div className="flex items-center">
-                            <User className="h-4 w-4 mr-2 text-gray-500 flex-shrink-0" />
-                            <span className="font-semibold text-sm md:text-base">{appointment.customer_name}</span>
-                          </div>
-                          <div className="flex items-center">
-                            <Phone className="h-4 w-4 mr-2 text-gray-500 flex-shrink-0" />
-                            <span className="text-xs md:text-sm text-gray-600">{appointment.customer_phone}</span>
-                          </div>
-                        </div>
-                        
-                        <div className="flex flex-col md:flex-row md:items-center md:space-x-4 space-y-2 md:space-y-0">
-                          <div className="flex items-center">
-                            <Calendar className="h-4 w-4 mr-2 text-gray-500 flex-shrink-0" />
-                            <span className="text-xs md:text-sm">{formatDate(appointment.scheduled_at)}</span>
-                          </div>
-                          <div className="flex items-center">
-                            <Clock className="h-4 w-4 mr-2 text-gray-500 flex-shrink-0" />
-                            <span className="text-xs md:text-sm">{formatTime(appointment.scheduled_at)}</span>
-                          </div>
-                        </div>
-
-                        {appointment.service && (
-                          <div className="text-xs md:text-sm text-gray-600">
-                            <strong>Serviço:</strong> {appointment.service.name} - R$ {appointment.service.price.toFixed(2)}
-                          </div>
-                        )}
+                <Card className="overflow-hidden border-l-4 hover:shadow-md transition-all" style={{
+                  borderLeftColor: appointment.status === 'confirmed' ? '#22c55e' : appointment.status === 'cancelled' ? '#ef4444' : '#eab308'
+                }}>
+                  <CardContent className="p-3 sm:p-4">
+                    {/* Header com Nome e Status */}
+                    <div className="flex items-start justify-between gap-2 mb-3">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-base truncate">{appointment.customer_name}</h3>
+                        <a href={`tel:${appointment.customer_phone}`} className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1 mt-0.5">
+                          <Phone className="h-3 w-3" />
+                          {appointment.customer_phone}
+                        </a>
                       </div>
+                      <Badge 
+                        variant={getStatusInfo(appointment.status).variant} 
+                        className="text-xs shrink-0"
+                      >
+                        {getStatusInfo(appointment.status).label}
+                      </Badge>
+                    </div>
 
-                      <div className="appointment-actions flex flex-row md:flex-col items-center md:items-end justify-between md:justify-start space-x-2 md:space-x-0 md:space-y-3">
-                        <Badge variant={getStatusInfo(appointment.status).variant} className="text-xs">
-                          {getStatusInfo(appointment.status).label}
-                        </Badge>
-
-                        <div className="flex space-x-1 md:space-x-2">
-                          {/* Botão de Aceitar - apenas para status pendente */}
-                          {appointment.status === 'pending' && (
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    variant="default"
-                                    size="sm"
-                                    onClick={() => handleAcceptAppointment(appointment)}
-                                    disabled={acceptingAppointments.has(appointment.id)}
-                                    className="bg-green-600 hover:bg-green-700 disabled:opacity-50"
-                                  >
-                                    {acceptingAppointments.has(appointment.id) ? (
-                                      <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                    ) : (
-                                      <CheckCircle className="h-4 w-4" />
-                                    )}
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>{acceptingAppointments.has(appointment.id) ? 'Confirmando...' : 'Aceitar agendamento'}</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          )}
-
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => openViewModal(appointment)}
-                                >
-                                  <Eye className="h-4 w-4" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Visualizar detalhes</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleEdit(appointment)}
-                                >
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Editar agendamento</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-
-                          {canReschedule(appointment) && (
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => openRescheduleDialog(appointment)}
-                                  >
-                                    <RefreshCw className="h-4 w-4" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Reagendar</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          )}
-
-                          {canCancel(appointment) && (
-                            <AlertDialog>
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <AlertDialogTrigger asChild>
-                                    <TooltipTrigger asChild>
-                                      <Button variant="destructive" size="sm">
-                                        <X className="h-4 w-4" />
-                                      </Button>
-                                    </TooltipTrigger>
-                                  </AlertDialogTrigger>
-                                  <TooltipContent>
-                                    <p>Cancelar agendamento</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Cancelar Agendamento</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Tem certeza que deseja cancelar o agendamento de "{appointment.customer_name}"?
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Voltar</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => handleStatusChange(appointment.id, 'cancelled')}
-                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                  >
-                                    Cancelar
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          )}
-
-                          <AlertDialog>
-                            <TooltipProvider>
-                              <Tooltip>
-                                <AlertDialogTrigger asChild>
-                                  <TooltipTrigger asChild>
-                                    <Button variant="destructive" size="sm">
-                                      <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                </AlertDialogTrigger>
-                                <TooltipContent>
-                                  <p>Excluir agendamento</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Excluir Agendamento</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Tem certeza que deseja excluir o agendamento de "{appointment.customer_name}"? Esta ação não pode ser desfeita.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Voltar</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => handleDelete(appointment.id)}
-                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                >
-                                  Excluir
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
+                    {/* Info Grid */}
+                    <div className="grid grid-cols-2 gap-2 mb-3 text-xs">
+                      <div className="flex items-center gap-1.5 text-muted-foreground">
+                        <Calendar className="h-3.5 w-3.5 shrink-0" />
+                        <span className="truncate">{formatDate(appointment.scheduled_at)}</span>
                       </div>
+                      <div className="flex items-center gap-1.5 text-muted-foreground">
+                        <Clock className="h-3.5 w-3.5 shrink-0" />
+                        <span className="font-semibold text-foreground">{formatTime(appointment.scheduled_at)}</span>
+                      </div>
+                    </div>
+
+                    {/* Serviço */}
+                    {appointment.service && (
+                      <div className="text-xs bg-muted/50 rounded-md px-2 py-1.5 mb-3">
+                        <span className="font-medium">{appointment.service.name}</span>
+                        <span className="text-muted-foreground"> • </span>
+                        <span className="text-primary font-semibold">R$ {appointment.service.price.toFixed(2)}</span>
+                      </div>
+                    )}
+
+                    {/* Actions */}
+                    <div className="flex flex-wrap gap-1.5">
+                      {/* Botão de Aceitar - apenas para status pendente */}
+                      {appointment.status === 'pending' && (
+                        <Button
+                          variant="default"
+                          size="sm"
+                          onClick={() => handleAcceptAppointment(appointment)}
+                          disabled={acceptingAppointments.has(appointment.id)}
+                          className="bg-green-600 hover:bg-green-700 disabled:opacity-50 h-8 px-3 text-xs flex-1 sm:flex-none"
+                        >
+                          {acceptingAppointments.has(appointment.id) ? (
+                            <>
+                              <div className="h-3 w-3 mr-1.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                              Confirmando
+                            </>
+                          ) : (
+                            <>
+                              <CheckCircle className="h-3.5 w-3.5 mr-1.5" />
+                              Aceitar
+                            </>
+                          )}
+                        </Button>
+                      )}
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openViewModal(appointment)}
+                        className="h-8 px-3 text-xs"
+                      >
+                        <Eye className="h-3.5 w-3.5 sm:mr-1.5" />
+                        <span className="hidden sm:inline">Ver</span>
+                      </Button>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEdit(appointment)}
+                        className="h-8 px-3 text-xs"
+                      >
+                        <Edit className="h-3.5 w-3.5 sm:mr-1.5" />
+                        <span className="hidden sm:inline">Editar</span>
+                      </Button>
+
+                      {canReschedule(appointment) && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openRescheduleDialog(appointment)}
+                          className="h-8 px-3 text-xs"
+                        >
+                          <RefreshCw className="h-3.5 w-3.5 sm:mr-1.5" />
+                          <span className="hidden sm:inline">Reagendar</span>
+                        </Button>
+                      )}
+
+                      {canCancel(appointment) && (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-8 px-3 text-xs text-destructive hover:text-destructive hover:bg-destructive/10">
+                              <X className="h-3.5 w-3.5 sm:mr-1.5" />
+                              <span className="hidden sm:inline">Cancelar</span>
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent className="max-w-[90vw] sm:max-w-md">
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Cancelar Agendamento</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Tem certeza que deseja cancelar o agendamento de "{appointment.customer_name}"?
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Voltar</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleStatusChange(appointment.id, 'cancelled')}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                Cancelar
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
+
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="sm" className="h-8 px-3 text-xs text-destructive hover:text-destructive hover:bg-destructive/10 ml-auto">
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent className="max-w-[90vw] sm:max-w-md">
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Excluir Agendamento</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Tem certeza que deseja excluir o agendamento de "{appointment.customer_name}"? Esta ação não pode ser desfeita.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Voltar</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleDelete(appointment.id)}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              Excluir
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   </CardContent>
                 </Card>
@@ -1035,74 +1091,77 @@ const Appointments = () => {
           </AnimatePresence>
         </motion.div>
       )}
-      {/* Modal de Visualização */}
+      {/* Modal de Visualização Otimizado */}
       <Dialog open={viewModalOpen} onOpenChange={setViewModalOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-[95vw] sm:max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Detalhes do Agendamento</DialogTitle>
-            <DialogDescription>
-              Visualize e gerencie os detalhes do agendamento
-            </DialogDescription>
+            <DialogTitle className="text-lg">Detalhes do Agendamento</DialogTitle>
           </DialogHeader>
           
           {selectedAppointment && (
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium">Cliente</label>
-                  <p className="text-sm text-gray-600">{selectedAppointment.customer_name}</p>
+              {/* Info Cards */}
+              <div className="space-y-3">
+                <div className="bg-muted/50 rounded-lg p-3">
+                  <label className="text-xs text-muted-foreground">Cliente</label>
+                  <p className="font-semibold">{selectedAppointment.customer_name}</p>
                 </div>
-                <div>
-                  <label className="text-sm font-medium">Telefone</label>
-                  <p className="text-sm text-gray-600">{formatPhone(selectedAppointment.customer_phone)}</p>
+
+                <div className="bg-muted/50 rounded-lg p-3">
+                  <label className="text-xs text-muted-foreground">Telefone</label>
+                  <a href={`tel:${selectedAppointment.customer_phone}`} className="font-semibold text-primary hover:underline flex items-center gap-1">
+                    <Phone className="h-3.5 w-3.5" />
+                    {formatPhone(selectedAppointment.customer_phone)}
+                  </a>
                 </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-muted/50 rounded-lg p-3">
+                    <label className="text-xs text-muted-foreground">Data</label>
+                    <p className="font-semibold text-sm">{formatDate(selectedAppointment.scheduled_at)}</p>
+                  </div>
+                  <div className="bg-muted/50 rounded-lg p-3">
+                    <label className="text-xs text-muted-foreground">Horário</label>
+                    <p className="font-semibold text-sm">{formatTime(selectedAppointment.scheduled_at)}</p>
+                  </div>
+                </div>
+
+                {selectedAppointment.service && (
+                  <div className="bg-muted/50 rounded-lg p-3">
+                    <label className="text-xs text-muted-foreground">Serviço</label>
+                    <p className="font-semibold">{selectedAppointment.service.name}</p>
+                    <p className="text-sm text-primary font-semibold">R$ {selectedAppointment.service.price.toFixed(2)}</p>
+                  </div>
+                )}
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium">Data</label>
-                  <p className="text-sm text-gray-600">{formatDate(selectedAppointment.scheduled_at)}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Horário</label>
-                  <p className="text-sm text-gray-600">{formatTime(selectedAppointment.scheduled_at)}</p>
-                </div>
-              </div>
-
-              {selectedAppointment.service && (
-                <div>
-                  <label className="text-sm font-medium">Serviço</label>
-                  <p className="text-sm text-gray-600">{selectedAppointment.service.name} - R$ {selectedAppointment.service.price.toFixed(2)}</p>
-                </div>
-              )}
-
+              {/* Status */}
               <div>
-                <label className="text-sm font-medium">Status</label>
-                <div className="mt-1">
-                  <Select
-                    value={selectedAppointment.status}
-                    onValueChange={(value) => updateAppointmentStatus(selectedAppointment.id, value)}
-                    disabled={statusUpdateLoading}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pending">Pendente</SelectItem>
-                      <SelectItem value="confirmed">Confirmado</SelectItem>
-                      <SelectItem value="cancelled">Cancelado</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                <Label className="text-xs text-muted-foreground">Status</Label>
+                <Select
+                  value={selectedAppointment.status}
+                  onValueChange={(value) => updateAppointmentStatus(selectedAppointment.id, value)}
+                  disabled={statusUpdateLoading}
+                >
+                  <SelectTrigger className="mt-1 h-9">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pending">Pendente</SelectItem>
+                    <SelectItem value="confirmed">Confirmado</SelectItem>
+                    <SelectItem value="cancelled">Cancelado</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
+              {/* Observações */}
               <div>
-                <label className="text-sm font-medium">Observações</label>
+                <Label className="text-xs text-muted-foreground">Observações</Label>
                 <Textarea
                   value={selectedAppointment.notes || ''}
                   onChange={(e) => updateAppointmentNotes(selectedAppointment.id, e.target.value)}
-                  placeholder="Adicione observações sobre o agendamento..."
-                  className="mt-1"
+                  placeholder="Adicione observações..."
+                  className="mt-1 text-sm"
                   rows={3}
                   disabled={notesUpdateLoading}
                 />
@@ -1110,18 +1169,18 @@ const Appointments = () => {
             </div>
           )}
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setViewModalOpen(false)}>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button variant="outline" onClick={() => setViewModalOpen(false)} className="w-full sm:w-auto">
               Fechar
             </Button>
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="destructive">
+                <Button variant="destructive" className="w-full sm:w-auto">
                   <Trash2 className="h-4 w-4 mr-2" />
                   Excluir
                 </Button>
               </AlertDialogTrigger>
-              <AlertDialogContent>
+              <AlertDialogContent className="max-w-[90vw] sm:max-w-md">
                 <AlertDialogHeader>
                   <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
                   <AlertDialogDescription>
@@ -1143,55 +1202,48 @@ const Appointments = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Modal de Reagendamento - Design Premium */}
+      {/* Modal de Reagendamento Otimizado */}
       <Dialog open={rescheduleDialogOpen} onOpenChange={setRescheduleDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader className="space-y-3">
-            <DialogTitle className="text-2xl font-bold flex items-center gap-2">
-              <RefreshCw className="h-6 w-6 text-primary" />
-              Reagendar Agendamento
+        <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="space-y-2">
+            <DialogTitle className="text-lg sm:text-xl font-bold flex items-center gap-2">
+              <RefreshCw className="h-5 w-5 text-primary" />
+              Reagendar
             </DialogTitle>
-            <DialogDescription className="text-base">
-              Escolha uma nova data e horário para o atendimento
+            <DialogDescription className="text-sm">
+              Escolha uma nova data e horário
             </DialogDescription>
           </DialogHeader>
 
           {selectedAppointment && (
-            <div className="space-y-6 py-4">
-              {/* Informações do Agendamento Atual */}
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                    <Calendar className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            <div className="space-y-4 py-2">
+              {/* Agendamento Atual Compacto */}
+              <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                <p className="text-xs font-semibold text-blue-900 dark:text-blue-100 mb-2">
+                  Agendamento Atual
+                </p>
+                <div className="grid grid-cols-2 gap-2 text-xs text-blue-700 dark:text-blue-300">
+                  <div className="flex items-center gap-1">
+                    <User className="h-3 w-3" />
+                    <span className="truncate font-medium">{selectedAppointment.customer_name}</span>
                   </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-1">
-                      Agendamento Atual
-                    </p>
-                    <div className="flex flex-wrap items-center gap-3 text-sm text-blue-700 dark:text-blue-300">
-                      <div className="flex items-center gap-1">
-                        <User className="h-4 w-4" />
-                        <span className="font-medium">{selectedAppointment.customer_name}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-4 w-4" />
-                        <span>{formatDate(selectedAppointment.scheduled_at)}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-4 w-4" />
-                        <span className="font-semibold">{formatTime(selectedAppointment.scheduled_at)}</span>
-                      </div>
-                    </div>
+                  <div className="flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    <span className="font-semibold">{formatTime(selectedAppointment.scheduled_at)}</span>
+                  </div>
+                  <div className="flex items-center gap-1 col-span-2">
+                    <Calendar className="h-3 w-3" />
+                    <span>{formatDate(selectedAppointment.scheduled_at)}</span>
                   </div>
                 </div>
               </div>
 
               {/* Date Picker */}
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <div className="h-8 w-1 bg-primary rounded-full" />
-                  <h3 className="text-lg font-semibold">Selecione a Nova Data</h3>
-                </div>
+              <div className="space-y-2">
+                <h3 className="text-sm font-semibold flex items-center gap-2">
+                  <div className="h-6 w-1 bg-primary rounded-full" />
+                  Nova Data
+                </h3>
                 <DatePicker
                   selectedDate={selectedDate ? parseISO(selectedDate) : null}
                   onSelectDate={(date) => {
@@ -1203,26 +1255,25 @@ const Appointments = () => {
                 />
               </div>
 
-              {/* Horários Disponíveis */}
+              {/* Horários */}
               {selectedDate && (
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <div className="h-8 w-1 bg-primary rounded-full" />
-                    <h3 className="text-lg font-semibold">Escolha o Horário</h3>
-                  </div>
+                <div className="space-y-2">
+                  <h3 className="text-sm font-semibold flex items-center gap-2">
+                    <div className="h-6 w-1 bg-primary rounded-full" />
+                    Novo Horário
+                  </h3>
                   
                   {availableSlots.length > 0 ? (
-                    <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2">
+                    <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
                       {availableSlots.map((slot) => (
                         <button
                           key={slot}
                           onClick={() => setSelectedTime(slot)}
                           type="button"
                           className={cn(
-                            "py-3 px-2 rounded-lg text-sm font-medium transition-all",
-                            "border-2 hover:scale-105 hover:shadow-md",
+                            "py-2 px-1 rounded-md text-xs font-medium transition-all border-2",
                             selectedTime === slot
-                              ? "bg-primary text-primary-foreground border-primary shadow-lg scale-105"
+                              ? "bg-primary text-primary-foreground border-primary shadow-md scale-105"
                               : "bg-background border-border hover:border-primary/50 hover:bg-primary/5"
                           )}
                         >
@@ -1231,40 +1282,30 @@ const Appointments = () => {
                       ))}
                     </div>
                   ) : (
-                    <div className="text-center py-12 bg-muted/50 rounded-xl border-2 border-dashed">
-                      <Clock className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-                      <p className="text-base font-medium text-foreground mb-1">
-                        Nenhum horário disponível
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Tente selecionar outra data
-                      </p>
+                    <div className="text-center py-8 bg-muted/50 rounded-lg border-2 border-dashed">
+                      <Clock className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                      <p className="text-xs font-medium">Nenhum horário disponível</p>
+                      <p className="text-xs text-muted-foreground">Tente outra data</p>
                     </div>
                   )}
                 </div>
               )}
 
-              {/* Resumo da Seleção */}
+              {/* Resumo */}
               {selectedDate && selectedTime && (
-                <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 border border-green-200 dark:border-green-800 rounded-xl p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
-                      <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
+                <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
+                  <p className="text-xs font-semibold text-green-900 dark:text-green-100 mb-2 flex items-center gap-1">
+                    <CheckCircle className="h-3.5 w-3.5" />
+                    Novo Agendamento
+                  </p>
+                  <div className="grid grid-cols-2 gap-2 text-xs text-green-700 dark:text-green-300">
+                    <div className="flex items-center gap-1">
+                      <Calendar className="h-3 w-3" />
+                      <span>{format(parseISO(selectedDate), "dd/MM/yyyy", { locale: ptBR })}</span>
                     </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-semibold text-green-900 dark:text-green-100 mb-1">
-                        Novo Agendamento
-                      </p>
-                      <div className="flex flex-wrap items-center gap-3 text-sm text-green-700 dark:text-green-300">
-                        <div className="flex items-center gap-1">
-                          <Calendar className="h-4 w-4" />
-                          <span>{format(parseISO(selectedDate), "dd/MM/yyyy", { locale: ptBR })}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Clock className="h-4 w-4" />
-                          <span className="font-semibold">{selectedTime}</span>
-                        </div>
-                      </div>
+                    <div className="flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      <span className="font-semibold">{selectedTime}</span>
                     </div>
                   </div>
                 </div>

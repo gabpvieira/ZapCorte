@@ -45,7 +45,7 @@ export const DashboardLayout = ({
             <div className="dashboard-header border-b border-border bg-background/95 backdrop-blur-sm sticky top-0 z-30 safe-area-top w-full overflow-x-hidden">
               <div className="container mx-auto px-4 py-4 md:py-6 md:px-6 max-w-full">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 w-full overflow-x-hidden">
-                  <div className="flex flex-col gap-2 ml-12 md:ml-0">
+                  <div className="flex flex-col gap-2 pl-12 md:pl-0">
                     <div className="flex items-center gap-4">
                       {/* Logo no header do dashboard */}
                       <img

@@ -11,78 +11,11 @@ const WhatsAppSettings: React.FC = () => {
   const { user } = useAuth();
   
   return (
-    <DashboardLayout>
-      <div className="space-y-8 w-full overflow-x-hidden">
-        {/* Page Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <div className="flex items-center space-x-4 mb-2">
-            <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-xl">
-              <MessageCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                Configurações WhatsApp
-              </h1>
-              <p className="text-gray-600 dark:text-gray-400">
-                Configure a integração com WhatsApp para envio automático de lembretes
-              </p>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Benefits Cards */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full overflow-x-hidden"
-        >
-          <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200 dark:from-green-900/20 dark:to-emerald-900/20 dark:border-green-800">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center space-x-2 text-green-800 dark:text-green-200">
-                <Zap className="h-5 w-5" />
-                <span className="text-lg">Automático</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-green-700 dark:text-green-300 text-sm">
-                Lembretes enviados automaticamente do seu número pessoal
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200 dark:from-blue-900/20 dark:to-cyan-900/20 dark:border-blue-800">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center space-x-2 text-blue-800 dark:text-blue-200">
-                <CheckCircle className="h-5 w-5" />
-                <span className="text-lg">Gratuito</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-blue-700 dark:text-blue-300 text-sm">
-                Sem custos adicionais, use seu WhatsApp pessoal
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200 dark:from-purple-900/20 dark:to-pink-900/20 dark:border-purple-800">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center space-x-2 text-purple-800 dark:text-purple-200">
-                <Users className="h-5 w-5" />
-                <span className="text-lg">Personalizado</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-purple-700 dark:text-purple-300 text-sm">
-                Mensagens personalizadas com dados do agendamento
-              </p>
-            </CardContent>
-          </Card>
-        </motion.div>
+    <DashboardLayout
+      title="Integração WhatsApp"
+      subtitle="Configure lembretes automáticos para seus clientes"
+    >
+      <div className="space-y-4 sm:space-y-6 w-full overflow-x-hidden">
 
         {/* WhatsApp Connection Component */}
         <motion.div
@@ -104,67 +37,96 @@ const WhatsAppSettings: React.FC = () => {
           </motion.div>
         )}
 
-        {/* How it Works */}
+        {/* Como Funciona - Redesenhado e Otimizado */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.4 }}
         >
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Clock className="h-5 w-5 text-blue-600" />
+          <Card className="border-2">
+            <CardHeader className="p-4 sm:p-6">
+              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                 <span>Como Funciona</span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <h4 className="font-semibold text-gray-900 dark:text-white">
-                    Tipos de Mensagens Automáticas:
-                  </h4>
-                  <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                    <li className="flex items-start space-x-2">
-                      <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                      <span><strong>Confirmação:</strong> Enviada imediatamente após o agendamento</span>
-                    </li>
-                    <li className="flex items-start space-x-2">
-                      <Clock className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
-                      <span><strong>Lembrete:</strong> Enviada algumas horas antes do atendimento</span>
-                    </li>
-                    <li className="flex items-start space-x-2">
-                      <MessageCircle className="h-4 w-4 text-purple-500 mt-0.5 flex-shrink-0" />
-                      <span><strong>Reagendamento:</strong> Enviada quando um agendamento é alterado</span>
-                    </li>
-                  </ul>
+            <CardContent className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+              {/* Tipos de Mensagens */}
+              <div className="space-y-3">
+                <h4 className="font-semibold text-sm sm:text-base text-gray-900 dark:text-white flex items-center gap-2">
+                  <MessageCircle className="h-4 w-4 text-primary" />
+                  Mensagens Automáticas
+                </h4>
+                <div className="space-y-2">
+                  <div className="flex items-start gap-2 p-3 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800">
+                    <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400 mt-0.5 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs sm:text-sm font-medium text-green-900 dark:text-green-100">
+                        Confirmação de Agendamento
+                      </p>
+                      <p className="text-xs text-green-700 dark:text-green-300 mt-0.5">
+                        Enviada automaticamente quando você aceita um novo agendamento
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                    <Clock className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs sm:text-sm font-medium text-blue-900 dark:text-blue-100">
+                        Lembrete Antes do Horário
+                      </p>
+                      <p className="text-xs text-blue-700 dark:text-blue-300 mt-0.5">
+                        Enviada automaticamente algumas horas antes do atendimento
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-2 p-3 bg-purple-50 dark:bg-purple-950/20 rounded-lg border border-purple-200 dark:border-purple-800">
+                    <MessageCircle className="h-4 w-4 text-purple-600 dark:text-purple-400 mt-0.5 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs sm:text-sm font-medium text-purple-900 dark:text-purple-100">
+                        Notificação de Reagendamento
+                      </p>
+                      <p className="text-xs text-purple-700 dark:text-purple-300 mt-0.5">
+                        Enviada quando você altera a data ou horário de um agendamento
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                <div className="space-y-4">
-                  <h4 className="font-semibold text-gray-900 dark:text-white">
-                    Informações Incluídas:
-                  </h4>
-                  <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                    <li className="flex items-start space-x-2">
-                      <span>📅</span>
-                      <span>Data e dia da semana do agendamento</span>
-                    </li>
-                    <li className="flex items-start space-x-2">
-                      <span>🕐</span>
-                      <span>Horário do atendimento</span>
-                    </li>
-                    <li className="flex items-start space-x-2">
-                      <span>✂️</span>
-                      <span>Serviço agendado</span>
-                    </li>
-                    <li className="flex items-start space-x-2">
-                      <span>👤</span>
-                      <span>Nome do cliente</span>
-                    </li>
-                    <li className="flex items-start space-x-2">
-                      <span>🏪</span>
-                      <span>Nome da barbearia</span>
-                    </li>
-                  </ul>
+              </div>
+
+              {/* Informações Incluídas */}
+              <div className="space-y-3">
+                <h4 className="font-semibold text-sm sm:text-base text-gray-900 dark:text-white flex items-center gap-2">
+                  <Zap className="h-4 w-4 text-primary" />
+                  Informações nas Mensagens
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {[
+                    { icon: '📅', text: 'Data e dia da semana' },
+                    { icon: '🕐', text: 'Horário do atendimento' },
+                    { icon: '✂️', text: 'Serviço agendado' },
+                    { icon: '👤', text: 'Nome do cliente' },
+                    { icon: '🏪', text: 'Nome da barbearia' },
+                    { icon: '💬', text: 'Mensagem personalizada' }
+                  ].map((item, index) => (
+                    <div key={index} className="flex items-center gap-2 p-2 bg-muted/50 rounded-md">
+                      <span className="text-base">{item.icon}</span>
+                      <span className="text-xs sm:text-sm text-gray-700 dark:text-gray-300">{item.text}</span>
+                    </div>
+                  ))}
                 </div>
+              </div>
+
+              {/* Dica */}
+              <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                <p className="text-xs sm:text-sm text-blue-900 dark:text-blue-100 flex items-start gap-2">
+                  <span className="text-base shrink-0">💡</span>
+                  <span>
+                    <strong>Dica:</strong> Personalize suas mensagens na seção "Personalização de Mensagens" acima para deixá-las com a cara da sua barbearia!
+                  </span>
+                </p>
               </div>
             </CardContent>
           </Card>

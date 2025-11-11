@@ -13,6 +13,7 @@ import { updateBarbershop, checkSlugAvailability } from "@/lib/supabase-queries"
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2, Save, ExternalLink, Clock, Image as ImageIcon } from "lucide-react";
 import { useState, useEffect } from "react";
+import { cn } from "@/lib/utils";
 
 const BarbershopSettings = () => {
   const { barbershop, refetch } = useUserData();
@@ -463,52 +464,76 @@ const BarbershopSettings = () => {
           </CardContent>
         </Card>
         
-        {/* Horários de Funcionamento */}
+        {/* Horários de Funcionamento - Otimizado Mobile */}
         <Card className="border-2 md:col-span-2">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="h-5 w-5" />
+          <CardHeader className="p-4 sm:p-6">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <Clock className="h-4 w-4 sm:h-5 sm:w-5" />
               Horários de Funcionamento
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            {/* Agrupamento Visual Semanal: aplicar mesmo horário para Seg–Sex */}
-            <div className="mb-6 space-y-3">
-              <Label className="font-medium">Aplicar mesmo horário para:</Label>
-              <div className="flex flex-wrap gap-4">
+          <CardContent className="p-4 sm:p-6">
+            {/* Agrupamento Visual Semanal - Otimizado Mobile */}
+            <div className="mb-4 sm:mb-6 space-y-3">
+              <Label className="font-medium text-sm">Aplicar mesmo horário para:</Label>
+              <div className="flex flex-wrap gap-2 sm:gap-3">
                 {[{day:1,label:"Seg"},{day:2,label:"Ter"},{day:3,label:"Qua"},{day:4,label:"Qui"},{day:5,label:"Sex"}].map(({day,label}) => (
-                  <label key={day} className="flex items-center gap-2 text-sm">
+                  <label key={day} className="flex items-center gap-1.5 text-xs sm:text-sm bg-muted/50 px-2 py-1.5 rounded-md">
                     <Checkbox
                       checked={selectedWeekdays.includes(day)}
                       onCheckedChange={() => toggleWeekdaySelection(day)}
+                      className="h-4 w-4"
                     />
                     {label}
                   </label>
                 ))}
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
                 <div>
-                  <Label className="text-xs text-gray-500">Das</Label>
-                  <Input type="time" value={groupStart} onChange={e=>setGroupStart(e.target.value)} step={900} className="h-9"/>
+                  <Label className="text-xs text-muted-foreground">Das</Label>
+                  <Input 
+                    type="time" 
+                    value={groupStart} 
+                    onChange={e=>setGroupStart(e.target.value)} 
+                    step={900} 
+                    className="h-9 text-sm mt-1"
+                  />
                 </div>
                 <div>
-                  <Label className="text-xs text-gray-500">Até</Label>
-                  <Input type="time" value={groupEnd} onChange={e=>setGroupEnd(e.target.value)} step={900} className="h-9"/>
+                  <Label className="text-xs text-muted-foreground">Até</Label>
+                  <Input 
+                    type="time" 
+                    value={groupEnd} 
+                    onChange={e=>setGroupEnd(e.target.value)} 
+                    step={900} 
+                    className="h-9 text-sm mt-1"
+                  />
                 </div>
-                <div className="flex gap-2">
-                  <Button type="button" onClick={applyGroupToSelected}>
-                    Aplicar para selecionados
-                  </Button>
-                  <Button type="button" variant="outline" onClick={clearAllHours}>
-                    Limpar Tudo
-                  </Button>
-                </div>
+                <Button 
+                  type="button" 
+                  onClick={applyGroupToSelected}
+                  className="h-9 text-xs sm:text-sm"
+                  size="sm"
+                >
+                  Aplicar para selecionados
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={clearAllHours}
+                  className="h-9 text-xs sm:text-sm"
+                  size="sm"
+                >
+                  Limpar Tudo
+                </Button>
               </div>
               {validationError && (
-                <p className="text-xs text-red-500">{validationError}</p>
+                <p className="text-xs text-red-500 bg-red-50 dark:bg-red-950/20 p-2 rounded">{validationError}</p>
               )}
             </div>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+
+            {/* Cards dos Dias - Otimizado Mobile */}
+            <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
               {[
                 { day: 0, name: 'Domingo' },
                 { day: 1, name: 'Segunda-feira' },
@@ -522,35 +547,45 @@ const BarbershopSettings = () => {
                 const isClosed = daySchedule === null;
                 
                 return (
-                  <div key={day} className="space-y-2 p-3 border rounded-lg">
-                    <div className="flex items-center justify-between">
-                      <Label className="font-medium">{name}</Label>
-                      <div className="flex items-center gap-2">
-                        <Label className="text-xs">{isClosed ? "Fechado" : "Aberto"}</Label>
-                        <Switch checked={!isClosed} onCheckedChange={(checked)=>setDayOpen(day, Boolean(checked))} />
+                  <div 
+                    key={day} 
+                    className={cn(
+                      "space-y-2 p-3 border rounded-lg transition-all",
+                      isClosed ? "bg-muted/30" : "bg-background"
+                    )}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <Label className="font-medium text-sm truncate">{name}</Label>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Label className="text-xs text-muted-foreground">{isClosed ? "Fechado" : "Aberto"}</Label>
+                        <Switch 
+                          checked={!isClosed} 
+                          onCheckedChange={(checked)=>setDayOpen(day, Boolean(checked))}
+                          className="scale-90 sm:scale-100"
+                        />
                       </div>
                     </div>
                     
                     {!isClosed && (
                       <div className="grid grid-cols-2 gap-2">
                         <div>
-                          <Label className="text-xs text-gray-500">Abertura</Label>
+                          <Label className="text-xs text-muted-foreground">Abertura</Label>
                           <Input
                             type="time"
                             value={daySchedule?.start || ''}
                             onChange={(e) => handleOpeningHoursChange(day, 'start', e.target.value)}
                             step={900}
-                            className="h-8 text-sm"
+                            className="h-9 text-sm mt-1"
                           />
                         </div>
                         <div>
-                          <Label className="text-xs text-gray-500">Fechamento</Label>
+                          <Label className="text-xs text-muted-foreground">Fechamento</Label>
                           <Input
                             type="time"
                             value={daySchedule?.end || ''}
                             onChange={(e) => handleOpeningHoursChange(day, 'end', e.target.value)}
                             step={900}
-                            className="h-8 text-sm"
+                            className="h-9 text-sm mt-1"
                           />
                         </div>
                       </div>
@@ -560,18 +595,19 @@ const BarbershopSettings = () => {
               })}
             </div>
             
-            <p className="text-xs text-gray-500 mt-4">
-              Configure os horários de funcionamento da sua barbearia. Dias marcados como "Fechado" não aparecerão no site.
+            <p className="text-xs text-muted-foreground mt-4 bg-blue-50 dark:bg-blue-950/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
+              💡 Configure os horários de funcionamento da sua barbearia. Dias marcados como "Fechado" não aparecerão no site.
             </p>
           </CardContent>
         </Card>
       </div>
 
-      <div className="mt-6 flex justify-end">
+      <div className="mt-6 flex justify-end px-4 sm:px-0">
         <Button 
           onClick={handleSave}
           disabled={loading || !slugAvailable || !formData.name || !formData.slug}
           size="lg"
+          className="w-full sm:w-auto"
         >
           {loading ? (
             <>

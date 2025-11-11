@@ -134,7 +134,7 @@ export const useCaktoCheckout = () => {
       }
 
       // Gerar URL de checkout
-      const checkoutUrl = await getCheckoutUrl(planType, userData);
+      let checkoutUrl = await getCheckoutUrl(planType, userData);
       
       // Adicionar dados customizados se fornecidos
       if (customData && Object.keys(customData).length > 0) {
@@ -142,11 +142,17 @@ export const useCaktoCheckout = () => {
         Object.entries(customData).forEach(([key, value]) => {
           url.searchParams.set(key, value);
         });
-        
-        // Abrir checkout em nova aba
-        window.open(url.toString(), '_blank');
+        checkoutUrl = url.toString();
+      }
+      
+      // Detectar se é mobile
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      
+      // No mobile, usar location.href para evitar bloqueio de popup
+      // No desktop, usar window.open para abrir em nova aba
+      if (isMobile) {
+        window.location.href = checkoutUrl;
       } else {
-        // Abrir checkout em nova aba
         window.open(checkoutUrl, '_blank');
       }
       

@@ -11,7 +11,8 @@ import {
   Menu, 
   X,
   User,
-  MessageCircle
+  MessageCircle,
+  Users
 } from "lucide-react";
 import logotipo from "@/assets/zapcorte-icon.png";
 import { Button } from "@/components/ui/button";
@@ -44,6 +45,12 @@ const sidebarItems: SidebarItem[] = [
     label: "Meus Agendamentos",
     icon: Calendar,
     href: "/dashboard/appointments"
+  },
+  {
+    id: "customers",
+    label: "Meus Clientes",
+    icon: Users,
+    href: "/dashboard/customers"
   },
   {
     id: "barbershop",

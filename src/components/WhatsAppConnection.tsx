@@ -181,41 +181,33 @@ Nos vemos em breve! ✂️`
   };
 
   return (
-    <div className="space-y-6 w-full overflow-x-hidden">
-      {/* Header */}
-      <div className="flex items-center justify-between w-full overflow-x-hidden">
-        <div>
-          <h1 className="text-3xl font-bold">Integração WhatsApp</h1>
-          <p className="text-muted-foreground">
-            Configure lembretes automáticos para seus clientes
-          </p>
-        </div>
-      </div>
-
-      {/* Status da Conexão */}
+    <div className="space-y-4 sm:space-y-6 w-full overflow-x-hidden">
+      {/* Status da Conexão - Otimizado Mobile */}
       <Card className="border-2 w-full max-w-full overflow-hidden">
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <span className="flex items-center space-x-2">
-              <Smartphone className="h-5 w-5" />
+        <CardHeader className="p-4 sm:p-6">
+          <CardTitle className="flex items-center justify-between gap-2">
+            <span className="flex items-center gap-2 text-base sm:text-lg">
+              <Smartphone className="h-4 w-4 sm:h-5 sm:w-5" />
               <span>Status da Conexão</span>
             </span>
-            <Badge variant={isConnected ? "default" : "secondary"}>
+            <Badge variant={isConnected ? "default" : "secondary"} className="shrink-0">
               {isConnected ? (
                 <>
                   <CheckCircle2 className="h-3 w-3 mr-1" />
-                  Conectado
+                  <span className="hidden sm:inline">Conectado</span>
+                  <span className="sm:hidden">✓</span>
                 </>
               ) : (
                 <>
                   <XCircle className="h-3 w-3 mr-1" />
-                  Desconectado
+                  <span className="hidden sm:inline">Desconectado</span>
+                  <span className="sm:hidden">✗</span>
                 </>
               )}
             </Badge>
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6 w-full overflow-x-hidden">
+        <CardContent className="space-y-4 sm:space-y-6 w-full overflow-x-hidden p-4 sm:p-6">
           {/* Error Alert */}
           <AnimatePresence>
             {error && (
@@ -234,33 +226,29 @@ Nos vemos em breve! ✂️`
             )}
           </AnimatePresence>
 
-          {/* Connected State */}
+          {/* Connected State - Otimizado Mobile */}
           {isConnected && phone && (
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg"
+              className="p-3 sm:p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg"
             >
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-full">
-                  <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
+              <div className="flex items-start gap-2 sm:gap-3">
+                <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-full shrink-0">
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 dark:text-green-400" />
                 </div>
-                <div>
-                  <p className="font-semibold text-green-900 dark:text-green-100">
-                    WhatsApp Conectado com Sucesso!
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-sm sm:text-base text-green-900 dark:text-green-100">
+                    WhatsApp Conectado!
                   </p>
-                  <p className="text-sm text-green-700 dark:text-green-300 flex items-center">
-                    <Phone className="h-4 w-4 mr-1" />
-                    Número: {phone}
+                  <p className="text-xs sm:text-sm text-green-700 dark:text-green-300 flex items-center gap-1 mt-1">
+                    <Phone className="h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
+                    <span className="truncate">{phone}</span>
                   </p>
                 </div>
               </div>
-              <div className="mt-4 flex space-x-3">
-                <Button variant="outline" size="sm" onClick={refreshStatus}>
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Atualizar Status
-                </Button>
-                <Button variant="destructive" size="sm" onClick={disconnect}>
+              <div className="mt-4">
+                <Button variant="destructive" size="sm" onClick={disconnect} className="w-full sm:w-auto">
                   <XCircle className="h-4 w-4 mr-2" />
                   Desconectar
                 </Button>
@@ -397,15 +385,15 @@ Nos vemos em breve! ✂️`
 
 
 
-      {/* Teste de Mensagem */}
+      {/* Teste de Mensagem - Otimizado Mobile */}
       <Card className="border-2 w-full max-w-full overflow-hidden">
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Send className="h-5 w-5" />
+        <CardHeader className="p-4 sm:p-6">
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <Send className="h-4 w-4 sm:h-5 sm:w-5" />
             <span>Teste de Mensagem</span>
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4 w-full overflow-x-hidden">
+        <CardContent className="space-y-3 sm:space-y-4 w-full overflow-x-hidden p-4 sm:p-6">
           <div className="bg-muted p-4 rounded-lg">
             <p className="text-sm text-muted-foreground">
               O teste será enviado para o seu próprio número do WhatsApp conectado.
@@ -451,15 +439,15 @@ Nos vemos em breve! ✂️`
         </CardContent>
       </Card>
 
-      {/* Status da Integração */}
+      {/* Status da Integração - Otimizado Mobile */}
       <Card className="border-2 w-full max-w-full overflow-hidden">
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Zap className="h-5 w-5" />
+        <CardHeader className="p-4 sm:p-6">
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <Zap className="h-4 w-4 sm:h-5 sm:w-5" />
             <span>Verificar Integração</span>
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4 w-full overflow-x-hidden">
+        <CardContent className="space-y-3 sm:space-y-4 w-full overflow-x-hidden p-4 sm:p-6">
           <p className="text-sm text-muted-foreground">
             Teste se a integração com o WhatsApp está funcionando corretamente
           </p>
@@ -511,19 +499,19 @@ Nos vemos em breve! ✂️`
         </CardContent>
       </Card>
 
-      {/* SEÇÃO: Personalização de Mensagens */}
+      {/* SEÇÃO: Personalização de Mensagens - Otimizado Mobile */}
       {isConnected && (
         <Card className="border-2 w-full max-w-full overflow-hidden">
-          <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10 border-b">
-            <CardTitle className="flex items-center space-x-2">
-              <MessageCircle className="h-5 w-5 text-primary" />
+          <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10 border-b p-4 sm:p-6">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
               <span>Personalização de Mensagens</span>
             </CardTitle>
-            <p className="text-sm text-muted-foreground mt-2">
+            <p className="text-xs sm:text-sm text-muted-foreground mt-2">
               Customize as mensagens automáticas enviadas aos seus clientes
             </p>
           </CardHeader>
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <Tabs defaultValue="confirmation" className="w-full">
               <TabsList className="grid w-full grid-cols-3 mb-6">
                 <TabsTrigger value="confirmation" className="flex items-center gap-2">

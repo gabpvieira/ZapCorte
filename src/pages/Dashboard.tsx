@@ -72,6 +72,11 @@ const Dashboard = () => {
   const [timeSlots, setTimeSlots] = useState<{ time: string; available: boolean }[]>([]);
   const [submitting, setSubmitting] = useState(false);
   
+  // Estados para busca de clientes
+  const [customers, setCustomers] = useState<any[]>([]);
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
+  const [customerSearchTerm, setCustomerSearchTerm] = useState("");
+  
   // Dashboard render tracking removed for production
   
   // Funções para gerenciar o modal e ações
@@ -213,8 +218,32 @@ const Dashboard = () => {
     setSelectedTime(null);
     setCustomerName("");
     setCustomerPhone("");
+    setSelectedCustomerId("");
+    setCustomerSearchTerm("");
     setTimeSlots([]);
   };
+
+  // Buscar clientes quando o modal abre
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      if (!barbershop?.id || !newAppointmentOpen) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('customers')
+          .select('id, name, phone')
+          .eq('barbershop_id', barbershop.id)
+          .order('name', { ascending: true });
+
+        if (error) throw error;
+        setCustomers(data || []);
+      } catch (error) {
+        console.error('Erro ao buscar clientes:', error);
+      }
+    };
+
+    fetchCustomers();
+  }, [barbershop?.id, newAppointmentOpen]);
 
   // Carregar horários disponíveis quando serviço ou data mudam
   useEffect(() => {
@@ -297,10 +326,33 @@ const Dashboard = () => {
         status: 'confirmed'
       });
 
-      toast({
-        title: "Agendamento Criado! 📅",
-        description: `Horário reservado para ${selectedTime} do dia ${selectedDate.toLocaleDateString('pt-BR')}.`,
-      });
+      // Enviar mensagem de confirmação via WhatsApp
+      try {
+        const serviceName = services.find(s => s.id === selectedService)?.name || 'Serviço';
+        const { enviarLembreteWhatsApp } = await import('@/lib/notifications');
+        
+        const mensagemEnviada = await enviarLembreteWhatsApp({
+          barbershopId: barbershop.id,
+          customerName,
+          customerPhone,
+          scheduledAt,
+          serviceName,
+          tipo: 'confirmacao',
+        });
+
+        toast({
+          title: "Agendamento Criado! 📅",
+          description: mensagemEnviada 
+            ? `Horário reservado e confirmação enviada via WhatsApp.`
+            : `Horário reservado para ${selectedTime} do dia ${selectedDate.toLocaleDateString('pt-BR')}.`,
+        });
+      } catch (whatsappError) {
+        console.warn('Erro ao enviar WhatsApp:', whatsappError);
+        toast({
+          title: "Agendamento Criado! 📅",
+          description: `Horário reservado para ${selectedTime} do dia ${selectedDate.toLocaleDateString('pt-BR')}.`,
+        });
+      }
 
       closeNewAppointmentModal();
       refetchDashboard();
@@ -470,52 +522,52 @@ const Dashboard = () => {
           </motion.div>
         </motion.div>
 
-        {/* Stats */}
-        <div className="stats-grid grid gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
+        {/* Stats - Grid 2x2 Mobile */}
+        <div className="stats-grid grid gap-3 sm:gap-4 md:gap-6 grid-cols-2 md:grid-cols-4">
           <Card className="stats-card border-2">
-            <CardContent className="p-4 md:p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs md:text-sm text-muted-foreground">Hoje</p>
-                  <p className="text-2xl md:text-3xl font-bold">{stats.todayAppointments}</p>
+            <CardContent className="p-3 sm:p-4 md:p-6">
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-muted-foreground">Hoje</p>
+                  <Calendar className="h-6 w-6 sm:h-8 sm:w-8 md:h-10 md:w-10 text-primary" />
                 </div>
-                <Calendar className="h-8 w-8 md:h-10 md:w-10 text-primary" />
+                <p className="text-2xl sm:text-3xl font-bold">{stats.todayAppointments}</p>
               </div>
             </CardContent>
           </Card>
 
           <Card className="stats-card border-2">
-            <CardContent className="p-4 md:p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs md:text-sm text-muted-foreground">Este Mês</p>
-                  <p className="text-2xl md:text-3xl font-bold">{stats.monthAppointments}</p>
+            <CardContent className="p-3 sm:p-4 md:p-6">
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-muted-foreground">Este Mês</p>
+                  <TrendingUp className="h-6 w-6 sm:h-8 sm:w-8 md:h-10 md:w-10 text-primary" />
                 </div>
-                <TrendingUp className="h-8 w-8 md:h-10 md:w-10 text-primary" />
+                <p className="text-2xl sm:text-3xl font-bold">{stats.monthAppointments}</p>
               </div>
             </CardContent>
           </Card>
 
           <Card className="stats-card border-2">
-            <CardContent className="p-4 md:p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs md:text-sm text-muted-foreground">Serviços</p>
-                  <p className="text-2xl md:text-3xl font-bold">{stats.totalServices}</p>
+            <CardContent className="p-3 sm:p-4 md:p-6">
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-muted-foreground">Serviços</p>
+                  <Clock className="h-6 w-6 sm:h-8 sm:w-8 md:h-10 md:w-10 text-primary" />
                 </div>
-                <Clock className="h-8 w-8 md:h-10 md:w-10 text-primary" />
+                <p className="text-2xl sm:text-3xl font-bold">{stats.totalServices}</p>
               </div>
             </CardContent>
           </Card>
 
           <Card className="stats-card border-2">
-            <CardContent className="p-4 md:p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs md:text-sm text-muted-foreground">Plano</p>
-                  <p className="text-lg md:text-xl font-bold capitalize">{stats.planType}</p>
+            <CardContent className="p-3 sm:p-4 md:p-6">
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-muted-foreground">Plano</p>
+                  <User className="h-6 w-6 sm:h-8 sm:w-8 md:h-10 md:w-10 text-primary" />
                 </div>
-                <User className="h-8 w-8 md:h-10 md:w-10 text-primary" />
+                <p className="text-lg sm:text-xl font-bold capitalize">{stats.planType}</p>
               </div>
             </CardContent>
           </Card>
@@ -641,6 +693,47 @@ const Dashboard = () => {
               <div className="flex items-center gap-2 mb-3">
                 <div className="h-8 w-1 bg-primary rounded-full" />
                 <h3 className="text-lg font-semibold">Dados do Cliente</h3>
+              </div>
+              
+              {/* Busca de Cliente */}
+              <div>
+                <Label htmlFor="customer_search">Buscar Cliente Existente</Label>
+                <Select
+                  value={selectedCustomerId}
+                  onValueChange={(value) => {
+                    setSelectedCustomerId(value);
+                    if (value === "new") {
+                      setCustomerName("");
+                      setCustomerPhone("");
+                    } else {
+                      const customer = customers.find(c => c.id === value);
+                      if (customer) {
+                        setCustomerName(customer.name);
+                        setCustomerPhone(customer.phone);
+                      }
+                    }
+                  }}
+                >
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Selecione um cliente ou digite novo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="new">
+                      <div className="flex items-center gap-2">
+                        <Plus className="h-4 w-4" />
+                        <span>Novo Cliente</span>
+                      </div>
+                    </SelectItem>
+                    {customers.map((customer) => (
+                      <SelectItem key={customer.id} value={customer.id}>
+                        <div className="flex items-col gap-1">
+                          <span className="font-medium">{customer.name}</span>
+                          <span className="text-xs text-muted-foreground">({customer.phone})</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -823,69 +916,69 @@ const Dashboard = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Modal de Visualização Detalhada */}
+      {/* Modal de Visualização Otimizado Mobile */}
       <Dialog open={viewModalOpen} onOpenChange={setViewModalOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-[95vw] sm:max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Detalhes do Agendamento</DialogTitle>
-            <DialogDescription>
-              Visualize e gerencie as informações do agendamento
-            </DialogDescription>
+            <DialogTitle className="text-lg">Detalhes do Agendamento</DialogTitle>
           </DialogHeader>
           
           {selectedAppointment && (
             <div className="space-y-4">
-              {/* Informações do Cliente */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <User className="h-4 w-4 text-gray-500" />
-                  <span className="font-medium">{selectedAppointment.customer_name}</span>
+              {/* Info Cards Compactos */}
+              <div className="space-y-3">
+                <div className="bg-muted/50 rounded-lg p-3">
+                  <Label className="text-xs text-muted-foreground">Cliente</Label>
+                  <p className="font-semibold">{selectedAppointment.customer_name}</p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Phone className="h-4 w-4 text-gray-500" />
-                  <span>{selectedAppointment.customer_phone}</span>
+
+                <div className="bg-muted/50 rounded-lg p-3">
+                  <Label className="text-xs text-muted-foreground">Telefone</Label>
+                  <a 
+                    href={`tel:${selectedAppointment.customer_phone}`} 
+                    className="font-semibold text-primary hover:underline flex items-center gap-1"
+                  >
+                    <Phone className="h-3.5 w-3.5" />
+                    {selectedAppointment.customer_phone}
+                  </a>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-muted/50 rounded-lg p-3">
+                    <Label className="text-xs text-muted-foreground">Data</Label>
+                    <Input 
+                      type="date"
+                      value={editDate}
+                      onChange={(e) => setEditDate(e.target.value)}
+                      className="mt-1 h-9 text-sm"
+                    />
+                  </div>
+                  <div className="bg-muted/50 rounded-lg p-3">
+                    <Label className="text-xs text-muted-foreground">Horário</Label>
+                    <Input 
+                      type="time"
+                      value={editTime}
+                      onChange={(e) => setEditTime(e.target.value)}
+                      className="mt-1 h-9 text-sm"
+                    />
+                  </div>
+                </div>
+
+                <div className="bg-muted/50 rounded-lg p-3">
+                  <Label className="text-xs text-muted-foreground">Serviço</Label>
+                  <p className="font-semibold text-sm">{selectedAppointment.service_name}</p>
                 </div>
               </div>
-              
-              {/* Data e Hora (Editar) */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Data</Label>
-                  <Input 
-                    type="date"
-                    value={editDate}
-                    onChange={(e) => setEditDate(e.target.value)}
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    {editDate ? format(new Date(`${editDate}T00:00:00`), "dd/MM/yyyy") : ""}
-                  </p>
-                </div>
-                <div>
-                  <Label>Horário</Label>
-                  <Input 
-                    type="time"
-                    value={editTime}
-                    onChange={(e) => setEditTime(e.target.value)}
-                  />
-                  <p className="text-xs text-gray-500 mt-1">{editTime}</p>
-                </div>
-              </div>
-              
-              {/* Serviço */}
-              <div>
-                <Label>Serviço</Label>
-                <Input value={selectedAppointment.service_name} disabled />
-              </div>
-              
+
               {/* Status */}
               <div>
-                <Label>Status</Label>
+                <Label className="text-xs text-muted-foreground">Status</Label>
                 <Select 
                   value={selectedAppointment.status} 
                   onValueChange={updateAppointmentStatus}
                   disabled={statusUpdateLoading}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="mt-1 h-9">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -895,35 +988,41 @@ const Dashboard = () => {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               {/* Observações */}
               <div>
-                <Label>Observações</Label>
+                <Label className="text-xs text-muted-foreground">Observações</Label>
                 <Textarea 
-                  placeholder="Adicione observações sobre este agendamento..."
+                  placeholder="Adicione observações..."
                   defaultValue={selectedAppointment.notes || ''}
                   onBlur={(e) => updateAppointmentNotes(e.target.value)}
                   disabled={notesUpdateLoading}
+                  className="mt-1 text-sm"
+                  rows={3}
                 />
               </div>
             </div>
           )}
           
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={closeViewModal}>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button 
+              variant="outline" 
+              onClick={closeViewModal}
+              className="w-full sm:w-auto order-3 sm:order-1"
+            >
               Fechar
-            </Button>
-            <Button onClick={rescheduleAppointment} disabled={rescheduleLoading}>
-              {rescheduleLoading ? "Salvando..." : "Salvar alterações"}
             </Button>
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="destructive" size="sm">
-                  <Trash2 className="h-4 w-4 mr-1" />
+                <Button 
+                  variant="destructive" 
+                  className="w-full sm:w-auto order-2"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
                   Excluir
                 </Button>
               </AlertDialogTrigger>
-              <AlertDialogContent>
+              <AlertDialogContent className="max-w-[90vw] sm:max-w-md">
                 <AlertDialogHeader>
                   <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
                   <AlertDialogDescription>
@@ -938,6 +1037,20 @@ const Dashboard = () => {
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
+            <Button 
+              onClick={rescheduleAppointment} 
+              disabled={rescheduleLoading}
+              className="w-full sm:w-auto order-1 sm:order-3"
+            >
+              {rescheduleLoading ? (
+                <>
+                  <div className="h-4 w-4 mr-2 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Salvando...
+                </>
+              ) : (
+                "Salvar alterações"
+              )}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

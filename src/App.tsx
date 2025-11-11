@@ -5,12 +5,13 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import Navbar from "./components/Navbar";
-import Home from "./pages/Home";
+import Home from "./pages/HomeNew";
 import Barbershop from "./pages/Barbershop";
 import Booking from "./pages/Booking";
 import Dashboard from "./pages/Dashboard";
 import Services from "./pages/Services";
 import Appointments from "./pages/Appointments";
+import Customers from "./pages/Customers";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
@@ -21,6 +22,7 @@ import WhatsAppSettings from "./pages/WhatsAppSettings";
 import { useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useReminderScheduler } from "@/hooks/useReminderScheduler";
+import ScrollToTop from "@/components/ScrollToTop";
 
 declare global {
   interface Window {
@@ -122,6 +124,7 @@ const AppContent = () => {
 
   return (
     <>
+      <ScrollToTop />
       <Routes>
         {/* Rotas públicas - não precisam de autenticação */}
         <Route path="/" element={<Home />} />
@@ -153,6 +156,14 @@ const AppContent = () => {
           element={
             <ProtectedRoute>
               <Appointments />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/dashboard/customers" 
+          element={
+            <ProtectedRoute>
+              <Customers />
             </ProtectedRoute>
           } 
         />
