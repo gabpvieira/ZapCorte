@@ -92,7 +92,38 @@ const Booking = () => {
       try {
         const dateString = format(selectedDate, 'yyyy-MM-dd');
         const slots = await getAvailableTimeSlots(barbershop.id, service.id, dateString);
-        setTimeSlots(slots);
+        
+        // Verificar se a data selecionada é hoje
+        const today = new Date();
+        const isToday = selectedDate.toDateString() === today.toDateString();
+        
+        if (isToday) {
+          // Filtrar horários que já passaram
+          const now = new Date();
+          const currentHour = now.getHours();
+          const currentMinute = now.getMinutes();
+          
+          const filteredSlots = slots.map(slot => {
+            // Extrair hora e minuto do slot (formato: "HH:mm")
+            const [slotHour, slotMinute] = slot.time.split(':').map(Number);
+            
+            // Verificar se o horário já passou
+            const slotTime = slotHour * 60 + slotMinute;
+            const currentTime = currentHour * 60 + currentMinute;
+            
+            // Se o horário já passou, marcar como indisponível
+            if (slotTime <= currentTime) {
+              return { ...slot, available: false };
+            }
+            
+            return slot;
+          });
+          
+          setTimeSlots(filteredSlots);
+        } else {
+          setTimeSlots(slots);
+        }
+        
         setSelectedTime(null); // Reset selected time when date changes
       } catch (error) {
         setTimeSlots([]);
@@ -396,6 +427,16 @@ const Booking = () => {
                       </div>
                       Selecione o Horário
                     </Label>
+                    
+                    {/* Mensagem informativa para hoje */}
+                    {selectedDate && selectedDate.toDateString() === new Date().toDateString() && (
+                      <div className="mb-3 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                        <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-2">
+                          <Clock className="h-3.5 w-3.5" />
+                          Horários que já passaram não estão disponíveis para agendamento
+                        </p>
+                      </div>
+                    )}
                     {timeSlots.length === 0 ? (
                       <div className="text-center py-8 sm:py-12 px-4 rounded-xl bg-muted/30 border border-dashed border-border">
                         <Clock className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-3 text-muted-foreground/50" />
@@ -420,15 +461,16 @@ const Booking = () => {
                               variant={selectedTime === slot.time ? "default" : "outline"}
                               onClick={() => slot.available && setSelectedTime(slot.time)}
                               disabled={!slot.available}
-                              className={`w-full h-10 sm:h-12 text-xs sm:text-sm font-semibold transition-all ${
+                              className={`w-full h-10 sm:h-12 text-xs sm:text-sm font-semibold transition-all relative ${
                                 selectedTime === slot.time 
                                   ? "shadow-lg shadow-primary/30 scale-105" 
                                   : "hover:scale-105 hover:shadow-md"
                               } ${
                                 !slot.available 
-                                  ? "opacity-30 cursor-not-allowed hover:scale-100" 
+                                  ? "opacity-30 cursor-not-allowed hover:scale-100 line-through" 
                                   : ""
                               }`}
+                              title={!slot.available ? "Horário indisponível" : ""}
                             >
                               {formatSlotLabel(slot.time)}
                             </Button>

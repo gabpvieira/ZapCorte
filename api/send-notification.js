@@ -190,7 +190,7 @@ export default async function handler(req, res) {
 
     // Registrar no histórico
     const notificationTitle = customerName && scheduledAt && serviceName
-      ? '🎉 Novo Agendamento!'
+      ? '🔔 Novo Agendamento!'
       : '✅ Notificação de Teste';
     
     const notificationBody = customerName && scheduledAt && serviceName
