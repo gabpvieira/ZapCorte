@@ -28,13 +28,27 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
  */
 export async function registerServiceWorker(): Promise<ServiceWorkerRegistration | null> {
   if (!('serviceWorker' in navigator)) {
+    console.error('Service Worker não suportado neste navegador');
     return null;
   }
 
   try {
-    const registration = await navigator.serviceWorker.register('/sw.js');
+    console.log('📝 Registrando Service Worker...');
+    
+    // Tentar registrar o service worker
+    const registration = await navigator.serviceWorker.register('/sw.js', {
+      scope: '/'
+    });
+    
+    console.log('✅ Service Worker registrado:', registration.scope);
+    
+    // Aguardar o service worker estar pronto
+    await navigator.serviceWorker.ready;
+    console.log('✅ Service Worker pronto');
+    
     return registration;
   } catch (error) {
+    console.error('❌ Erro ao registrar Service Worker:', error);
     return null;
   }
 }
@@ -43,7 +57,33 @@ export async function registerServiceWorker(): Promise<ServiceWorkerRegistration
  * Verifica se notificações estão suportadas
  */
 export function isPushSupported(): boolean {
-  return 'serviceWorker' in navigator && 'PushManager' in window;
+  // Verificações básicas
+  if (!('serviceWorker' in navigator)) {
+    console.warn('Service Worker não suportado');
+    return false;
+  }
+  
+  if (!('PushManager' in window)) {
+    console.warn('Push Manager não suportado');
+    return false;
+  }
+  
+  if (!('Notification' in window)) {
+    console.warn('Notification API não suportada');
+    return false;
+  }
+  
+  return true;
+}
+
+/**
+ * Detecta se é iOS/Safari
+ */
+export function isIOSSafari(): boolean {
+  const ua = navigator.userAgent;
+  const isIOS = /iPad|iPhone|iPod/.test(ua);
+  const isSafari = /Safari/.test(ua) && !/Chrome/.test(ua);
+  return isIOS || isSafari;
 }
 
 /**
@@ -58,13 +98,33 @@ export function isNotificationEnabled(): boolean {
  */
 export async function requestNotificationPermission(): Promise<boolean> {
   if (!isPushSupported()) {
+    console.error('Push não suportado neste dispositivo');
     return false;
   }
 
   try {
+    console.log('🔔 Solicitando permissão de notificações...');
+    console.log('📱 Dispositivo:', getDeviceInfo());
+    console.log('🌐 Navegador:', navigator.userAgent);
+    
+    // Verificar se já tem permissão
+    if (Notification.permission === 'granted') {
+      console.log('✅ Permissão já concedida');
+      return true;
+    }
+    
+    if (Notification.permission === 'denied') {
+      console.error('❌ Permissão negada anteriormente');
+      return false;
+    }
+    
+    // Solicitar permissão
     const permission = await Notification.requestPermission();
+    console.log('📋 Resultado da permissão:', permission);
+    
     return permission === 'granted';
   } catch (error) {
+    console.error('❌ Erro ao solicitar permissão:', error);
     return false;
   }
 }
@@ -74,27 +134,61 @@ export async function requestNotificationPermission(): Promise<boolean> {
  */
 export async function subscribeToPush(): Promise<PushSubscription | null> {
   try {
+    console.log('📝 Iniciando inscrição push...');
+    
     const registration = await registerServiceWorker();
     if (!registration) {
+      console.error('❌ Falha ao registrar Service Worker');
       return null;
     }
 
     // Aguardar o service worker estar ativo
+    console.log('⏳ Aguardando Service Worker ficar pronto...');
     await navigator.serviceWorker.ready;
+    console.log('✅ Service Worker pronto');
 
     // Verificar se já existe uma subscription
+    console.log('🔍 Verificando subscription existente...');
     let subscription = await registration.pushManager.getSubscription();
 
-    if (!subscription) {
-      // Criar nova subscription
+    if (subscription) {
+      console.log('✅ Subscription existente encontrada');
+      return subscription;
+    }
+
+    // Criar nova subscription
+    console.log('📝 Criando nova subscription...');
+    
+    try {
       subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
       });
+      
+      console.log('✅ Subscription criada com sucesso');
+      return subscription;
+    } catch (subscribeError: any) {
+      console.error('❌ Erro ao criar subscription:', subscribeError);
+      
+      // Tentar novamente sem a chave VAPID (fallback para alguns navegadores)
+      if (subscribeError.name === 'NotSupportedError' || subscribeError.name === 'InvalidStateError') {
+        console.log('🔄 Tentando novamente sem VAPID...');
+        try {
+          subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true
+          });
+          console.log('✅ Subscription criada (sem VAPID)');
+          return subscription;
+        } catch (fallbackError) {
+          console.error('❌ Falha no fallback:', fallbackError);
+          return null;
+        }
+      }
+      
+      return null;
     }
-
-    return subscription;
   } catch (error) {
+    console.error('❌ Erro geral ao inscrever:', error);
     return null;
   }
 }

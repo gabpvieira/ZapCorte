@@ -75,9 +75,14 @@ const NotificationSettings = () => {
 
   const handleEnableNotifications = async () => {
     if (!isSupported) {
+      const { isIOSSafari } = await import('@/lib/webpush');
+      const isIOS = isIOSSafari();
+      
       toast({
         title: 'Não Suportado',
-        description: 'Seu navegador não suporta notificações push',
+        description: isIOS 
+          ? 'Para ativar notificações no iOS, você precisa adicionar o app à tela inicial primeiro'
+          : 'Seu navegador não suporta notificações push. Tente usar Chrome, Firefox ou Safari',
         variant: 'destructive',
       });
       return;
@@ -93,45 +98,64 @@ const NotificationSettings = () => {
     }
 
     setLoading(true);
+    
     try {
+      console.log('🚀 Iniciando ativação de notificações...');
+      
       // Solicitar permissão
       const granted = await requestNotificationPermission();
 
       if (!granted) {
+        const permissionState = Notification.permission;
+        
+        let errorMessage = 'Você precisa permitir notificações nas configurações do navegador';
+        
+        if (permissionState === 'denied') {
+          errorMessage = 'Permissão negada. Vá em Configurações > Notificações e permita para este site';
+        }
+        
         toast({
           title: 'Permissão Negada',
-          description: 'Você precisa permitir notificações nas configurações do navegador',
+          description: errorMessage,
           variant: 'destructive',
         });
         setLoading(false);
         return;
       }
+
+      console.log('✅ Permissão concedida');
 
       // Inscrever para push
       const sub = await subscribeToPush();
       
       if (!sub) {
+        console.error('❌ Falha ao criar subscription');
         toast({
-          title: 'Erro',
-          description: 'Não foi possível criar a inscrição',
+          title: 'Erro ao Inscrever',
+          description: 'Não foi possível criar a inscrição. Verifique o console para mais detalhes.',
           variant: 'destructive',
         });
         setLoading(false);
         return;
       }
+
+      console.log('✅ Subscription criada');
 
       // Salvar no banco
       const saved = await saveSubscriptionToDatabase(barbershop.id, sub);
 
       if (!saved) {
+        console.error('❌ Falha ao salvar no banco');
         toast({
-          title: 'Erro',
-          description: 'Não foi possível salvar as configurações',
+          title: 'Erro ao Salvar',
+          description: 'Não foi possível salvar as configurações. Tente novamente.',
           variant: 'destructive',
         });
         setLoading(false);
         return;
       }
+
+      console.log('✅ Salvo no banco com sucesso');
 
       setSubscription(sub);
       setNotificationsEnabled(true);
@@ -140,10 +164,26 @@ const NotificationSettings = () => {
         title: 'Notificações Ativadas! 🎉',
         description: 'Você receberá alertas de novos agendamentos',
       });
-    } catch (error) {
+      
+      // Recarregar status
+      await checkNotificationStatus();
+      
+    } catch (error: any) {
+      console.error('❌ Erro ao ativar notificações:', error);
+      
+      let errorMessage = 'Não foi possível ativar as notificações';
+      
+      if (error.name === 'NotAllowedError') {
+        errorMessage = 'Permissão negada. Verifique as configurações do navegador';
+      } else if (error.name === 'NotSupportedError') {
+        errorMessage = 'Notificações não suportadas neste dispositivo';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: 'Erro',
-        description: 'Não foi possível ativar as notificações',
+        description: errorMessage,
         variant: 'destructive',
       });
     } finally {
@@ -281,6 +321,20 @@ const NotificationSettings = () => {
                   ))}
                 </div>
               </div>
+
+              {/* Instruções para iOS/Safari */}
+              {/iPad|iPhone|iPod|Safari/.test(navigator.userAgent) && (
+                <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                  <h4 className="font-semibold text-sm text-blue-600 dark:text-blue-400 mb-2">
+                    📱 Usuários iOS/Safari
+                  </h4>
+                  <div className="space-y-1 text-xs text-blue-600 dark:text-blue-400">
+                    <p>1. Adicione o app à tela inicial (botão Compartilhar → Adicionar à Tela Inicial)</p>
+                    <p>2. Abra o app pela tela inicial (não pelo navegador)</p>
+                    <p>3. Ative as notificações quando solicitado</p>
+                  </div>
+                </div>
+              )}
 
               {/* Botões de Ação */}
               <div className="space-y-3 pt-4 border-t">
