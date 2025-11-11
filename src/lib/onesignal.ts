@@ -15,6 +15,10 @@ declare global {
 const ONESIGNAL_APP_ID = import.meta.env.VITE_ONESIGNAL_APP_ID;
 const ONESIGNAL_REST_API_KEY = import.meta.env.VITE_ONESIGNAL_REST_API_KEY;
 
+// Flag para evitar inicialização duplicada
+let isInitialized = false;
+let initializationPromise: Promise<boolean> | null = null;
+
 /**
  * Verifica se o OneSignal está configurado
  */
@@ -23,33 +27,59 @@ export function isOneSignalConfigured(): boolean {
 }
 
 /**
- * Inicializa o OneSignal
+ * Inicializa o OneSignal (apenas uma vez)
  */
 export async function initializeOneSignal(): Promise<boolean> {
   if (!ONESIGNAL_APP_ID) {
     return false;
   }
 
-  try {
-    window.OneSignalDeferred = window.OneSignalDeferred || [];
-    
-    window.OneSignalDeferred.push(async function(OneSignal: any) {
-      await OneSignal.init({
-        appId: ONESIGNAL_APP_ID,
-        safari_web_id: "web.onesignal.auto.xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-        notifyButton: {
-          enable: false,
-        },
-        allowLocalhostAsSecureOrigin: true,
-        serviceWorkerParam: { scope: '/' },
-        serviceWorkerPath: 'OneSignalSDKWorker.js',
-      });
-    });
-
+  // Se já está inicializado, retorna true
+  if (isInitialized) {
     return true;
-  } catch (error) {
-    return false;
   }
+
+  // Se já está inicializando, aguarda a promise existente
+  if (initializationPromise) {
+    return initializationPromise;
+  }
+
+  // Cria nova promise de inicialização
+  initializationPromise = new Promise<boolean>((resolve) => {
+    try {
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
+      
+      window.OneSignalDeferred.push(async function(OneSignal: any) {
+        try {
+          await OneSignal.init({
+            appId: ONESIGNAL_APP_ID,
+            safari_web_id: "web.onesignal.auto.xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+            notifyButton: {
+              enable: false,
+            },
+            allowLocalhostAsSecureOrigin: true,
+            serviceWorkerParam: { scope: '/' },
+            serviceWorkerPath: 'OneSignalSDKWorker.js',
+          });
+          
+          isInitialized = true;
+          resolve(true);
+        } catch (error) {
+          // Silenciar erro se já estiver inicializado
+          if (error instanceof Error && error.message.includes('already initialized')) {
+            isInitialized = true;
+            resolve(true);
+          } else {
+            resolve(false);
+          }
+        }
+      });
+    } catch (error) {
+      resolve(false);
+    }
+  });
+
+  return initializationPromise;
 }
 
 /**
@@ -57,7 +87,6 @@ export async function initializeOneSignal(): Promise<boolean> {
  */
 export async function requestNotificationPermission(): Promise<boolean> {
   if (!window.OneSignalDeferred) {
-    console.error('[OneSignal] SDK não carregado');
     return false;
   }
 
@@ -67,17 +96,14 @@ export async function requestNotificationPermission(): Promise<boolean> {
         const permission = await OneSignal.Notifications.permission;
         
         if (permission === 'granted') {
-          console.log('[OneSignal] Permissão já concedida');
           resolve(true);
           return;
         }
 
         // Solicitar permissão
         const result = await OneSignal.Notifications.requestPermission();
-        console.log('[OneSignal] Resultado da solicitação:', result);
         resolve(result);
       } catch (error) {
-        console.error('[OneSignal] Erro ao solicitar permissão:', error);
         resolve(false);
       }
     });
@@ -98,7 +124,6 @@ export async function isNotificationEnabled(): Promise<boolean> {
         const permission = await OneSignal.Notifications.permission;
         resolve(permission === 'granted');
       } catch (error) {
-        console.error('[OneSignal] Erro ao verificar permissão:', error);
         resolve(false);
       }
     });
@@ -117,10 +142,8 @@ export async function getPlayerId(): Promise<string | null> {
     window.OneSignalDeferred!.push(async function(OneSignal: any) {
       try {
         const playerId = await OneSignal.User.PushSubscription.id;
-        console.log('[OneSignal] Player ID:', playerId);
         resolve(playerId);
       } catch (error) {
-        console.error('[OneSignal] Erro ao obter Player ID:', error);
         resolve(null);
       }
     });
@@ -139,11 +162,9 @@ export async function savePlayerIdToBarbershop(barbershopId: string, playerId: s
     .eq('id', barbershopId);
 
   if (error) {
-    console.error('[OneSignal] Erro ao salvar Player ID:', error);
     return false;
   }
 
-  console.log('[OneSignal] Player ID salvo com sucesso');
   return true;
 }
 
@@ -164,7 +185,6 @@ export async function sendPushNotification({
   data?: Record<string, any>;
 }) {
   if (!ONESIGNAL_REST_API_KEY) {
-    console.error('[OneSignal] REST API Key não configurada');
     return false;
   }
 
@@ -198,16 +218,11 @@ export async function sendPushNotification({
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      console.error('[OneSignal] Erro na resposta:', errorData);
       return false;
     }
 
-    const data = await response.json();
-    console.log('[OneSignal] Notificação enviada com sucesso:', data);
     return true;
   } catch (error) {
-    console.error('[OneSignal] Erro ao enviar notificação:', error);
     return false;
   }
 }

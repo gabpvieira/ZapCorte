@@ -83,45 +83,13 @@ const AppContent = () => {
       return;
     }
 
-    // Inicializar OneSignal
-    initializeOneSignal().then(() => {
-      window.__ONESIGNAL_INIT_DONE = true;
+    // Inicializar OneSignal (apenas uma vez)
+    initializeOneSignal().then((success) => {
+      if (success) {
+        window.__ONESIGNAL_INIT_DONE = true;
+      }
     });
-    window.OneSignalDeferred.push(async function (OneSignal: any) {
-      if (window.__ONESIGNAL_INIT_DONE) return;
-
-      await OneSignal.init({
-        appId: appId,
-        notifyButton: { enable: false },
-      });
-      window.__ONESIGNAL_INIT_DONE = true;
-      console.log('[OneSignal v16] Initialized');
-
-      // Listen for subscription changes
-      OneSignal.Notifications.addEventListener('change', async (subscription: any) => {
-        if (subscription.token) {
-          try {
-            const playerId = await OneSignal.User.getId();
-            console.log('[OneSignal v16] Player ID:', playerId);
-
-            // Update barbershop with player_id
-            const { error } = await supabase
-              .from('barbershops')
-              .update({ player_id: playerId })
-              .eq('id', '54f0a086-a7f7-46b9-bf96-f658940c8ae8'); // Gabriel Barbeiro
-
-            if (error) {
-              console.error('[OneSignal v16] Error updating barbershop:', error);
-            } else {
-              console.log('[OneSignal v16] Player ID saved to barbershop');
-            }
-          } catch (err) {
-            console.error('[OneSignal v16] Error getting player ID:', err);
-          }
-        }
-      });
-    });
-  }, [user, loading, isHomePage]);
+  }, [isHomePage]);
 
   return (
     <>
