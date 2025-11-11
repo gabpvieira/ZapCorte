@@ -17,8 +17,16 @@ export async function notificarNovoAgendamento({
   serviceName?: string;
 }) {
   try {
+    // Detectar ambiente e usar URL correta
+    const isProduction = window.location.hostname !== 'localhost';
+    const apiUrl = isProduction 
+      ? window.location.origin 
+      : 'http://localhost:3001';
+
+    console.log('📨 Enviando notificação push para:', apiUrl);
+
     // Enviar notificação push via API
-    await fetch('/api/send-notification', {
+    const response = await fetch(`${apiUrl}/api/send-notification`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -28,6 +36,13 @@ export async function notificarNovoAgendamento({
         serviceName,
       }),
     });
+
+    if (response.ok) {
+      const result = await response.json();
+      console.log('✅ Notificação push enviada:', result);
+    } else {
+      console.error('❌ Erro ao enviar notificação push:', await response.text());
+    }
 
     // Enviar lembrete WhatsApp se os dados estiverem disponíveis
     if (customerPhone) {
@@ -43,6 +58,7 @@ export async function notificarNovoAgendamento({
 
     return true;
   } catch (error) {
+    console.error('❌ Erro ao notificar novo agendamento:', error);
     return false;
   }
 }
@@ -80,19 +96,8 @@ export async function enviarLembreteWhatsApp({
       return false;
     }
 
-    // Buscar nome do barbeiro/usuário
-    let barbeiroNome = 'Barbeiro';
-    if (barbershop.user_id) {
-      const { data: user } = await supabase
-        .from('users')
-        .select('name')
-        .eq('id', barbershop.user_id)
-        .single();
-      
-      if (user?.name) {
-        barbeiroNome = user.name;
-      }
-    }
+    // Usar nome da barbearia como nome do barbeiro
+    const barbeiroNome = barbershop.name || 'Barbeiro';
 
     // Formatar data e hora
     const date = new Date(scheduledAt);
