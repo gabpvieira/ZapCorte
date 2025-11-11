@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   MessageCircle, 
@@ -22,7 +23,8 @@ import {
   Settings,
   Send,
   Clock,
-  Bell
+  Bell,
+  RotateCcw
 } from 'lucide-react';
 import { useWhatsAppConnection } from '@/hooks/useWhatsAppConnection';
 import { evolutionApi } from '@/lib/evolutionApi';
@@ -102,9 +104,9 @@ const WhatsAppConnection: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full overflow-x-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between w-full overflow-x-hidden">
         <div>
           <h1 className="text-3xl font-bold">Integração WhatsApp</h1>
           <p className="text-muted-foreground">
@@ -114,7 +116,7 @@ const WhatsAppConnection: React.FC = () => {
       </div>
 
       {/* Status da Conexão */}
-      <Card className="border-2">
+      <Card className="border-2 w-full max-w-full overflow-hidden">
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <span className="flex items-center space-x-2">
@@ -136,7 +138,7 @@ const WhatsAppConnection: React.FC = () => {
             </Badge>
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-6 w-full overflow-x-hidden">
           {/* Error Alert */}
           <AnimatePresence>
             {error && (
@@ -204,7 +206,7 @@ const WhatsAppConnection: React.FC = () => {
                 <p className="text-sm text-muted-foreground mb-4">
                   Abra o WhatsApp no seu celular e escaneie o código abaixo
                 </p>
-                <div className="bg-white p-4 rounded-lg inline-block shadow-sm">
+                <div className="bg-white p-4 rounded-lg inline-block shadow-sm max-w-full overflow-hidden">
                   <img 
                     src={(() => {
                       if (qrCode.startsWith('data:image/')) return qrCode;
@@ -212,7 +214,7 @@ const WhatsAppConnection: React.FC = () => {
                       return `data:image/png;base64,${qrCode}`;
                     })()} 
                     alt="QR Code WhatsApp" 
-                    className="w-64 h-64 mx-auto object-contain"
+                    className="w-64 h-64 max-w-full mx-auto object-contain"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
                       const currentSrc = target.src;
@@ -316,91 +318,17 @@ const WhatsAppConnection: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Configurações de Lembretes */}
-      <Card className="border-2">
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Settings className="h-5 w-5" />
-            <span>Configurações de Lembretes</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {settingsError && (
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{settingsError}</AlertDescription>
-            </Alert>
-          )}
 
-          {/* Ativar/Desativar Lembretes */}
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label className="text-base">Lembretes Automáticos</Label>
-              <p className="text-sm text-muted-foreground">
-                Enviar lembretes automáticos para os clientes
-              </p>
-            </div>
-            <Switch
-              checked={settings.reminders_enabled}
-              onCheckedChange={(checked) => handleSettingChange('reminders_enabled', checked)}
-              disabled={settingsLoading || settingsSaving}
-            />
-          </div>
-
-          {/* Intervalo de Lembrete */}
-          <div className="space-y-2">
-            <Label>Intervalo do Lembrete</Label>
-            <Select
-              value={settings.reminder_interval}
-              onValueChange={(value) => handleSettingChange('reminder_interval', value)}
-              disabled={settingsLoading || settingsSaving || !settings.reminders_enabled}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="30">
-                  <div className="flex items-center space-x-2">
-                    <Clock className="h-4 w-4" />
-                    <span>30 minutos antes</span>
-                  </div>
-                </SelectItem>
-                <SelectItem value="60">
-                  <div className="flex items-center space-x-2">
-                    <Clock className="h-4 w-4" />
-                    <span>1 hora antes</span>
-                  </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Mensagem Personalizada */}
-          <div className="space-y-2">
-            <Label>Mensagem do Lembrete</Label>
-            <Textarea
-              placeholder="Digite a mensagem que será enviada aos clientes..."
-              value={settings.reminder_message}
-              onChange={(e) => handleSettingChange('reminder_message', e.target.value)}
-              disabled={settingsLoading || settingsSaving || !settings.reminders_enabled}
-              rows={4}
-            />
-            <p className="text-xs text-muted-foreground">
-              Use as variáveis: {'{nome}'}, {'{data}'}, {'{hora}'}, {'{servico}'}
-            </p>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Teste de Mensagem */}
-      <Card className="border-2">
+      <Card className="border-2 w-full max-w-full overflow-hidden">
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <Send className="h-5 w-5" />
             <span>Teste de Mensagem</span>
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 w-full overflow-x-hidden">
           <div className="bg-muted p-4 rounded-lg">
             <p className="text-sm text-muted-foreground">
               O teste será enviado para o seu próprio número do WhatsApp conectado.
@@ -447,14 +375,14 @@ const WhatsAppConnection: React.FC = () => {
       </Card>
 
       {/* Status da Integração */}
-      <Card className="border-2">
+      <Card className="border-2 w-full max-w-full overflow-hidden">
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <Zap className="h-5 w-5" />
             <span>Verificar Integração</span>
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 w-full overflow-x-hidden">
           <p className="text-sm text-muted-foreground">
             Teste se a integração com o WhatsApp está funcionando corretamente
           </p>
@@ -505,6 +433,215 @@ const WhatsAppConnection: React.FC = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* SEÇÃO: Personalização de Mensagens */}
+      {isConnected && (
+        <Card className="border-2 w-full max-w-full overflow-hidden">
+          <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10 border-b">
+            <CardTitle className="flex items-center space-x-2">
+              <MessageCircle className="h-5 w-5 text-primary" />
+              <span>Personalização de Mensagens</span>
+            </CardTitle>
+            <p className="text-sm text-muted-foreground mt-2">
+              Customize as mensagens automáticas enviadas aos seus clientes
+            </p>
+          </CardHeader>
+          <CardContent className="p-6">
+            <Tabs defaultValue="confirmation" className="w-full">
+              <TabsList className="grid w-full grid-cols-3 mb-6">
+                <TabsTrigger value="confirmation" className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4" />
+                  <span className="hidden sm:inline">Confirmação</span>
+                </TabsTrigger>
+                <TabsTrigger value="reschedule" className="flex items-center gap-2">
+                  <RotateCcw className="h-4 w-4" />
+                  <span className="hidden sm:inline">Reagendamento</span>
+                </TabsTrigger>
+                <TabsTrigger value="reminder" className="flex items-center gap-2">
+                  <Clock className="h-4 w-4" />
+                  <span className="hidden sm:inline">Lembrete</span>
+                </TabsTrigger>
+              </TabsList>
+
+              {/* TAB: Confirmação */}
+              <TabsContent value="confirmation" className="space-y-4">
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2 text-base">
+                    <CheckCircle2 className="h-4 w-4 text-green-600" />
+                    Mensagem de Confirmação
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    Enviada imediatamente após o cliente agendar
+                  </p>
+                  <Textarea
+                    placeholder="Digite a mensagem de confirmação..."
+                    value={settings.confirmation_message || ''}
+                    onChange={(e) => handleSettingChange('confirmation_message', e.target.value)}
+                    disabled={settingsLoading || settingsSaving}
+                    rows={6}
+                    className="font-mono text-sm"
+                  />
+                  <div className="flex flex-wrap gap-2">
+                    <Badge variant="outline" className="text-xs">{'{nome}'}</Badge>
+                    <Badge variant="outline" className="text-xs">{'{data}'}</Badge>
+                    <Badge variant="outline" className="text-xs">{'{hora}'}</Badge>
+                    <Badge variant="outline" className="text-xs">{'{servico}'}</Badge>
+                  </div>
+                </div>
+                <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20">
+                  <div className="flex items-start gap-2 mb-2">
+                    <MessageCircle className="h-4 w-4 text-green-600 mt-1" />
+                    <span className="text-xs font-medium text-green-600">Preview</span>
+                  </div>
+                  <div className="whitespace-pre-wrap text-sm">
+                    {(settings.confirmation_message || '')
+                      .replace(/{nome}/g, 'João')
+                      .replace(/{data}/g, '15/11/2024')
+                      .replace(/{hora}/g, '14:30')
+                      .replace(/{servico}/g, 'Corte + Barba') || 
+                      'Digite uma mensagem...'}
+                  </div>
+                </div>
+              </TabsContent>
+
+              {/* TAB: Reagendamento */}
+              <TabsContent value="reschedule" className="space-y-4">
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2 text-base">
+                    <RotateCcw className="h-4 w-4 text-blue-600" />
+                    Mensagem de Reagendamento
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    Enviada quando um agendamento é alterado
+                  </p>
+                  <Textarea
+                    placeholder="Digite a mensagem de reagendamento..."
+                    value={settings.reschedule_message || ''}
+                    onChange={(e) => handleSettingChange('reschedule_message', e.target.value)}
+                    disabled={settingsLoading || settingsSaving}
+                    rows={6}
+                    className="font-mono text-sm"
+                  />
+                  <div className="flex flex-wrap gap-2">
+                    <Badge variant="outline" className="text-xs">{'{nome}'}</Badge>
+                    <Badge variant="outline" className="text-xs">{'{data}'}</Badge>
+                    <Badge variant="outline" className="text-xs">{'{hora}'}</Badge>
+                    <Badge variant="outline" className="text-xs">{'{servico}'}</Badge>
+                  </div>
+                </div>
+                <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                  <div className="flex items-start gap-2 mb-2">
+                    <MessageCircle className="h-4 w-4 text-blue-600 mt-1" />
+                    <span className="text-xs font-medium text-blue-600">Preview</span>
+                  </div>
+                  <div className="whitespace-pre-wrap text-sm">
+                    {(settings.reschedule_message || '')
+                      .replace(/{nome}/g, 'João')
+                      .replace(/{data}/g, '15/11/2024')
+                      .replace(/{hora}/g, '14:30')
+                      .replace(/{servico}/g, 'Corte + Barba') || 
+                      'Digite uma mensagem...'}
+                  </div>
+                </div>
+              </TabsContent>
+
+              {/* TAB: Lembrete */}
+              <TabsContent value="reminder" className="space-y-4">
+                {/* Switch de Lembretes */}
+                <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
+                  <div className="space-y-0.5">
+                    <Label className="text-base font-semibold">Lembretes Automáticos</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Enviar lembretes antes do horário
+                    </p>
+                  </div>
+                  <Switch
+                    checked={settings.reminders_enabled}
+                    onCheckedChange={(checked) => handleSettingChange('reminders_enabled', checked)}
+                    disabled={settingsLoading || settingsSaving}
+                  />
+                </div>
+
+                {settings.reminders_enabled && (
+                  <>
+                    {/* Intervalo */}
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-primary" />
+                        Intervalo do Lembrete
+                      </Label>
+                      <Select
+                        value={settings.reminder_interval}
+                        onValueChange={(value) => handleSettingChange('reminder_interval', value)}
+                        disabled={settingsLoading || settingsSaving}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="30">30 minutos antes</SelectItem>
+                          <SelectItem value="60">1 hora antes</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Mensagem */}
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-2 text-base">
+                        <Bell className="h-4 w-4 text-purple-600" />
+                        Mensagem do Lembrete
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        Enviada antes do horário agendado
+                      </p>
+                      <Textarea
+                        placeholder="Digite a mensagem de lembrete..."
+                        value={settings.reminder_message}
+                        onChange={(e) => handleSettingChange('reminder_message', e.target.value)}
+                        disabled={settingsLoading || settingsSaving}
+                        rows={6}
+                        className="font-mono text-sm"
+                      />
+                      <div className="flex flex-wrap gap-2">
+                        <Badge variant="outline" className="text-xs">{'{nome}'}</Badge>
+                        <Badge variant="outline" className="text-xs">{'{data}'}</Badge>
+                        <Badge variant="outline" className="text-xs">{'{hora}'}</Badge>
+                        <Badge variant="outline" className="text-xs">{'{servico}'}</Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        💡 Use emojis e quebras de linha livremente
+                      </p>
+                    </div>
+
+                    {/* Preview */}
+                    <div className="p-4 rounded-lg bg-purple-500/10 border border-purple-500/20">
+                      <div className="flex items-start gap-2 mb-2">
+                        <MessageCircle className="h-4 w-4 text-purple-600 mt-1" />
+                        <span className="text-xs font-medium text-purple-600">Preview</span>
+                      </div>
+                      <div className="whitespace-pre-wrap text-sm">
+                        {settings.reminder_message
+                          .replace(/{nome}/g, 'João')
+                          .replace(/{data}/g, '15/11/2024')
+                          .replace(/{hora}/g, '14:30')
+                          .replace(/{servico}/g, 'Corte + Barba') || 
+                          'Digite uma mensagem...'}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </TabsContent>
+            </Tabs>
+
+            {settingsSaving && (
+              <Alert className="mt-4">
+                <RefreshCw className="h-4 w-4 animate-spin" />
+                <AlertDescription>Salvando configurações...</AlertDescription>
+              </Alert>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };

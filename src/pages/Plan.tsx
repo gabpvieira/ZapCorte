@@ -61,10 +61,10 @@ const Plan = () => {
       title="Plano & Conta"
       subtitle="Gerencie seu plano e informações de assinatura"
     >
-      <div className="space-y-6">
+      <div className="space-y-6 w-full overflow-x-hidden">
         {/* Status do Plano Atual */}
-        <div className="grid gap-6 md:grid-cols-2">
-          <Card className="border-2">
+        <div className="grid gap-6 md:grid-cols-2 w-full overflow-x-hidden">
+          <Card className="border-2 w-full max-w-full overflow-hidden">
             <CardHeader>
               <CardTitle>Seu Plano Atual</CardTitle>
             </CardHeader>
@@ -121,7 +121,7 @@ const Plan = () => {
             </CardContent>
           </Card>
 
-          <Card className="border-2">
+          <Card className="border-2 w-full max-w-full overflow-hidden">
             <CardHeader>
               <CardTitle>Informações da Conta</CardTitle>
             </CardHeader>
@@ -136,16 +136,16 @@ const Plan = () => {
         </div>
 
         {/* Comparação de Planos */}
-        <Card className="border-2">
+        <Card className="border-2 w-full max-w-full overflow-hidden">
           <CardHeader>
             <CardTitle>Compare os Planos</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="plans-grid grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+          <CardContent className="w-full overflow-x-hidden">
+            <div className="plans-grid grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 w-full overflow-x-hidden">
               {Object.entries(planLimits).map(([planKey, plan]) => (
                 <div 
                   key={planKey}
-                  className={`plan-card p-4 md:p-6 rounded-lg border-2 mobile-full-width ${
+                  className={`plan-card p-4 md:p-6 rounded-lg border-2 mobile-full-width w-full max-w-full overflow-hidden ${
                     currentPlan === planKey 
                       ? 'border-primary bg-primary/5' 
                       : 'border-border'

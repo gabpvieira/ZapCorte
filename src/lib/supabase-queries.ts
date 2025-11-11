@@ -142,16 +142,49 @@ export async function getAvailableTimeSlots(
   date: string
 ): Promise<{ time: string; available: boolean }[]> {
   // 1. Buscar dados essenciais
-  const dayOfWeek = new Date(date).getDay();
+  // IMPORTANTE: Usar timezone brasileiro para calcular o dia da semana corretamente
+  const dateWithTimezone = new Date(date + 'T12:00:00-03:00');
+  const dayOfWeek = dateWithTimezone.getDay();
 
-  const [{ data: availability, error: availabilityError }, { data: service, error: serviceError }, { data: appointments, error: appointmentsError }] = await Promise.all([
-    supabase
-      .from('availability')
-      .select('*')
-      .eq('barbershop_id', barbershopId)
-      .eq('day_of_week', dayOfWeek)
-      .eq('is_active', true)
-      .single(),
+  console.log('[getAvailableTimeSlots] Buscando horários:', {
+    barbershopId,
+    serviceId,
+    date,
+    dateWithTimezone: dateWithTimezone.toISOString(),
+    dayOfWeek,
+    dayName: ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'][dayOfWeek]
+  });
+
+  // Primeiro, buscar a barbearia para verificar opening_hours
+  const { data: barbershop, error: barbershopError } = await supabase
+    .from('barbershops')
+    .select('opening_hours')
+    .eq('id', barbershopId)
+    .single();
+
+  if (barbershopError || !barbershop) {
+    console.error('[getAvailableTimeSlots] Erro ao buscar barbearia:', barbershopError);
+    return [];
+  }
+
+  // Verificar se o dia está fechado no opening_hours
+  const dayKey = dayOfWeek.toString();
+  const daySchedule = barbershop.opening_hours?.[dayKey];
+
+  console.log('[getAvailableTimeSlots] Horário do dia:', {
+    dayKey,
+    daySchedule,
+    allOpeningHours: barbershop.opening_hours
+  });
+
+  // Se o dia está marcado como null (fechado) ou não existe, retornar vazio
+  if (!daySchedule || daySchedule === null) {
+    console.log('[getAvailableTimeSlots] Dia fechado, retornando vazio');
+    return [];
+  }
+
+  // Buscar serviço e agendamentos
+  const [{ data: service, error: serviceError }, { data: appointments, error: appointmentsError }] = await Promise.all([
     supabase
       .from('services')
       .select('duration')
@@ -166,20 +199,27 @@ export async function getAvailableTimeSlots(
       .neq('status', 'cancelled'),
   ]);
 
-  if (availabilityError || !availability || serviceError || !service) {
-    console.error('Error fetching availability or service:', availabilityError, serviceError);
+  if (serviceError || !service) {
+    console.error('[getAvailableTimeSlots] Erro ao buscar serviço:', serviceError);
     return [];
   }
   if (appointmentsError) {
-    console.error('Error fetching appointments:', appointmentsError);
+    console.error('[getAvailableTimeSlots] Erro ao buscar agendamentos:', appointmentsError);
     return [];
   }
 
   // 2. Definir durações e horários de trabalho
   const serviceDuration = service.duration; // minutos
   const breakTime = 5; // 5 minutos de intervalo
-  const workStart = new Date(`${date}T${availability.start_time}-03:00`);
-  const workEnd = new Date(`${date}T${availability.end_time}-03:00`);
+  const workStart = new Date(`${date}T${daySchedule.start}-03:00`);
+  const workEnd = new Date(`${date}T${daySchedule.end}-03:00`);
+
+  console.log('[getAvailableTimeSlots] Horários de trabalho:', {
+    workStart: workStart.toISOString(),
+    workEnd: workEnd.toISOString(),
+    serviceDuration,
+    breakTime
+  });
 
   // 3. Construir períodos ocupados (agendamento + pausa)
   const busyPeriods: { start: Date; end: Date }[] = [];

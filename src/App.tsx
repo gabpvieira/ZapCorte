@@ -212,11 +212,13 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <AuthProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <AppContent />
-        </BrowserRouter>
+        <div className="w-full max-w-full overflow-x-hidden">
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <AppContent />
+          </BrowserRouter>
+        </div>
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Upload, X, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { Upload, X, Image as ImageIcon, Loader2, Camera, Cloud } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { validateImageFile, getPlaceholderImageUrl } from '@/lib/storage';
@@ -14,7 +14,8 @@ interface ImageUploadProps {
   showPreview?: boolean;
   maxWidth?: number;
   maxHeight?: number;
-  variant?: 'logo' | 'banner'; // Adicionado
+  variant?: 'logo' | 'banner';
+  recommendedSize?: string;
 }
 
 export function ImageUpload({
@@ -27,11 +28,13 @@ export function ImageUpload({
   showPreview = true,
   maxWidth = 400,
   maxHeight = 300,
-  variant = 'banner' // Padrão para banner
+  variant = 'banner',
+  recommendedSize
 }: ImageUploadProps) {
   const [preview, setPreview] = useState<string | null>(value || null);
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -40,11 +43,13 @@ export function ImageUpload({
 
   const handleFileSelect = (file: File) => {
     setError(null);
+    setIsUploading(true);
 
     // Validar arquivo
     const validation = validateImageFile(file);
     if (!validation.isValid) {
       setError(validation.error || 'Arquivo inválido');
+      setIsUploading(false);
       return;
     }
 
@@ -56,6 +61,11 @@ export function ImageUpload({
       if (onUrlChange) {
         onUrlChange(result);
       }
+      setIsUploading(false);
+    };
+    reader.onerror = () => {
+      setError('Erro ao carregar imagem');
+      setIsUploading(false);
     };
     reader.readAsDataURL(file);
 
@@ -108,107 +118,141 @@ export function ImageUpload({
     }
   };
 
-  return (
-    <div className={cn("space-y-4", className)}>
-      {/* Upload Area */}
-      <div
-        onClick={handleClick}
-        onDrop={handleDrop}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        className={cn(
-          "relative border-2 border-dashed rounded-lg p-6 transition-all cursor-pointer",
-          "hover:border-primary/50 hover:bg-primary/5",
-          isDragging && "border-primary bg-primary/10",
-          disabled && "opacity-50 cursor-not-allowed",
-          error && "border-destructive bg-destructive/5"
-        )}
-      >
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          onChange={handleFileInputChange}
-          disabled={disabled}
-          className="hidden"
-        />
+  const aspectRatio = variant === 'logo' ? '1/1' : '16/9';
+  const Icon = variant === 'logo' ? Camera : Cloud;
 
-        {preview && showPreview ? (
-          <div className="relative w-full h-full">
+  return (
+    <div className={cn("w-full max-w-full overflow-hidden", className)}>
+      {/* Preview com Aspect Ratio */}
+      {preview && showPreview ? (
+        <div className="space-y-3 w-full">
+          <div 
+            className={cn(
+              "relative w-full overflow-hidden group",
+              variant === 'logo' ? "rounded-2xl" : "rounded-xl"
+            )}
+            style={{ aspectRatio }}
+          >
+            {isUploading && (
+              <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
+                <Loader2 className="h-8 w-8 text-white animate-spin" />
+              </div>
+            )}
             <img
               src={preview}
               alt="Preview"
               className={cn(
-                "object-cover w-full h-full",
-                variant === 'logo' ? "rounded-full" : "rounded-lg"
+                "w-full h-full object-cover transition-transform duration-300 group-hover:scale-105",
+                variant === 'logo' ? "rounded-2xl" : "rounded-xl"
               )}
-              style={{ maxWidth, maxHeight }}
             />
-            <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 opacity-0 hover:opacity-100 transition-opacity">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="mr-2"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleClick();
-                }}
-                disabled={disabled}
-              >
-                Alterar
-              </Button>
-              <Button
-                type="button"
-                variant="destructive"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleRemove();
-                }}
-                disabled={disabled}
-              >
-                <X className="h-4 w-4" />
-                Remover
-              </Button>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <div className="absolute bottom-0 left-0 right-0 p-4 flex items-center justify-center gap-2">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  className="bg-white/90 hover:bg-white text-black"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleClick();
+                  }}
+                  disabled={disabled || isUploading}
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  Alterar
+                </Button>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleRemove();
+                  }}
+                  disabled={disabled || isUploading}
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  Remover
+                </Button>
+              </div>
             </div>
           </div>
-        ) : (
-          <div className="text-center">
-            <Upload className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-sm text-muted-foreground mb-2">
-              {placeholder}
+          {recommendedSize && (
+            <p className="text-xs text-center text-muted-foreground">
+              {recommendedSize}
             </p>
-            <p className="text-xs text-muted-foreground">
-              PNG, JPG, WebP ou SVG (máx. 2MB)
-            </p>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      ) : (
+        /* Upload Dropzone */
+        <div className="space-y-3 w-full">
+          <div
+            onClick={handleClick}
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            className={cn(
+              "relative w-full overflow-hidden border-2 border-dashed transition-all cursor-pointer",
+              "hover:border-primary hover:bg-primary/5 hover:shadow-lg",
+              "flex flex-col items-center justify-center",
+              isDragging && "border-primary bg-primary/10 scale-[1.02]",
+              disabled && "opacity-50 cursor-not-allowed",
+              error && "border-destructive bg-destructive/5",
+              variant === 'logo' ? "rounded-2xl" : "rounded-xl"
+            )}
+            style={{ aspectRatio, minHeight: variant === 'logo' ? '200px' : '150px' }}
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleFileInputChange}
+              disabled={disabled || isUploading}
+              className="hidden"
+            />
 
-      {/* Error Message */}
-      {error && (
-        <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-lg">
-          {error}
+            {isUploading ? (
+              <div className="flex flex-col items-center justify-center p-6">
+                <Loader2 className="h-12 w-12 text-primary animate-spin mb-4" />
+                <p className="text-sm font-medium text-primary">Carregando imagem...</p>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center p-6 text-center">
+                <div className={cn(
+                  "mb-4 p-4 rounded-full transition-colors",
+                  isDragging ? "bg-primary/20" : "bg-muted"
+                )}>
+                  <Icon className={cn(
+                    "h-8 w-8 transition-colors",
+                    isDragging ? "text-primary" : "text-muted-foreground"
+                  )} />
+                </div>
+                <p className="text-sm font-medium text-foreground mb-1">
+                  {isDragging ? "Solte a imagem aqui" : placeholder}
+                </p>
+                <p className="text-xs text-muted-foreground mb-2">
+                  ou arraste e solte
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  PNG, JPG, WebP (máx. 2MB)
+                </p>
+              </div>
+            )}
+          </div>
+          {recommendedSize && (
+            <p className="text-xs text-center text-muted-foreground">
+              {recommendedSize}
+            </p>
+          )}
         </div>
       )}
 
-      {/* File Info */}
-      {preview && !showPreview && (
-        <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-          <div className="flex items-center space-x-2">
-            <ImageIcon className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm">Imagem selecionada</span>
-          </div>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={handleRemove}
-            disabled={disabled}
-          >
-            <X className="h-4 w-4" />
-          </Button>
+      {/* Error Message */}
+      {error && (
+        <div className="mt-3 text-sm text-destructive bg-destructive/10 p-3 rounded-lg flex items-center gap-2">
+          <X className="h-4 w-4 flex-shrink-0" />
+          <span>{error}</span>
         </div>
       )}
     </div>

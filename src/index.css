@@ -5,6 +5,9 @@
 /* Responsividade completa do painel */
 @import './styles/responsive-dashboard.css';
 
+/* Premium Image Upload */
+@import './styles/image-upload-premium.css';
+
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
 All colors MUST be HSL.
 */
@@ -88,10 +91,16 @@ All colors MUST be HSL.
 
   html {
     scroll-behavior: smooth;
+    overflow-x: hidden;
+    max-width: 100vw;
   }
 
   body {
     @apply bg-background text-foreground;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    max-width: 100vw;
   }
 }
 

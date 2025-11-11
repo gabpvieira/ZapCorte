@@ -80,34 +80,39 @@ const WeeklyDatePicker = ({ selectedDate, onDateSelect, minDate }: WeeklyDatePic
   };
 
   return (
-    <div className="w-full">
-      {/* Week Navigation Header */}
-      <div className="flex justify-between items-center mb-4">
+    <div className="w-full p-4">
+      {/* Week Navigation Header - Premium */}
+      <div className="flex justify-between items-center mb-6">
         <Button
-          variant="outline"
+          variant="ghost"
           size="sm"
           onClick={goToPreviousWeek}
-          className="p-2 h-8 w-8"
+          className="h-10 w-10 rounded-full hover:bg-primary/10 hover:scale-110 transition-all"
         >
-          <ChevronLeft className="h-4 w-4" />
+          <ChevronLeft className="h-5 w-5" />
         </Button>
         
-        <h3 className="text-white font-semibold text-sm md:text-base">
-          Semana de {formatWeekRange()}
-        </h3>
+        <div className="text-center">
+          <h3 className="font-semibold text-base">
+            {format(currentWeek, 'MMMM yyyy', { locale: ptBR })}
+          </h3>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {formatWeekRange()}
+          </p>
+        </div>
         
         <Button
-          variant="outline"
+          variant="ghost"
           size="sm"
           onClick={goToNextWeek}
-          className="p-2 h-8 w-8"
+          className="h-10 w-10 rounded-full hover:bg-primary/10 hover:scale-110 transition-all"
         >
-          <ChevronRight className="h-4 w-4" />
+          <ChevronRight className="h-5 w-5" />
         </Button>
       </div>
 
-      {/* Days List - Vertical */}
-      <div className="space-y-2">
+      {/* Days List - Premium Design */}
+      <div className="space-y-2.5">
         {weekDays.map((date, index) => {
           const isSelected = selectedDate && isSameDay(date, selectedDate);
           const isTodayDate = isToday(date);
@@ -120,39 +125,87 @@ const WeeklyDatePicker = ({ selectedDate, onDateSelect, minDate }: WeeklyDatePic
               onClick={() => handleDateClick(date)}
               disabled={isDisabled}
               className={`
-                w-full p-4 rounded-lg text-sm font-medium transition-all duration-200
-                flex items-center justify-between
+                w-full p-4 rounded-xl text-sm font-medium transition-all duration-300
+                flex items-center justify-between group relative overflow-hidden
                 ${isSelected 
-                  ? 'bg-green-600 text-white shadow-md' 
+                  ? 'bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-lg shadow-primary/30 scale-[1.02]' 
                   : isTodayDate
-                  ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                  ? 'bg-primary/10 text-primary border-2 border-primary/30 hover:bg-primary/20'
                   : isDisabled
-                  ? 'bg-zinc-900 text-zinc-600 cursor-not-allowed opacity-50'
-                  : 'bg-zinc-800 text-white hover:bg-green-600 border border-zinc-700'
+                  ? 'bg-muted/30 text-muted-foreground cursor-not-allowed opacity-40'
+                  : 'bg-card border border-border/50 hover:border-primary/50 hover:bg-primary/5 hover:scale-[1.01]'
                 }
               `}
             >
-              <div className="flex items-center gap-3">
-                <span className="text-lg font-bold min-w-[2rem]">
+              {/* Hover Effect Background */}
+              {!isDisabled && !isSelected && (
+                <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/5 to-primary/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+              )}
+              
+              <div className="flex items-center gap-4 relative z-10">
+                <div className={`
+                  flex items-center justify-center w-12 h-12 rounded-lg font-bold text-lg
+                  ${isSelected 
+                    ? 'bg-white/20' 
+                    : isTodayDate 
+                    ? 'bg-primary/20' 
+                    : 'bg-muted/50'
+                  }
+                `}>
                   {format(date, 'd')}
-                </span>
-                <span className="text-base">
-                  {format(date, 'EEEE', { locale: ptBR })}
-                </span>
+                </div>
+                <div className="text-left">
+                  <div className="font-semibold capitalize">
+                    {format(date, 'EEEE', { locale: ptBR })}
+                  </div>
+                  <div className={`text-xs ${isSelected ? 'opacity-90' : 'text-muted-foreground'}`}>
+                    {format(date, "dd 'de' MMMM", { locale: ptBR })}
+                  </div>
+                </div>
               </div>
-              <span className="text-sm opacity-70">
-                {format(date, 'dd/MM', { locale: ptBR })}
-              </span>
+              
+              {/* Badge: Mostra "Hoje" apenas no dia atual quando NÃO está selecionado */}
+              {isTodayDate && !isSelected && (
+                <span className="relative z-10 text-xs px-2 py-1 rounded-full bg-primary/20 text-primary font-semibold">
+                  Hoje
+                </span>
+              )}
+              
+              {/* Badge: Mostra "Selecionado" quando está selecionado (mesmo se for hoje) */}
+              {isSelected && (
+                <span className="relative z-10 text-xs px-2 py-1 rounded-full bg-white/20 font-semibold">
+                  {isTodayDate ? '✓ Hoje' : '✓ Selecionado'}
+                </span>
+              )}
             </button>
           );
         })}
       </div>
 
-      {/* Mobile scroll hint */}
-      <div className="md:hidden text-center mt-2">
-        <p className="text-xs text-zinc-400">
-          Deslize horizontalmente para ver mais opções
-        </p>
+      {/* Info Footer - Legenda */}
+      <div className="mt-4 pt-4 border-t border-border/50">
+        <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
+          {/* Primeiro badge: Mostra "Hoje" ou a data selecionada */}
+          {selectedDate && (
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded bg-primary" />
+              <span>
+                {isToday(selectedDate) 
+                  ? 'Hoje' 
+                  : format(selectedDate, 'dd/MM/yyyy', { locale: ptBR })
+                }
+              </span>
+            </div>
+          )}
+          
+          {/* Segundo badge: Sempre "Selecionado" quando há seleção */}
+          {selectedDate && (
+            <div className="flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded bg-gradient-to-r from-primary to-primary/80" />
+              <span>Selecionado</span>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

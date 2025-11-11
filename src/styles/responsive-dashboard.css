@@ -491,6 +491,32 @@
     overflow-x: auto !important;
     -webkit-overflow-scrolling: touch !important;
   }
+
+  /* Prevenir overflow em todos os elementos principais */
+  main,
+  section,
+  article,
+  div[class*="space-y"],
+  div[class*="grid"],
+  div[class*="flex"] {
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+  }
+
+  /* Cards e componentes UI */
+  [class*="card"],
+  [class*="Card"] {
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+  }
+
+  /* Imagens e mídia responsivas */
+  img,
+  video,
+  iframe {
+    max-width: 100% !important;
+    height: auto !important;
+  }
 }
 
 /* =====================================================

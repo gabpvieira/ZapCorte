@@ -10,6 +10,7 @@ import { getBarbershopBySlug, getBarbershopServices } from "@/lib/supabase-queri
 import { isBarbershopOpen, formatOpeningHours } from "@/lib/barbershop-utils";
 import type { Barbershop, Service } from "@/lib/supabase";
 import { supabase } from "@/lib/supabase";
+import "@/styles/booking-premium.css";
 
 const Barbershop = () => {
   const { slug } = useParams();
@@ -124,182 +125,295 @@ const Barbershop = () => {
 
   return (
     <motion.div 
-      className="min-h-screen bg-background"
+      className="min-h-screen bg-gradient-to-br from-background via-background to-muted/10"
       variants={containerVariants}
       initial="initial"
       animate="animate"
     >
-      {/* Banner */}
+      {/* Hero Banner Premium - Full Width */}
       <motion.div 
-        className="relative w-full h-[200px] overflow-hidden"
+        className="relative w-full h-[300px] sm:h-[350px] md:h-[400px] lg:h-[450px] mb-16 sm:mb-20"
         variants={bannerVariants}
       >
-        <div className="w-full h-full bg-black">
+        {/* Banner Image - Full Width */}
+        <div className="absolute inset-0">
           <img 
             src={barbershop.banner_url || '/placeholder-banner.jpg'} 
             alt={`Banner ${barbershop.name}`}
             className="w-full h-full object-cover" 
           />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-black/70" />
         </div>
-        {/* Curva inferior (meia-lua invertida) integrada ao banner */}
+        
+        {/* Logo Premium - Posicionada para sobrepor */}
+        <div className="absolute inset-x-0 -bottom-16 sm:-bottom-20 flex items-center justify-center z-30">
+          <motion.div 
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.3, duration: 0.5, type: "spring" }}
+          >
+            <div className="relative">
+              <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full" />
+              <img 
+                src={barbershop.logo_url || '/placeholder-logo.jpg'} 
+                alt={`Logo ${barbershop.name}`}
+                className="relative rounded-full w-[120px] h-[120px] sm:w-[140px] sm:h-[140px] md:w-[160px] md:h-[160px] border-4 border-background shadow-2xl object-cover ring-4 ring-primary/20" 
+              />
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Curva inferior premium */}
         <svg
-          viewBox="0 0 1440 320"
+          viewBox="0 0 1440 120"
           preserveAspectRatio="none"
-          className="absolute bottom-0 left-0 w-full h-[80px] block"
+          className="absolute bottom-0 left-0 w-full h-[40px] sm:h-[60px] md:h-[80px] pointer-events-none"
         >
           <path
-            d="M0,160 C480,320 960,0 1440,160 L1440,320 L0,320 Z"
+            d="M0,64 C240,120 480,120 720,80 C960,40 1200,40 1440,80 L1440,120 L0,120 Z"
             style={{ fill: 'hsl(var(--background))' }}
           />
         </svg>
       </motion.div>
 
-      {/* Logo sobreposta e centralizada */}
-      <motion.div 
-        className="relative -mt-[55px] flex justify-center z-20 mb-4"
-        variants={itemVariants}
-      >
-        <img 
-          src={barbershop.logo_url || '/placeholder-logo.jpg'} 
-          alt={`Logo ${barbershop.name}`}
-          className="rounded-full w-[110px] h-[110px] border-4 border-white shadow-lg object-cover" 
-        />
-      </motion.div>
-
-      {/* Curvatura integrada no banner; removido bloco decorativo separado */}
-
-      {/* Cabeçalho e conteúdo */}
+      {/* Header Info Premium */}
       <motion.section 
-        className="text-center px-4 -mt-4"
+        className="text-center w-[90%] sm:w-full mx-auto px-0 sm:px-4 pt-4 sm:pt-6 pb-6 sm:pb-8"
         variants={itemVariants}
       >
-        <h1 className="text-2xl font-bold text-white">{barbershop.name}</h1>
+        <motion.h1 
+          className="text-3xl sm:text-4xl md:text-5xl font-bold mb-2 sm:mb-3 bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text text-transparent"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+        >
+          {barbershop.name}
+        </motion.h1>
+        
         {barbershop.subtitle && (
-          <p className="text-sm text-gray-400 mt-1">{barbershop.subtitle}</p>
+          <motion.p 
+            className="text-base sm:text-lg text-muted-foreground mb-5 sm:mb-6 max-w-2xl mx-auto"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+          >
+            {barbershop.subtitle}
+          </motion.p>
         )}
 
-        {/* Ícones sociais */}
-        <div className="flex justify-center gap-4 mt-4">
+        {/* Status Badge Premium */}
+        <motion.div 
+          className="mb-5 sm:mb-6"
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.6 }}
+        >
+          <span 
+            className={`inline-flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-2.5 rounded-full font-semibold text-xs sm:text-sm shadow-lg ${
+              isOpen 
+                ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-green-500/30' 
+                : 'bg-gradient-to-r from-red-500 to-red-600 text-white shadow-red-500/30'
+            }`}
+          >
+            <span className={`w-1.5 sm:w-2 h-1.5 sm:h-2 rounded-full ${isOpen ? 'bg-white' : 'bg-white/80'} animate-pulse`} />
+            {isOpen ? 'ABERTO AGORA' : 'FECHADO'}
+          </span>
+        </motion.div>
+
+        {/* Social Links Premium */}
+        <motion.div 
+          className="flex justify-center gap-2.5 sm:gap-3 mb-5 sm:mb-6"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.7 }}
+        >
           {barbershop.instagram_url && (
-            <a 
+            <motion.a 
               href={barbershop.instagram_url} 
               target="_blank" 
               rel="noopener noreferrer"
-              className="p-3 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:scale-110 transition-transform"
+              className="group relative p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 text-white shadow-lg hover:shadow-xl transition-all"
+              whileHover={{ scale: 1.1, rotate: 5 }}
+              whileTap={{ scale: 0.95 }}
               aria-label="Instagram"
             >
-              <Instagram className="h-5 w-5" />
-            </a>
+              <Instagram className="h-4 w-4 sm:h-5 sm:w-5 relative z-10" />
+              <div className="absolute inset-0 bg-white/20 rounded-xl sm:rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
+            </motion.a>
           )}
           {barbershop.whatsapp_number && (
-            <a 
+            <motion.a 
               href={`https://wa.me/${barbershop.whatsapp_number}`} 
               target="_blank" 
               rel="noopener noreferrer"
-              className="p-3 rounded-full bg-green-500 text-white hover:scale-110 transition-transform"
+              className="group relative p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-gradient-to-br from-green-500 to-green-600 text-white shadow-lg hover:shadow-xl transition-all"
+              whileHover={{ scale: 1.1, rotate: -5 }}
+              whileTap={{ scale: 0.95 }}
               aria-label="WhatsApp"
             >
-              <MessageCircle className="h-5 w-5" />
-            </a>
+              <MessageCircle className="h-4 w-4 sm:h-5 sm:w-5 relative z-10" />
+              <div className="absolute inset-0 bg-white/20 rounded-xl sm:rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
+            </motion.a>
           )}
           {barbershop.maps_url && (
-            <a 
+            <motion.a 
               href={barbershop.maps_url} 
               target="_blank" 
               rel="noopener noreferrer"
-              className="p-3 rounded-full bg-blue-500 text-white hover:scale-110 transition-transform"
+              className="group relative p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg hover:shadow-xl transition-all"
+              whileHover={{ scale: 1.1, rotate: 5 }}
+              whileTap={{ scale: 0.95 }}
               aria-label="Maps"
             >
-              <MapPin className="h-5 w-5" />
-            </a>
+              <MapPin className="h-4 w-4 sm:h-5 sm:w-5 relative z-10" />
+              <div className="absolute inset-0 bg-white/20 rounded-xl sm:rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
+            </motion.a>
           )}
-        </div>
+        </motion.div>
 
-        {/* Status dinâmico */}
-        <div className="mt-4">
-          <span 
-            id="statusBadge" 
-            className={`inline-block px-4 py-1 rounded-full text-white font-medium text-sm ${
-              isOpen ? 'bg-green-500' : 'bg-red-500'
-            }`}
-          >
-            {isOpen ? 'ABERTO' : 'FECHADO'}
-          </span>
-        </div>
-
-        {/* Horário de funcionamento */}
-        <p className="mt-4 text-xs text-gray-500 max-w-md mx-auto">
-          {formatOpeningHours(barbershop.opening_hours)}
-        </p>
+        {/* Horário de funcionamento Premium */}
+        <motion.div
+          className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl bg-card/50 backdrop-blur-sm border border-border/50"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.8 }}
+        >
+          <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary flex-shrink-0" />
+          <p className="text-xs sm:text-sm text-muted-foreground">
+            {formatOpeningHours(barbershop.opening_hours)}
+          </p>
+        </motion.div>
       </motion.section>
 
       {/* Container para serviços */}
       <motion.div 
-        className="container mx-auto px-4 mt-12"
+        className="container mx-auto w-[90%] sm:w-full px-0 sm:px-4 mt-12 sm:mt-16"
         variants={itemVariants}
       >
 
-        {/* Services */}
-        <section className="pb-20">
-          <h2 className="mb-6 text-2xl font-bold">Nossos Serviços</h2>
+        {/* Services Section Premium */}
+        <section className="pb-16 sm:pb-20">
+          <motion.div 
+            className="text-center mb-8 sm:mb-12"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 sm:mb-3 bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent">
+              Nossos Serviços
+            </h2>
+            <p className="text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto">
+              Escolha o serviço perfeito para você e agende seu horário
+            </p>
+          </motion.div>
+
           {services.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground">Nenhum serviço disponível no momento.</p>
-            </div>
+            <motion.div 
+              className="text-center py-20"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+            >
+              <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-muted/30 flex items-center justify-center">
+                <Clock className="h-10 w-10 text-muted-foreground/50" />
+              </div>
+              <p className="text-muted-foreground text-lg">Nenhum serviço disponível no momento.</p>
+            </motion.div>
           ) : (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {services.map((service) => (
-                <Card key={service.id} className="overflow-hidden border-2 transition-all hover:shadow-lg hover:shadow-primary/10">
-                  <div
-                    className="h-48 bg-cover bg-center"
-                    style={{ backgroundImage: `url(${service.image_url})` }}
-                  />
-                  <CardContent className="p-6">
-                    <h3 className="mb-2 text-xl font-bold">{service.name}</h3>
-                    <p className="mb-4 text-sm text-muted-foreground">{service.description}</p>
-                    <div className="mb-4 flex items-center justify-between">
-                      <span className="text-2xl font-bold text-primary">
+            <div className="grid gap-5 sm:gap-6 md:gap-8 md:grid-cols-2 lg:grid-cols-3">
+              {services.map((service, index) => (
+                <motion.div
+                  key={service.id}
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                >
+                  <Card className="group overflow-hidden border-0 shadow-xl shadow-primary/5 hover:shadow-2xl hover:shadow-primary/10 transition-all duration-300 h-full flex flex-col bg-card/50 backdrop-blur-sm">
+                    {/* Service Image com Overlay */}
+                    <div className="relative h-48 sm:h-52 md:h-56 overflow-hidden">
+                      <div
+                        className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
+                        style={{ backgroundImage: `url(${service.image_url})` }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+                      
+                      {/* Price Badge Floating */}
+                      <div className="absolute top-3 sm:top-4 right-3 sm:right-4 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl bg-primary text-primary-foreground font-bold text-base sm:text-lg shadow-lg backdrop-blur-sm">
                         R$ {service.price.toFixed(2)}
-                      </span>
-                      <span className="flex items-center gap-1 text-sm text-muted-foreground">
-                        <Clock className="h-4 w-4" />
+                      </div>
+
+                      {/* Duration Badge */}
+                      <div className="absolute bottom-3 sm:bottom-4 left-3 sm:left-4 flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-black/50 backdrop-blur-sm text-white text-xs sm:text-sm">
+                        <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                         {service.duration} min
-                      </span>
+                      </div>
                     </div>
-                    <Button
-                      className="w-full"
-                      size="lg"
-                      onClick={() => handleBooking(service.id)}
-                    >
-                      Agendar Agora
-                    </Button>
-                  </CardContent>
-                </Card>
+
+                    {/* Service Content */}
+                    <CardContent className="p-4 sm:p-5 md:p-6 flex-1 flex flex-col">
+                      <h3 className="mb-2 sm:mb-3 text-xl sm:text-2xl font-bold group-hover:text-primary transition-colors">
+                        {service.name}
+                      </h3>
+                      <p className="mb-4 sm:mb-6 text-xs sm:text-sm text-muted-foreground flex-1 line-clamp-2">
+                        {service.description}
+                      </p>
+
+                      {/* CTA Button Premium */}
+                      <Button
+                        className="w-full h-11 sm:h-12 text-sm sm:text-base font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all hover:scale-[1.02] group"
+                        size="lg"
+                        onClick={() => handleBooking(service.id)}
+                      >
+                        <span className="group-hover:scale-110 transition-transform inline-block">
+                          Agendar Agora
+                        </span>
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </motion.div>
               ))}
             </div>
           )}
         </section>
 
-        {/* Meus Agendamentos (público, filtrado pela barbearia) */}
-        <section className="pb-24">
-          <h2 className="mb-6 text-2xl font-bold">Meus Agendamentos</h2>
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Search className="mr-2 h-5 w-5" />
+        {/* Meus Agendamentos Premium */}
+        <section className="pb-20 sm:pb-24">
+          <motion.div 
+            className="text-center mb-8 sm:mb-12"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 sm:mb-3 bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent">
+              Meus Agendamentos
+            </h2>
+            <p className="text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto">
+              Consulte seus horários agendados
+            </p>
+          </motion.div>
+
+          <Card className="border-0 shadow-2xl shadow-primary/5 bg-card/50 backdrop-blur-sm overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10 border-b border-border/50 px-4 sm:px-6 py-4 sm:py-6">
+              <CardTitle className="flex items-center gap-2 sm:gap-3 text-base sm:text-lg md:text-xl">
+                <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10">
+                  <Search className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                </div>
                 Buscar por Telefone
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <div className="flex-1">
-                  <Label htmlFor="phone">Telefone</Label>
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6 sm:mb-8">
+                <div className="flex-1 space-y-2">
+                  <Label htmlFor="phone" className="text-xs sm:text-sm font-medium">
+                    Número do WhatsApp
+                  </Label>
                   <Input
                     id="phone"
                     placeholder="Ex: 11987654321"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
+                    className="h-11 sm:h-12 text-sm sm:text-base border-border/50 focus:border-primary transition-all"
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Digite o número usado no agendamento
+                  </p>
                 </div>
                 <div className="flex items-end">
                   <Button
@@ -309,7 +423,7 @@ const Barbershop = () => {
                         setSearchLoading(true);
                         const { data, error } = await supabase
                           .from("appointments")
-                          .select(`*, services(name, duration)`) // incluir serviço básico
+                          .select(`*, services(name, duration)`)
                           .eq("barbershop_id", barbershop.id)
                           .eq("customer_phone", phone.trim())
                           .order("scheduled_at", { ascending: true });
@@ -330,52 +444,119 @@ const Barbershop = () => {
                         setSearchLoading(false);
                       }
                     }}
-                    disabled={searchLoading}
+                    disabled={searchLoading || !phone.trim()}
+                    className="h-12 px-8 shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all"
                   >
-                    {searchLoading ? "Buscando..." : "Buscar"}
+                    {searchLoading ? (
+                      <span className="flex items-center gap-2">
+                        <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        Buscando...
+                      </span>
+                    ) : (
+                      "Buscar"
+                    )}
                   </Button>
                 </div>
               </div>
 
-              {/* Resultados */}
-              <div className="mt-8 space-y-4">
+              {/* Resultados Premium */}
+              <div className="space-y-4">
                 {searchPerformed && appointments.length === 0 ? (
-                  <Card>
-                    <CardContent className="py-10 text-center text-muted-foreground">
-                      Nenhum agendamento encontrado para este telefone nesta barbearia.
-                    </CardContent>
-                  </Card>
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="text-center py-16 px-4 rounded-2xl bg-muted/20 border border-dashed border-border"
+                  >
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted/30 flex items-center justify-center">
+                      <Calendar className="h-8 w-8 text-muted-foreground/50" />
+                    </div>
+                    <h3 className="text-lg font-semibold mb-2">Nenhum agendamento encontrado</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Não encontramos agendamentos para este telefone.
+                    </p>
+                  </motion.div>
                 ) : (
-                  appointments.map((apt) => (
-                    <Card key={apt.id} className="border-2">
-                      <CardContent className="p-4 flex items-center justify-between">
-                        <div className="space-y-1">
-                          <div className="font-medium text-white">{apt.customer_name}</div>
-                          <div className="text-sm text-gray-400">{apt.customer_phone}</div>
-                          <div className="flex items-center gap-3 text-sm text-gray-300">
-                            <div className="flex items-center">
-                              <Calendar className="h-4 w-4 mr-2" />
-                <span>{new Date(apt.scheduled_at).toLocaleDateString('pt-BR')}</span>
-                            </div>
-                            <div className="flex items-center">
-                              <Clock className="h-4 w-4 mr-2" />
-                <span>{new Date(apt.scheduled_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                  appointments.map((apt, index) => (
+                    <motion.div
+                      key={apt.id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                    >
+                      <Card className="border-0 shadow-lg hover:shadow-xl transition-all bg-gradient-to-r from-card to-card/50 overflow-hidden group">
+                        <CardContent className="p-5">
+                          <div className="flex items-start justify-between gap-4">
+                            {/* Info Principal */}
+                            <div className="flex-1 space-y-3">
+                              <div className="flex items-start gap-3">
+                                <div className="p-2 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                                  <Calendar className="h-5 w-5 text-primary" />
+                                </div>
+                                <div>
+                                  <h4 className="font-semibold text-lg mb-1">{apt.customer_name}</h4>
+                                  <p className="text-sm text-muted-foreground">{apt.customer_phone}</p>
+                                </div>
+                              </div>
+
+                              {/* Data e Hora */}
+                              <div className="flex flex-wrap items-center gap-4 text-sm">
+                                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/50">
+                                  <Calendar className="h-4 w-4 text-primary" />
+                                  <span className="font-medium">
+                                    {new Date(apt.scheduled_at).toLocaleDateString('pt-BR', { 
+                                      day: '2-digit', 
+                                      month: 'long',
+                                      year: 'numeric'
+                                    })}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/50">
+                                  <Clock className="h-4 w-4 text-primary" />
+                                  <span className="font-medium">
+                                    {new Date(apt.scheduled_at).toLocaleTimeString('pt-BR', { 
+                                      hour: '2-digit', 
+                                      minute: '2-digit' 
+                                    })}
+                                  </span>
+                                </div>
+                              </div>
+
+                              {/* Serviço */}
                               {apt.service && (
-                                <>
-                                  <span className="mx-2">•</span>
-                                  <span>{apt.service.name} ({apt.service.duration} min)</span>
-                                </>
+                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                  <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                                  <span>{apt.service.name}</span>
+                                  <span>•</span>
+                                  <span>{apt.service.duration} minutos</span>
+                                </div>
                               )}
                             </div>
+
+                            {/* Status Badge */}
+                            <div>
+                              <span className={`
+                                inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold
+                                ${apt.status === 'confirmed' ? 'bg-green-500/10 text-green-600 border border-green-500/20' : ''}
+                                ${apt.status === 'pending' ? 'bg-yellow-500/10 text-yellow-600 border border-yellow-500/20' : ''}
+                                ${apt.status === 'cancelled' ? 'bg-red-500/10 text-red-600 border border-red-500/20' : ''}
+                                ${apt.status === 'completed' ? 'bg-blue-500/10 text-blue-600 border border-blue-500/20' : ''}
+                              `}>
+                                <span className={`w-1.5 h-1.5 rounded-full ${
+                                  apt.status === 'confirmed' ? 'bg-green-600' : 
+                                  apt.status === 'pending' ? 'bg-yellow-600' : 
+                                  apt.status === 'cancelled' ? 'bg-red-600' : 
+                                  'bg-blue-600'
+                                }`} />
+                                {apt.status === 'confirmed' ? 'Confirmado' : 
+                                 apt.status === 'pending' ? 'Pendente' : 
+                                 apt.status === 'cancelled' ? 'Cancelado' : 
+                                 'Concluído'}
+                              </span>
+                            </div>
                           </div>
-                        </div>
-                        <div>
-                          <span className="text-xs px-2 py-1 rounded-full border border-gray-600 text-gray-300">
-                            {apt.status}
-                          </span>
-                        </div>
-                      </CardContent>
-                    </Card>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
                   ))
                 )}
               </div>
@@ -384,13 +565,26 @@ const Barbershop = () => {
         </section>
       </motion.div>
 
-      {/* Footer */}
+      {/* Footer Premium */}
       <motion.footer 
-        className="border-t border-border py-8 mt-12"
+        className="relative border-t border-border/50 py-12 mt-20 overflow-hidden"
         variants={itemVariants}
       >
-        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-          <p>Powered by ZapCorte - Sistema de Agendamento</p>
+        <div className="absolute inset-0 bg-gradient-to-t from-primary/5 to-transparent" />
+        <div className="container mx-auto px-4 text-center relative z-10">
+          <div className="mb-4">
+            <p className="text-sm font-medium text-foreground mb-2">
+              Powered by ZapCorte
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Sistema de Agendamento Premium
+            </p>
+          </div>
+          <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+            <span>Feito com</span>
+            <span className="text-red-500 animate-pulse">❤️</span>
+            <span>para profissionais</span>
+          </div>
         </div>
       </motion.footer>
     </motion.div>

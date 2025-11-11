@@ -1,0 +1,297 @@
+/* =====================================================
+   PREMIUM IMAGE UPLOAD - RESPONSIVIDADE
+   ===================================================== */
+
+/* Garantir que imagens não causem overflow */
+.image-upload-container {
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+/* Logo - Aspect Ratio 1:1 (Quadrado) */
+.image-upload-logo {
+  aspect-ratio: 1 / 1;
+  max-width: 300px;
+  margin: 0 auto;
+}
+
+/* Banner - Aspect Ratio 16:9 (Panorâmico) */
+.image-upload-banner {
+  aspect-ratio: 16 / 9;
+  width: 100%;
+}
+
+/* Dropzone Premium Styles */
+.dropzone-premium {
+  position: relative;
+  border: 2px dashed hsl(var(--border));
+  border-radius: 1rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.dropzone-premium:hover {
+  border-color: hsl(var(--primary));
+  background-color: hsl(var(--primary) / 0.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.dropzone-premium.dragging {
+  border-color: hsl(var(--primary));
+  background-color: hsl(var(--primary) / 0.1);
+  transform: scale(1.02);
+}
+
+.dropzone-premium.error {
+  border-color: hsl(var(--destructive));
+  background-color: hsl(var(--destructive) / 0.05);
+}
+
+/* Preview Image Styles */
+.preview-image-container {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 1rem;
+}
+
+.preview-image-container.logo {
+  border-radius: 2rem;
+}
+
+.preview-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.preview-image-container:hover .preview-image {
+  transform: scale(1.05);
+}
+
+/* Overlay Buttons */
+.preview-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.6), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 1rem;
+  gap: 0.5rem;
+}
+
+.preview-image-container:hover .preview-overlay {
+  opacity: 1;
+}
+
+/* Loading State */
+.upload-loading {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+/* Icon Container */
+.upload-icon-container {
+  padding: 1rem;
+  border-radius: 9999px;
+  background-color: hsl(var(--muted));
+  transition: all 0.3s ease;
+}
+
+.dropzone-premium:hover .upload-icon-container {
+  background-color: hsl(var(--primary) / 0.2);
+  transform: scale(1.1);
+}
+
+.dropzone-premium.dragging .upload-icon-container {
+  background-color: hsl(var(--primary) / 0.3);
+  transform: scale(1.15);
+}
+
+/* =====================================================
+   RESPONSIVIDADE MOBILE
+   ===================================================== */
+
+@media screen and (max-width: 767px) {
+  /* Logo menor em mobile */
+  .image-upload-logo {
+    max-width: 200px;
+  }
+
+  /* Banner mantém proporção mas reduz altura mínima */
+  .image-upload-banner {
+    min-height: 120px;
+  }
+
+  /* Dropzone com padding reduzido */
+  .dropzone-premium {
+    padding: 1.5rem 1rem;
+  }
+
+  /* Ícones menores em mobile */
+  .upload-icon-container {
+    padding: 0.75rem;
+  }
+
+  /* Botões de overlay empilhados em mobile muito pequeno */
+  @media screen and (max-width: 380px) {
+    .preview-overlay {
+      flex-direction: column;
+      padding: 0.75rem;
+    }
+    
+    .preview-overlay button {
+      width: 100%;
+      font-size: 0.75rem;
+    }
+  }
+
+  /* Texto menor em mobile */
+  .dropzone-premium p {
+    font-size: 0.875rem;
+  }
+
+  .dropzone-premium .text-xs {
+    font-size: 0.75rem;
+  }
+}
+
+/* =====================================================
+   TABLET (768px - 1023px)
+   ===================================================== */
+
+@media screen and (min-width: 768px) and (max-width: 1023px) {
+  .image-upload-logo {
+    max-width: 250px;
+  }
+
+  .image-upload-banner {
+    min-height: 150px;
+  }
+}
+
+/* =====================================================
+   DESKTOP (1024px+)
+   ===================================================== */
+
+@media screen and (min-width: 1024px) {
+  .image-upload-logo {
+    max-width: 300px;
+  }
+
+  .image-upload-banner {
+    min-height: 200px;
+  }
+
+  /* Hover effects mais pronunciados em desktop */
+  .dropzone-premium:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  }
+}
+
+/* =====================================================
+   ANIMAÇÕES E TRANSIÇÕES
+   ===================================================== */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.upload-loading svg {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* =====================================================
+   ACESSIBILIDADE
+   ===================================================== */
+
+/* Focus visível para navegação por teclado */
+.dropzone-premium:focus-within {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 2px;
+}
+
+/* Reduzir animações para usuários com preferência */
+@media (prefers-reduced-motion: reduce) {
+  .dropzone-premium,
+  .preview-image,
+  .preview-overlay,
+  .upload-icon-container {
+    transition: none;
+    animation: none;
+  }
+  
+  .dropzone-premium:hover {
+    transform: none;
+  }
+}
+
+/* =====================================================
+   DARK MODE
+   ===================================================== */
+
+.dark .dropzone-premium {
+  border-color: hsl(var(--border));
+}
+
+.dark .dropzone-premium:hover {
+  background-color: hsl(var(--primary) / 0.1);
+}
+
+.dark .upload-icon-container {
+  background-color: hsl(var(--muted));
+}
+
+/* =====================================================
+   UTILITÁRIOS
+   ===================================================== */
+
+/* Prevenir seleção de texto durante drag */
+.dropzone-premium.dragging * {
+  user-select: none;
+  pointer-events: none;
+}
+
+/* Garantir que imagens não ultrapassem container */
+.preview-image-container img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Centralização perfeita */
+.upload-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}

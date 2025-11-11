@@ -1,14 +1,18 @@
 import React from 'react';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import WhatsAppConnection from '@/components/WhatsAppConnection';
+import MessageCustomizer from '@/components/MessageCustomizer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MessageCircle, Zap, CheckCircle, Clock, Users } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useAuth } from '@/contexts/AuthContext';
 
 const WhatsAppSettings: React.FC = () => {
+  const { user } = useAuth();
+  
   return (
     <DashboardLayout>
-      <div className="space-y-8">
+      <div className="space-y-8 w-full overflow-x-hidden">
         {/* Page Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -35,7 +39,7 @@ const WhatsAppSettings: React.FC = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-6"
+          className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full overflow-x-hidden"
         >
           <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200 dark:from-green-900/20 dark:to-emerald-900/20 dark:border-green-800">
             <CardHeader className="pb-3">
@@ -89,11 +93,22 @@ const WhatsAppSettings: React.FC = () => {
           <WhatsAppConnection />
         </motion.div>
 
+        {/* NOVA SEÇÃO: Personalização de Mensagens */}
+        {user?.barbershop_id && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+          >
+            <MessageCustomizer barbershopId={user.barbershop_id} />
+          </motion.div>
+        )}
+
         {/* How it Works */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
         >
           <Card>
             <CardHeader>
@@ -119,7 +134,7 @@ const WhatsAppSettings: React.FC = () => {
                     </li>
                     <li className="flex items-start space-x-2">
                       <MessageCircle className="h-4 w-4 text-purple-500 mt-0.5 flex-shrink-0" />
-                      <span><strong>Cancelamento:</strong> Enviada quando um agendamento é cancelado</span>
+                      <span><strong>Reagendamento:</strong> Enviada quando um agendamento é alterado</span>
                     </li>
                   </ul>
                 </div>
@@ -141,8 +156,8 @@ const WhatsAppSettings: React.FC = () => {
                       <span>Serviço agendado</span>
                     </li>
                     <li className="flex items-start space-x-2">
-                      <span>👨‍💼</span>
-                      <span>Nome do profissional</span>
+                      <span>👤</span>
+                      <span>Nome do cliente</span>
                     </li>
                     <li className="flex items-start space-x-2">
                       <span>🏪</span>

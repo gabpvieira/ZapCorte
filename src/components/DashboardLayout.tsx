@@ -29,22 +29,22 @@ export const DashboardLayout = ({
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden max-w-full">
       <DashboardSidebar />
       
       {/* Main Content */}
-      <div className="dashboard-main-content md:pl-64">
+      <div className="dashboard-main-content md:pl-64 w-full overflow-x-hidden">
         <motion.main
           variants={contentVariants}
           initial="initial"
           animate="animate"
-          className="min-h-screen"
+          className="min-h-screen w-full overflow-x-hidden"
         >
           {/* Header */}
           {(title || subtitle || action) && (
-            <div className="dashboard-header border-b border-border bg-background/95 backdrop-blur-sm sticky top-0 z-30 safe-area-top">
-              <div className="container mx-auto px-4 py-4 md:py-6 md:px-6">
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="dashboard-header border-b border-border bg-background/95 backdrop-blur-sm sticky top-0 z-30 safe-area-top w-full overflow-x-hidden">
+              <div className="container mx-auto px-4 py-4 md:py-6 md:px-6 max-w-full">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 w-full overflow-x-hidden">
                   <div className="flex flex-col gap-2 ml-12 md:ml-0">
                     <div className="flex items-center gap-4">
                       {/* Logo no header do dashboard */}
@@ -76,7 +76,7 @@ export const DashboardLayout = ({
           )}
 
           {/* Content */}
-          <div className="container mx-auto px-4 py-4 md:py-6 md:px-6 container-padding">
+          <div className="container mx-auto px-4 py-4 md:py-6 md:px-6 container-padding w-full max-w-full overflow-x-hidden">
             {children}
           </div>
         </motion.main>

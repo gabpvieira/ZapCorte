@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Edit, Trash2, Calendar, Clock, Phone, User, Filter, Eye, RefreshCw, X } from "lucide-react";
+import { Plus, Edit, Trash2, Calendar, Clock, Phone, User, Filter, Eye, RefreshCw, X, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -17,6 +17,9 @@ import { supabase } from "@/lib/supabase";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { format, parseISO, parse, isPast, isToday, addDays, startOfDay, endOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { enviarLembreteWhatsApp } from "@/lib/notifications";
+import { DatePicker } from "@/components/DatePicker";
+import { cn } from "@/lib/utils";
 
 interface Service {
   id: string;
@@ -371,6 +374,65 @@ const Appointments = () => {
     }
   };
 
+  // Função para aceitar agendamento e enviar mensagem WhatsApp
+  const handleAcceptAppointment = async (appointment: Appointment) => {
+    if (!barbershop?.id) {
+      console.error('[Aceitar] Barbearia não encontrada');
+      return;
+    }
+
+    console.log('[Aceitar] Iniciando confirmação:', {
+      appointmentId: appointment.id,
+      customerName: appointment.customer_name,
+      customerPhone: appointment.customer_phone,
+      barbershopId: barbershop.id,
+      serviceName: appointment.service?.name
+    });
+
+    try {
+      // Atualizar status para confirmado
+      const { error } = await supabase
+        .from("appointments")
+        .update({ status: "confirmed" })
+        .eq("id", appointment.id);
+
+      if (error) {
+        console.error('[Aceitar] Erro ao atualizar status:', error);
+        throw error;
+      }
+
+      console.log('[Aceitar] Status atualizado com sucesso, enviando WhatsApp...');
+
+      // Enviar mensagem de confirmação via WhatsApp
+      const mensagemEnviada = await enviarLembreteWhatsApp({
+        barbershopId: barbershop.id,
+        customerName: appointment.customer_name,
+        customerPhone: appointment.customer_phone,
+        scheduledAt: appointment.scheduled_at,
+        serviceName: appointment.service?.name || 'Serviço',
+        tipo: 'confirmacao',
+      });
+
+      console.log('[Aceitar] Resultado do envio WhatsApp:', mensagemEnviada);
+
+      toast({
+        title: "Agendamento Confirmado!",
+        description: mensagemEnviada 
+          ? "Mensagem de confirmação enviada via WhatsApp." 
+          : "Agendamento confirmado. WhatsApp não conectado.",
+      });
+
+      fetchAppointments();
+    } catch (error) {
+      console.error("[Aceitar] Erro ao aceitar agendamento:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível confirmar o agendamento.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const updateAppointmentNotes = async (appointmentId: string, notes: string) => {
     setNotesUpdateLoading(true);
     try {
@@ -447,42 +509,47 @@ const Appointments = () => {
     if (!date || !selectedAppointment?.service) return;
 
     try {
-      const startDate = startOfDay(parseISO(date));
-      const endDate = endOfDay(parseISO(date));
+      console.log('[Reagendar] Buscando horários disponíveis:', {
+        date,
+        serviceId: selectedAppointment.service_id,
+        serviceDuration: selectedAppointment.service.duration,
+        barbershopId: barbershop?.id
+      });
 
-      const { data: existingAppointments, error } = await supabase
-        .from("appointments")
-        .select("scheduled_at")
-        .eq("barbershop_id", barbershop?.id)
-        .gte("scheduled_at", startDate.toISOString())
-        .lte("scheduled_at", endDate.toISOString())
-        .neq("id", selectedAppointment.id)
-        .neq("status", "cancelled");
+      // Usar a mesma função que a página pública usa (com lógica dinâmica)
+      const { getAvailableTimeSlots } = await import('@/lib/supabase-queries');
+      
+      const timeSlots = await getAvailableTimeSlots(
+        barbershop?.id || '',
+        selectedAppointment.service_id,
+        date
+      );
 
-      if (error) throw error;
+      console.log('[Reagendar] Horários recebidos:', timeSlots);
 
-      const occupiedSlots = existingAppointments?.map(apt => 
-        format(parseISO(apt.scheduled_at), "HH:mm", { locale: ptBR })
-      ) || [];
+      // Filtrar apenas os horários disponíveis
+      const availableSlots = timeSlots
+        .filter(slot => slot.available)
+        .map(slot => slot.time);
 
-      const slots = [];
-      for (let hour = 8; hour <= 18; hour++) {
-        for (let minute = 0; minute < 60; minute += 30) {
-          const time = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-          if (!occupiedSlots.includes(time)) {
-            slots.push(time);
-          }
-        }
+      console.log('[Reagendar] Horários disponíveis:', availableSlots);
+
+      setAvailableSlots(availableSlots);
+
+      if (availableSlots.length === 0) {
+        toast({
+          title: "Nenhum horário disponível",
+          description: "Não há horários disponíveis nesta data. Tente outra data.",
+        });
       }
-
-      setAvailableSlots(slots);
     } catch (error) {
-      console.error("Erro ao buscar horários disponíveis:", error);
+      console.error("[Reagendar] Erro ao buscar horários disponíveis:", error);
       toast({
         title: "Erro",
         description: "Não foi possível carregar os horários disponíveis.",
         variant: "destructive",
       });
+      setAvailableSlots([]);
     }
   };
 
@@ -794,6 +861,27 @@ const Appointments = () => {
                         </Badge>
 
                         <div className="flex space-x-1 md:space-x-2">
+                          {/* Botão de Aceitar - apenas para status pendente */}
+                          {appointment.status === 'pending' && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="default"
+                                    size="sm"
+                                    onClick={() => handleAcceptAppointment(appointment)}
+                                    className="bg-green-600 hover:bg-green-700"
+                                  >
+                                    <CheckCircle className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Aceitar agendamento</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
+
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
@@ -1034,70 +1122,147 @@ const Appointments = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Modal de Reagendamento */}
+      {/* Modal de Reagendamento - Design Premium */}
       <Dialog open={rescheduleDialogOpen} onOpenChange={setRescheduleDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Reagendar Agendamento</DialogTitle>
-            <DialogDescription>
-              Selecione uma nova data e horário para o agendamento
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="space-y-3">
+            <DialogTitle className="text-2xl font-bold flex items-center gap-2">
+              <RefreshCw className="h-6 w-6 text-primary" />
+              Reagendar Agendamento
+            </DialogTitle>
+            <DialogDescription className="text-base">
+              Escolha uma nova data e horário para o atendimento
             </DialogDescription>
           </DialogHeader>
 
           {selectedAppointment && (
-            <div className="space-y-4">
-              <div className="bg-gray-50 p-3 rounded-lg">
-                <p className="text-sm font-medium">Agendamento atual:</p>
-                <p className="text-sm text-gray-600">
-                  {formatDate(selectedAppointment.scheduled_at)} às {formatTime(selectedAppointment.scheduled_at)}
-                </p>
+            <div className="space-y-6 py-4">
+              {/* Informações do Agendamento Atual */}
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                    <Calendar className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-1">
+                      Agendamento Atual
+                    </p>
+                    <div className="flex flex-wrap items-center gap-3 text-sm text-blue-700 dark:text-blue-300">
+                      <div className="flex items-center gap-1">
+                        <User className="h-4 w-4" />
+                        <span className="font-medium">{selectedAppointment.customer_name}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Calendar className="h-4 w-4" />
+                        <span>{formatDate(selectedAppointment.scheduled_at)}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-4 w-4" />
+                        <span className="font-semibold">{formatTime(selectedAppointment.scheduled_at)}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              <div>
-                <label className="text-sm font-medium">Nova data</label>
-                <Input
-                  type="date"
-                  value={selectedDate}
-                  onChange={handleDateChange}
-                  min={format(new Date(), 'yyyy-MM-dd')}
-                  className="mt-1"
+              {/* Date Picker */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-1 bg-primary rounded-full" />
+                  <h3 className="text-lg font-semibold">Selecione a Nova Data</h3>
+                </div>
+                <DatePicker
+                  selectedDate={selectedDate ? parseISO(selectedDate) : null}
+                  onSelectDate={(date) => {
+                    const formattedDate = format(date, 'yyyy-MM-dd');
+                    setSelectedDate(formattedDate);
+                    handleDateChange(formattedDate);
+                  }}
+                  minDate={new Date()}
                 />
               </div>
 
+              {/* Horários Disponíveis */}
               {selectedDate && (
-                <div>
-                  <label className="text-sm font-medium">Horários disponíveis</label>
-                  <div className="grid grid-cols-3 gap-2 mt-2 max-h-40 overflow-y-auto">
-                    {availableSlots.length > 0 ? (
-                      availableSlots.map((slot) => (
-                        <Button
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className="h-8 w-1 bg-primary rounded-full" />
+                    <h3 className="text-lg font-semibold">Escolha o Horário</h3>
+                  </div>
+                  
+                  {availableSlots.length > 0 ? (
+                    <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2">
+                      {availableSlots.map((slot) => (
+                        <button
                           key={slot}
-                          variant={selectedTime === slot ? "default" : "outline"}
-                          size="sm"
                           onClick={() => setSelectedTime(slot)}
-                          className="text-xs"
+                          type="button"
+                          className={cn(
+                            "py-3 px-2 rounded-lg text-sm font-medium transition-all",
+                            "border-2 hover:scale-105 hover:shadow-md",
+                            selectedTime === slot
+                              ? "bg-primary text-primary-foreground border-primary shadow-lg scale-105"
+                              : "bg-background border-border hover:border-primary/50 hover:bg-primary/5"
+                          )}
                         >
                           {slot}
-                        </Button>
-                      ))
-                    ) : (
-                      <p className="text-sm text-gray-500 col-span-3 text-center py-4">
-                        Nenhum horário disponível nesta data
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12 bg-muted/50 rounded-xl border-2 border-dashed">
+                      <Clock className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+                      <p className="text-base font-medium text-foreground mb-1">
+                        Nenhum horário disponível
                       </p>
-                    )}
+                      <p className="text-sm text-muted-foreground">
+                        Tente selecionar outra data
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Resumo da Seleção */}
+              {selectedDate && selectedTime && (
+                <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 border border-green-200 dark:border-green-800 rounded-xl p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                      <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-green-900 dark:text-green-100 mb-1">
+                        Novo Agendamento
+                      </p>
+                      <div className="flex flex-wrap items-center gap-3 text-sm text-green-700 dark:text-green-300">
+                        <div className="flex items-center gap-1">
+                          <Calendar className="h-4 w-4" />
+                          <span>{format(parseISO(selectedDate), "dd/MM/yyyy", { locale: ptBR })}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Clock className="h-4 w-4" />
+                          <span className="font-semibold">{selectedTime}</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
             </div>
           )}
 
-          <DialogFooter>
-            <Button variant="outline" onClick={closeRescheduleDialog}>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button 
+              variant="outline" 
+              onClick={closeRescheduleDialog}
+              className="w-full sm:w-auto"
+            >
               Cancelar
             </Button>
             <Button 
               onClick={handleReschedule}
               disabled={!selectedTime || rescheduleLoading}
+              className="w-full sm:w-auto"
             >
               {rescheduleLoading ? (
                 <>
@@ -1105,7 +1270,10 @@ const Appointments = () => {
                   Reagendando...
                 </>
               ) : (
-                'Confirmar reagendamento'
+                <>
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Confirmar Reagendamento
+                </>
               )}
             </Button>
           </DialogFooter>

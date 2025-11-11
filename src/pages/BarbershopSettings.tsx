@@ -11,7 +11,7 @@ import { ImageUpload } from "@/components/ImageUpload";
 import { uploadBarbershopLogo, uploadBarbershopBanner } from "@/lib/storage";
 import { updateBarbershop, checkSlugAvailability } from "@/lib/supabase-queries";
 import { useToast } from "@/components/ui/use-toast";
-import { Loader2, Save, ExternalLink, Clock } from "lucide-react";
+import { Loader2, Save, ExternalLink, Clock, Image as ImageIcon } from "lucide-react";
 import { useState, useEffect } from "react";
 
 const BarbershopSettings = () => {
@@ -371,37 +371,94 @@ const BarbershopSettings = () => {
           </CardContent>
         </Card>
 
-        <Card className="border-2">
-          <CardHeader>
-            <CardTitle>Aparência</CardTitle>
+        <Card className="border-2 w-full max-w-full overflow-hidden">
+          <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10 border-b">
+            <CardTitle className="flex items-center gap-2">
+              <ImageIcon className="h-5 w-5 text-primary" />
+              Aparência
+            </CardTitle>
+            <p className="text-sm text-muted-foreground mt-1">
+              Personalize a identidade visual da sua barbearia
+            </p>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-4">
-              <Label>Logo da Barbearia</Label>
-              <ImageUpload
-                  value={logoPreview || barbershop?.logo_url}
-                  onChange={handleLogoChange}
-                  placeholder="Clique para fazer upload da logo"
-                  showPreview={true}
-                  maxWidth={200}
-                  maxHeight={200}
-                  variant="logo"
-                />
-              <p className="text-xs text-muted-foreground">Tamanho recomendado: 200 × 200 px (máx. 200 kB)</p>
+          <CardContent className="p-4 md:p-6 space-y-8 w-full overflow-x-hidden">
+            {/* Logo Section */}
+            <div className="space-y-4 w-full">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-base font-semibold">Logo da Barbearia</Label>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Imagem quadrada para melhor visualização
+                  </p>
+                </div>
+              </div>
+              <div className="flex justify-center w-full">
+                <div className="w-full max-w-xs">
+                  <ImageUpload
+                    value={logoPreview || barbershop?.logo_url}
+                    onChange={handleLogoChange}
+                    placeholder="Adicionar logo"
+                    showPreview={true}
+                    maxWidth={200}
+                    maxHeight={200}
+                    variant="logo"
+                    recommendedSize="Recomendado: 200×200px (máx. 200KB)"
+                  />
+                </div>
+              </div>
             </div>
 
-            <div className="space-y-4">
-              <Label>Banner da Barbearia</Label>
-              <ImageUpload
+            {/* Divider */}
+            <div className="border-t" />
+
+            {/* Banner Section */}
+            <div className="space-y-4 w-full">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-base font-semibold">Banner da Barbearia</Label>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Imagem panorâmica para o topo do seu site
+                  </p>
+                </div>
+              </div>
+              <div className="w-full">
+                <ImageUpload
                   value={bannerPreview || barbershop?.banner_url}
                   onChange={handleBannerChange}
-                  placeholder="Clique para fazer upload do banner"
+                  placeholder="Adicionar banner"
                   showPreview={true}
-                  maxWidth={400}
-                  maxHeight={200}
+                  maxWidth={800}
+                  maxHeight={300}
                   variant="banner"
+                  recommendedSize="Recomendado: 1200×400px (máx. 500KB)"
                 />
-              <p className="text-xs text-muted-foreground">Tamanho recomendado: 1200 × 400 px (máx. 500 kB)</p>
+              </div>
+            </div>
+
+            {/* Tips Card */}
+            <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+              <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-2 flex items-center gap-2">
+                <ImageIcon className="h-4 w-4" />
+                Dicas para melhores resultados
+              </h4>
+              <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-1.5">
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-500 mt-0.5">•</span>
+                  <span>Use imagens de alta qualidade e bem iluminadas</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-500 mt-0.5">•</span>
+                  <span>A logo deve ter fundo transparente (PNG) para melhor resultado</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-500 mt-0.5">•</span>
+                  <span>O banner deve representar o ambiente da sua barbearia</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-500 mt-0.5">•</span>
+                  <span>Evite textos muito pequenos nas imagens</span>
+                </li>
+              </ul>
             </div>
           </CardContent>
         </Card>

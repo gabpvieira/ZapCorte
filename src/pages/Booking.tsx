@@ -10,6 +10,7 @@ import { Calendar, Clock, ArrowLeft } from "lucide-react";
 import { getBarbershopBySlug, getBarbershopServices, createAppointment, getAvailableTimeSlots } from "@/lib/supabase-queries";
 import { supabase } from "@/lib/supabase";
 import { notificarNovoAgendamento } from '@/lib/notifications';
+import "@/styles/booking-premium.css";
 
 async function registrarPushBarbeiro(barbershopId: string) {
   if (!window.OneSignalDeferred) return;
@@ -285,135 +286,266 @@ const Booking = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background py-8">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+      {/* Header Premium com Glassmorphism */}
       <motion.div 
-        className="container mx-auto max-w-4xl px-4"
-        variants={containerVariants}
-        initial="initial"
-        animate="animate"
+        className="sticky top-0 z-50 backdrop-blur-xl bg-background/80 border-b border-border/50"
+        initial={{ y: -100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
       >
-        <motion.div variants={itemVariants}>
+        <div className="container mx-auto max-w-6xl w-[90%] sm:w-full px-0 sm:px-4 py-3 sm:py-4">
           <Button
             variant="ghost"
             onClick={() => navigate(`/barbershop/${slug}`)}
-            className="mb-6 text-foreground hover:bg-muted"
+            className="text-foreground hover:bg-muted/50 transition-all hover:scale-105 text-sm sm:text-base"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
             Voltar
           </Button>
+        </div>
+      </motion.div>
+
+      <motion.div 
+        className="container mx-auto max-w-6xl w-[90%] sm:w-full px-0 sm:px-4 py-6 sm:py-12"
+        variants={containerVariants}
+        initial="initial"
+        animate="animate"
+      >
+        {/* Hero Section */}
+        <motion.div 
+          className="text-center mb-8 sm:mb-12"
+          variants={itemVariants}
+        >
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-3 sm:mb-4 bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent">
+            Reserve seu Horário
+          </h1>
+          <p className="text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto">
+            Escolha o melhor momento para cuidar do seu visual
+          </p>
         </motion.div>
-        <div className="grid gap-8 md:grid-cols-2">
-          {/* Service Info */}
+
+        <div className="grid gap-6 sm:gap-8 lg:grid-cols-[1fr_1.2fr]">
+          {/* Service Info - Card Premium */}
           <motion.div variants={itemVariants}>
-            <Card className="border-2">
-            <CardHeader>
-              <CardTitle>Resumo do Serviço</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div
-                className="h-48 rounded-lg bg-cover bg-center"
-                style={{ backgroundImage: `url(${service.image_url})` }}
-              />
-              <div>
-                <h3 className="mb-2 text-xl font-bold">{service.name}</h3>
-                <p className="text-sm text-muted-foreground">{service.description}</p>
+            <Card className="border-0 shadow-2xl shadow-primary/5 overflow-hidden bg-card/50 backdrop-blur-sm lg:sticky lg:top-24">
+              <div className="relative">
+                <div
+                  className="h-48 sm:h-56 md:h-64 bg-cover bg-center relative overflow-hidden"
+                  style={{ backgroundImage: `url(${service.image_url})` }}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                  <div className="absolute bottom-3 sm:bottom-4 left-3 sm:left-4 right-3 sm:right-4">
+                    <h3 className="text-xl sm:text-2xl font-bold text-white mb-1">{service.name}</h3>
+                    <p className="text-xs sm:text-sm text-white/90 line-clamp-2">{service.description}</p>
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center justify-between border-t border-border pt-4">
-                <span className="text-2xl font-bold text-primary">
-                  R$ {service.price.toFixed(2)}
-                </span>
-                <span className="flex items-center gap-1 text-muted-foreground">
-                  <Clock className="h-4 w-4" />
-                  {service.duration} min
-                </span>
-              </div>
-            </CardContent>
-          </Card>
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex items-center justify-between p-3 sm:p-4 rounded-xl bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20">
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Investimento</p>
+                    <span className="text-2xl sm:text-3xl font-bold text-primary">
+                      R$ {service.price.toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-muted-foreground mb-1">Duração</p>
+                    <span className="flex items-center gap-1.5 sm:gap-2 text-base sm:text-lg font-semibold">
+                      <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                      {service.duration} min
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </motion.div>
 
-          {/* Booking Form */}
+          {/* Booking Form - Design Premium */}
           <motion.div variants={itemVariants}>
-            <Card className="border-2">
-            <CardHeader>
-              <CardTitle>Escolha seu Horário</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Date Selector */}
-                <div>
-                  <Label className="mb-4 flex items-center gap-2">
-                    <Calendar className="h-4 w-4" />
-                    Escolha a Data
-                  </Label>
-                  <WeeklyDatePicker
-                    selectedDate={selectedDate}
-                    onDateSelect={setSelectedDate}
-                    minDate={new Date()}
-                  />
-                </div>
-
-                {/* Time Slots */}
-                <div>
-                  <Label className="mb-2 flex items-center gap-2">
-                    <Clock className="h-4 w-4" />
-                    Horário
-                  </Label>
-                  {timeSlots.length === 0 ? (
-                    <p className="text-sm text-muted-foreground py-4">
-                      Nenhum horário disponível para esta data.
-                    </p>
-                  ) : (
-                    <div className="grid grid-cols-3 gap-2">
-                      {timeSlots.map((slot) => (
-                        <Button
-                          key={slot.time}
-                          type="button"
-                          variant={selectedTime === slot.time ? "default" : "outline"}
-                          onClick={() => slot.available && setSelectedTime(slot.time)}
-                          disabled={!slot.available}
-                           className={`w-full ${!slot.available ? "opacity-40 cursor-not-allowed" : ""}`}
-                         >
-                           {formatSlotLabel(slot.time)}
-                         </Button>
-                       ))}
+            <Card className="border-0 shadow-2xl shadow-primary/5 bg-card/50 backdrop-blur-sm">
+              <CardHeader className="pb-6 sm:pb-8 px-4 sm:px-6">
+                <CardTitle className="text-xl sm:text-2xl">Complete seu Agendamento</CardTitle>
+                <p className="text-xs sm:text-sm text-muted-foreground mt-2">
+                  Preencha os dados abaixo para confirmar
+                </p>
+              </CardHeader>
+              <CardContent className="px-4 sm:px-6">
+                <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
+                  {/* Date Selector */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
+                  >
+                    <Label className="mb-3 sm:mb-4 flex items-center gap-2 text-sm sm:text-base font-semibold">
+                      <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10">
+                        <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
+                      </div>
+                      Escolha a Data
+                    </Label>
+                    <div className="rounded-xl overflow-hidden border border-border/50 bg-background/50">
+                      <WeeklyDatePicker
+                        selectedDate={selectedDate}
+                        onDateSelect={setSelectedDate}
+                        minDate={new Date()}
+                      />
                     </div>
-                  )}
-                </div>
+                  </motion.div>
 
-                {/* Customer Info */}
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="name">Nome Completo</Label>
-                    <Input
-                      id="name"
-                      type="text"
-                      placeholder="João Silva"
-                      value={customerName}
-                      onChange={(e) => setCustomerName(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="phone">WhatsApp</Label>
-                    <Input
-                      id="phone"
-                      type="tel"
-                      placeholder="(11) 99999-9999"
-                      value={customerPhone}
-                      onChange={(e) => setCustomerPhone(e.target.value)}
-                      required
-                    />
-                  </div>
-                </div>
+                  {/* Time Slots */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                  >
+                    <Label className="mb-3 sm:mb-4 flex items-center gap-2 text-sm sm:text-base font-semibold">
+                      <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10">
+                        <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
+                      </div>
+                      Selecione o Horário
+                    </Label>
+                    {timeSlots.length === 0 ? (
+                      <div className="text-center py-8 sm:py-12 px-4 rounded-xl bg-muted/30 border border-dashed border-border">
+                        <Clock className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-3 text-muted-foreground/50" />
+                        <p className="text-xs sm:text-sm text-muted-foreground">
+                          Nenhum horário disponível para esta data.
+                        </p>
+                        <p className="text-xs text-muted-foreground/70 mt-1">
+                          Tente selecionar outra data
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 sm:gap-3">
+                        {timeSlots.map((slot, index) => (
+                          <motion.div
+                            key={slot.time}
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ delay: index * 0.03 }}
+                          >
+                            <Button
+                              type="button"
+                              variant={selectedTime === slot.time ? "default" : "outline"}
+                              onClick={() => slot.available && setSelectedTime(slot.time)}
+                              disabled={!slot.available}
+                              className={`w-full h-10 sm:h-12 text-xs sm:text-sm font-semibold transition-all ${
+                                selectedTime === slot.time 
+                                  ? "shadow-lg shadow-primary/30 scale-105" 
+                                  : "hover:scale-105 hover:shadow-md"
+                              } ${
+                                !slot.available 
+                                  ? "opacity-30 cursor-not-allowed hover:scale-100" 
+                                  : ""
+                              }`}
+                            >
+                              {formatSlotLabel(slot.time)}
+                            </Button>
+                          </motion.div>
+                        ))}
+                      </div>
+                    )}
+                  </motion.div>
 
-                <Button type="submit" size="lg" className="w-full" disabled={submitting}>
-                  {submitting ? "Confirmando..." : "Confirmar Agendamento"}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
+                  {/* Customer Info */}
+                  <motion.div
+                    className="space-y-4 sm:space-y-5"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 }}
+                  >
+                    <div className="space-y-2">
+                      <Label htmlFor="name" className="text-xs sm:text-sm font-medium">
+                        Nome Completo
+                      </Label>
+                      <Input
+                        id="name"
+                        type="text"
+                        placeholder="Digite seu nome completo"
+                        value={customerName}
+                        onChange={(e) => setCustomerName(e.target.value)}
+                        required
+                        className="h-11 sm:h-12 text-sm sm:text-base border-border/50 focus:border-primary transition-all"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="phone" className="text-xs sm:text-sm font-medium">
+                        WhatsApp
+                      </Label>
+                      <Input
+                        id="phone"
+                        type="tel"
+                        placeholder="(11) 99999-9999"
+                        value={customerPhone}
+                        onChange={(e) => setCustomerPhone(e.target.value)}
+                        required
+                        className="h-11 sm:h-12 text-sm sm:text-base border-border/50 focus:border-primary transition-all"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Você receberá confirmação e lembretes por WhatsApp
+                      </p>
+                    </div>
+                  </motion.div>
+
+                  {/* Submit Button Premium */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5 }}
+                  >
+                    <Button 
+                      type="submit" 
+                      size="lg" 
+                      className="w-full h-12 sm:h-14 text-sm sm:text-base font-semibold shadow-xl shadow-primary/30 hover:shadow-2xl hover:shadow-primary/40 transition-all hover:scale-[1.02]" 
+                      disabled={submitting || !selectedTime || !customerName || !customerPhone}
+                    >
+                      {submitting ? (
+                        <span className="flex items-center gap-2">
+                          <div className="h-4 w-4 sm:h-5 sm:w-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                          Confirmando...
+                        </span>
+                      ) : (
+                        "Confirmar Agendamento"
+                      )}
+                    </Button>
+                    {selectedTime && customerName && customerPhone && (
+                      <motion.p 
+                        className="text-center text-xs text-muted-foreground mt-3"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                      >
+                        ✓ Tudo pronto! Clique para confirmar
+                      </motion.p>
+                    )}
+                  </motion.div>
+                </form>
+              </CardContent>
+            </Card>
           </motion.div>
         </div>
+
+        {/* Trust Badges */}
+        <motion.div 
+          className="mt-12 sm:mt-16 grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 max-w-4xl mx-auto"
+          variants={itemVariants}
+        >
+          {[
+            { icon: "⚡", title: "Confirmação Instantânea", desc: "Receba confirmação imediata" },
+            { icon: "🔔", title: "Lembretes Automáticos", desc: "Nunca perca seu horário" },
+            { icon: "🔒", title: "Dados Seguros", desc: "Suas informações protegidas" }
+          ].map((badge, i) => (
+            <motion.div
+              key={i}
+              className="text-center p-4 sm:p-6 rounded-xl bg-card/30 border border-border/50"
+              whileHover={{ scale: 1.05 }}
+              transition={{ duration: 0.2 }}
+            >
+              <div className="text-2xl sm:text-3xl mb-2">{badge.icon}</div>
+              <h4 className="font-semibold text-sm sm:text-base mb-1">{badge.title}</h4>
+              <p className="text-xs text-muted-foreground">{badge.desc}</p>
+            </motion.div>
+          ))}
+        </motion.div>
       </motion.div>
     </div>
   );

@@ -326,7 +326,7 @@ const Dashboard = () => {
                   return (
                     <div
                       key={appointment.id}
-                      className="appointment-card flex flex-col md:flex-row md:items-center md:justify-between rounded-lg border border-border p-4 hover:bg-gray-50 transition-colors gap-4"
+                      className="appointment-card flex flex-col md:flex-row md:items-center md:justify-between rounded-lg border border-border p-4 hover:bg-muted/50 dark:hover:bg-muted/20 transition-colors gap-4"
                     >
                       <div className="appointment-card-content flex items-center gap-3 md:gap-4 flex-1">
                         <div className="flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full bg-primary/10 flex-shrink-0">

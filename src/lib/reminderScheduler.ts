@@ -137,6 +137,25 @@ class ReminderScheduler {
    */
   private async sendReminder(reminder: any) {
     try {
+      // VERIFICAÇÃO CRÍTICA: Verificar se o lembrete já foi enviado
+      const { data: existingReminder } = await supabase
+        .from('reminder_jobs')
+        .select('status')
+        .eq('id', reminder.id)
+        .single();
+
+      if (existingReminder && existingReminder.status !== 'pending') {
+        console.log(`⏭️ Lembrete ${reminder.id} já foi processado (status: ${existingReminder.status})`);
+        return;
+      }
+
+      // Marcar como "processing" imediatamente para evitar duplicação
+      await supabase
+        .from('reminder_jobs')
+        .update({ status: 'processing' })
+        .eq('id', reminder.id)
+        .eq('status', 'pending'); // Só atualiza se ainda estiver pending
+
       const appointment = reminder.appointments;
       const barbershop = reminder.barbershops;
       const service = reminder.services;
@@ -206,6 +225,18 @@ class ReminderScheduler {
    */
   static async createRemindersForAppointment(appointmentId: string) {
     try {
+      // VERIFICAÇÃO: Verificar se já existe lembrete pendente para este agendamento
+      const { data: existingReminders } = await supabase
+        .from('reminder_jobs')
+        .select('id, status')
+        .eq('appointment_id', appointmentId)
+        .in('status', ['pending', 'processing']);
+
+      if (existingReminders && existingReminders.length > 0) {
+        console.log(`⏭️ Lembrete já existe para agendamento ${appointmentId}`);
+        return;
+      }
+
       // Buscar dados do agendamento e configurações da barbearia
       const { data: appointment, error: appointmentError } = await supabase
         .from('appointments')

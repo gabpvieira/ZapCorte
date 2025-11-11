@@ -93,19 +93,14 @@ export async function enviarLembreteWhatsApp({
 }) {
   try {
     // Buscar dados da barbearia e verificar se WhatsApp está conectado
-    const { data: barbershop, error } = await supabase
+    const { data: barbershop, error: barbershopError } = await supabase
       .from('barbershops')
-      .select(`
-        whatsapp_session_id, 
-        whatsapp_connected, 
-        name,
-        users!inner(name)
-      `)
+      .select('whatsapp_session_id, whatsapp_connected, name, user_id')
       .eq('id', barbershopId)
       .single();
 
-    if (error) {
-      console.error('[WhatsApp] Erro ao buscar barbearia:', error);
+    if (barbershopError) {
+      console.error('[WhatsApp] Erro ao buscar barbearia:', barbershopError);
       return false;
     }
 
@@ -114,12 +109,25 @@ export async function enviarLembreteWhatsApp({
       return false;
     }
 
+    // Buscar nome do barbeiro/usuário
+    let barbeiroNome = 'Barbeiro';
+    if (barbershop.user_id) {
+      const { data: user } = await supabase
+        .from('users')
+        .select('name')
+        .eq('id', barbershop.user_id)
+        .single();
+      
+      if (user?.name) {
+        barbeiroNome = user.name;
+      }
+    }
+
     // Formatar data e hora
     const date = new Date(scheduledAt);
     const dataFormatada = format(date, "dd/MM/yyyy", { locale: ptBR });
     const diaSemana = format(date, "EEEE", { locale: ptBR });
     const horaFormatada = format(date, "HH:mm");
-    const barbeiroNome = barbershop.users?.name || 'Barbeiro';
 
     // Gerar mensagem baseada no tipo
     let mensagem = '';
@@ -178,6 +186,15 @@ _Mensagem enviada automaticamente pelo ZapCorte_`;
         break;
     }
 
+    // Log detalhado antes de enviar
+    console.log('[WhatsApp] Preparando envio:', {
+      sessionId: barbershop.whatsapp_session_id,
+      customerPhone,
+      customerName,
+      tipo,
+      mensagemLength: mensagem.length
+    });
+
     // Enviar mensagem via Evolution API
     const sucesso = await evolutionApi.sendMessage(barbershop.whatsapp_session_id, {
       phone: customerPhone,
@@ -185,15 +202,15 @@ _Mensagem enviada automaticamente pelo ZapCorte_`;
     });
 
     if (sucesso) {
-      console.log(`[WhatsApp] Mensagem de ${tipo} enviada para ${customerName}`);
+      console.log(`[WhatsApp] ✅ Mensagem de ${tipo} enviada para ${customerName} (${customerPhone})`);
       return true;
     } else {
-      console.error(`[WhatsApp] Falha ao enviar mensagem de ${tipo}`);
+      console.error(`[WhatsApp] ❌ Falha ao enviar mensagem de ${tipo} para ${customerPhone}`);
       return false;
     }
 
   } catch (error) {
-    console.error('[WhatsApp] Erro ao enviar lembrete:', error);
+    console.error('[WhatsApp] ❌ Erro ao enviar lembrete:', error);
     return false;
   }
 }
