@@ -36,6 +36,37 @@ async function sendPushNotification(subscription, payload) {
 }
 
 /**
+ * Envia notificação de novo agendamento
+ */
+async function sendNewAppointmentNotification(subscription, data) {
+  const { customerName, scheduledAt, serviceName } = data;
+  
+  const date = new Date(scheduledAt);
+  const hoje = new Date().toDateString() === date.toDateString();
+  const dataFormatada = date.toLocaleDateString('pt-BR');
+  const hora = date.toLocaleTimeString('pt-BR', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
+  const payload = {
+    title: '🎉 Novo Agendamento!',
+    body: `${customerName} agendou ${serviceName || 'um serviço'} para ${hoje ? 'hoje' : dataFormatada} às ${hora}`,
+    icon: '/zapcorte-icon.png',
+    badge: '/zapcorte-icon.png',
+    data: {
+      url: '/dashboard/appointments',
+      type: 'new_appointment',
+      customerName,
+      scheduledAt,
+      serviceName,
+    },
+  };
+
+  return await sendPushNotification(subscription, payload);
+}
+
+/**
  * Envia notificação de teste
  */
 async function sendTestNotification(subscription) {
@@ -109,7 +140,19 @@ export default async function handler(req, res) {
 
     for (const sub of subscriptions) {
       try {
-        const result = await sendTestNotification(sub.subscription);
+        let result;
+        
+        // Se tem dados do cliente, enviar notificação personalizada
+        if (customerName && scheduledAt && serviceName) {
+          result = await sendNewAppointmentNotification(sub.subscription, {
+            customerName,
+            scheduledAt,
+            serviceName
+          });
+        } else {
+          // Senão, enviar notificação de teste
+          result = await sendTestNotification(sub.subscription);
+        }
 
         if (result.success) {
           successCount++;
@@ -146,16 +189,27 @@ export default async function handler(req, res) {
     }
 
     // Registrar no histórico
+    const notificationTitle = customerName && scheduledAt && serviceName
+      ? '🎉 Novo Agendamento!'
+      : '✅ Notificação de Teste';
+    
+    const notificationBody = customerName && scheduledAt && serviceName
+      ? `${customerName} agendou ${serviceName}`
+      : 'Suas notificações estão funcionando!';
+
     await supabase.from('push_notifications').insert({
       barbershop_id: barbershopId,
-      title: '✅ Notificação de Teste',
-      body: 'Suas notificações estão funcionando!',
+      title: notificationTitle,
+      body: notificationBody,
       status: successCount > 0 ? 'sent' : 'failed',
       sent_at: successCount > 0 ? new Date().toISOString() : null,
       data: { 
         devices: results,
         successCount,
-        failCount
+        failCount,
+        customerName,
+        scheduledAt,
+        serviceName
       }
     });
 
