@@ -141,24 +141,24 @@ const Plan = () => {
             <CardTitle>Compare os Planos</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid md:grid-cols-3 gap-6">
+            <div className="plans-grid grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
               {Object.entries(planLimits).map(([planKey, plan]) => (
                 <div 
                   key={planKey}
-                  className={`p-4 rounded-lg border-2 ${
+                  className={`plan-card p-4 md:p-6 rounded-lg border-2 mobile-full-width ${
                     currentPlan === planKey 
                       ? 'border-primary bg-primary/5' 
                       : 'border-border'
                   }`}
                 >
-                  <div className="text-center mb-4">
-                    <h3 className="text-lg font-bold">{plan.name}</h3>
-                    <p className="text-2xl font-bold text-primary">{plan.price}</p>
+                  <div className="plan-card-header text-center mb-4">
+                    <h3 className="plan-card-title text-lg md:text-xl font-bold">{plan.name}</h3>
+                    <p className="plan-card-price text-xl md:text-2xl font-bold text-primary mt-2">{plan.price}</p>
                   </div>
                   
-                  <ul className="space-y-2 mb-4">
+                  <ul className="plan-card-features space-y-2 mb-4">
                     {plan.features.map((feature, index) => (
-                      <li key={index} className="flex items-start gap-2 text-sm">
+                      <li key={index} className="flex items-start gap-2 text-xs md:text-sm">
                         <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
                         <span>{feature}</span>
                       </li>
@@ -167,7 +167,7 @@ const Plan = () => {
                   
                   {currentPlan !== planKey && planKey !== 'freemium' && (
                     <UpgradeButton 
-                      className="w-full" 
+                      className="plan-card-button w-full" 
                       variant="outline"
                       planType={planKey as 'starter' | 'pro'}
                     >
@@ -176,7 +176,7 @@ const Plan = () => {
                   )}
                   
                   {currentPlan === planKey && (
-                    <Button className="w-full" disabled>
+                    <Button className="plan-card-button w-full" disabled>
                       Plano Atual
                     </Button>
                   )}

@@ -1,0 +1,627 @@
+/* =====================================================
+   RESPONSIVIDADE COMPLETA DO PAINEL DO BARBEIRO
+   ===================================================== */
+
+/* =====================================================
+   1. MENU LATERAL (SIDEBAR) - MOBILE
+   ===================================================== */
+
+/* Desktop: Menu lateral visível */
+@media screen and (min-width: 768px) {
+  .dashboard-sidebar {
+    display: flex !important;
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 16rem; /* 256px */
+    z-index: 40;
+  }
+}
+
+/* Mobile: Menu lateral oculto por padrão */
+@media screen and (max-width: 767px) {
+  .dashboard-sidebar {
+    display: none;
+  }
+  
+  /* Botão hamburguer visível apenas em mobile */
+  .mobile-menu-button {
+    display: block !important;
+  }
+  
+  /* Overlay escuro quando menu está aberto */
+  .mobile-menu-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 40;
+  }
+  
+  /* Menu slide-in em mobile */
+  .mobile-menu-sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 16rem; /* 256px */
+    z-index: 50;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease-in-out;
+  }
+  
+  .mobile-menu-sidebar.open {
+    transform: translateX(0);
+  }
+}
+
+/* =====================================================
+   2. CONTEÚDO PRINCIPAL - LAYOUT RESPONSIVO
+   ===================================================== */
+
+/* Desktop: Margem para o menu lateral */
+@media screen and (min-width: 768px) {
+  .dashboard-main-content {
+    margin-left: 16rem; /* 256px - largura do sidebar */
+  }
+}
+
+/* Mobile: Sem margem lateral */
+@media screen and (max-width: 767px) {
+  .dashboard-main-content {
+    margin-left: 0 !important;
+    padding-left: 0 !important;
+  }
+  
+  /* Ajustar padding do container */
+  .container {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+}
+
+/* =====================================================
+   3. HEADER DO DASHBOARD
+   ===================================================== */
+
+@media screen and (max-width: 767px) {
+  /* Ajustar header para mobile */
+  .dashboard-header {
+    padding: 1rem !important;
+  }
+  
+  .dashboard-header h1 {
+    font-size: 1.5rem !important; /* 24px */
+    margin-left: 3rem !important; /* Espaço para o botão hamburguer */
+  }
+  
+  .dashboard-header .subtitle {
+    font-size: 0.875rem !important; /* 14px */
+  }
+  
+  /* Botões de ação em mobile */
+  .dashboard-header-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+  }
+  
+  .dashboard-header-actions button {
+    width: 100%;
+    font-size: 0.875rem !important;
+  }
+}
+
+/* =====================================================
+   4. CARDS E GRID - EMPILHAMENTO VERTICAL
+   ===================================================== */
+
+/* Desktop: Múltiplas colunas */
+@media screen and (min-width: 768px) {
+  .stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  .services-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .plans-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media screen and (min-width: 1024px) {
+  .services-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Tablet: 2 colunas */
+@media screen and (min-width: 640px) and (max-width: 767px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .services-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .plans-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Mobile: 1 coluna (empilhamento vertical) */
+@media screen and (max-width: 639px) {
+  .stats-grid,
+  .services-grid,
+  .plans-grid,
+  .grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+  
+  /* Forçar largura 100% em todos os cards */
+  .card,
+  .stats-card,
+  .service-card,
+  .plan-card {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
+
+/* =====================================================
+   5. TABELAS E LISTAS DE AGENDAMENTOS
+   ===================================================== */
+
+@media screen and (max-width: 767px) {
+  /* Agendamentos: Layout vertical */
+  .appointment-card {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+  }
+  
+  .appointment-card-content {
+    width: 100% !important;
+  }
+  
+  .appointment-card-actions {
+    width: 100% !important;
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    margin-top: 1rem !important;
+  }
+  
+  /* Informações do agendamento em mobile */
+  .appointment-info {
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+  }
+  
+  .appointment-info > div {
+    width: 100% !important;
+  }
+  
+  /* Botões de ação menores em mobile */
+  .appointment-actions button {
+    padding: 0.5rem !important;
+  }
+  
+  .appointment-actions button svg {
+    width: 1rem !important;
+    height: 1rem !important;
+  }
+}
+
+/* =====================================================
+   6. FORMULÁRIOS E MODAIS
+   ===================================================== */
+
+@media screen and (max-width: 767px) {
+  /* Modais ocupam toda a tela em mobile */
+  .dialog-content,
+  .modal-content {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+  }
+  
+  /* Formulários: campos em coluna única */
+  .form-grid {
+    grid-template-columns: 1fr !important;
+  }
+  
+  /* Inputs e selects com tamanho adequado para toque */
+  input,
+  select,
+  textarea,
+  button {
+    min-height: 44px !important; /* Tamanho mínimo para toque */
+    font-size: 16px !important; /* Evita zoom no iOS */
+  }
+  
+  /* Labels maiores */
+  label {
+    font-size: 0.875rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+}
+
+/* =====================================================
+   7. CARDS DE SERVIÇOS
+   ===================================================== */
+
+@media screen and (max-width: 767px) {
+  .service-card {
+    width: 100% !important;
+  }
+  
+  .service-card-image {
+    height: 12rem !important; /* 192px */
+  }
+  
+  .service-card-content {
+    padding: 1rem !important;
+  }
+  
+  .service-card-title {
+    font-size: 1.125rem !important; /* 18px */
+  }
+  
+  .service-card-description {
+    font-size: 0.875rem !important; /* 14px */
+  }
+  
+  .service-card-actions {
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+  }
+  
+  .service-card-actions button {
+    width: 100% !important;
+  }
+}
+
+/* =====================================================
+   8. CARDS DE PLANOS
+   ===================================================== */
+
+@media screen and (max-width: 767px) {
+  .plan-card {
+    width: 100% !important;
+    margin-bottom: 1rem !important;
+  }
+  
+  .plan-card-header {
+    text-align: center !important;
+    padding: 1.5rem 1rem !important;
+  }
+  
+  .plan-card-title {
+    font-size: 1.25rem !important; /* 20px */
+  }
+  
+  .plan-card-price {
+    font-size: 1.75rem !important; /* 28px */
+  }
+  
+  .plan-card-features {
+    padding: 1rem !important;
+  }
+  
+  .plan-card-features li {
+    font-size: 0.875rem !important; /* 14px */
+    padding: 0.5rem 0 !important;
+  }
+  
+  .plan-card-button {
+    width: 100% !important;
+    margin-top: 1rem !important;
+  }
+}
+
+/* =====================================================
+   9. FILTROS E CONTROLES
+   ===================================================== */
+
+@media screen and (max-width: 767px) {
+  .filters-container {
+    flex-direction: column !important;
+    gap: 1rem !important;
+  }
+  
+  .filter-item {
+    width: 100% !important;
+  }
+  
+  .filter-item select,
+  .filter-item input {
+    width: 100% !important;
+  }
+}
+
+/* =====================================================
+   10. BADGES E TAGS
+   ===================================================== */
+
+@media screen and (max-width: 767px) {
+  .badge,
+  .tag {
+    font-size: 0.75rem !important; /* 12px */
+    padding: 0.25rem 0.5rem !important;
+  }
+}
+
+/* =====================================================
+   11. BOTÕES E AÇÕES
+   ===================================================== */
+
+@media screen and (max-width: 767px) {
+  /* Botões primários maiores para toque */
+  .btn-primary,
+  .button-primary {
+    min-height: 44px !important;
+    padding: 0.75rem 1.5rem !important;
+    font-size: 1rem !important;
+  }
+  
+  /* Botões secundários */
+  .btn-secondary,
+  .button-secondary {
+    min-height: 44px !important;
+    padding: 0.75rem 1rem !important;
+  }
+  
+  /* Grupos de botões em coluna */
+  .button-group {
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+  }
+  
+  .button-group button {
+    width: 100% !important;
+  }
+}
+
+/* =====================================================
+   12. IMAGENS E MÍDIA
+   ===================================================== */
+
+@media screen and (max-width: 767px) {
+  img {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+  
+  .logo {
+    max-width: 120px !important;
+  }
+  
+  .banner-image {
+    height: 150px !important;
+    object-fit: cover !important;
+  }
+}
+
+/* =====================================================
+   13. TIPOGRAFIA RESPONSIVA
+   ===================================================== */
+
+@media screen and (max-width: 767px) {
+  h1 {
+    font-size: 1.5rem !important; /* 24px */
+    line-height: 2rem !important;
+  }
+  
+  h2 {
+    font-size: 1.25rem !important; /* 20px */
+    line-height: 1.75rem !important;
+  }
+  
+  h3 {
+    font-size: 1.125rem !important; /* 18px */
+    line-height: 1.5rem !important;
+  }
+  
+  p {
+    font-size: 0.875rem !important; /* 14px */
+    line-height: 1.25rem !important;
+  }
+  
+  .text-sm {
+    font-size: 0.75rem !important; /* 12px */
+  }
+}
+
+/* =====================================================
+   14. ESPAÇAMENTO E PADDING
+   ===================================================== */
+
+@media screen and (max-width: 767px) {
+  .section-padding {
+    padding: 1rem !important;
+  }
+  
+  .card-padding {
+    padding: 1rem !important;
+  }
+  
+  .container-padding {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+  
+  /* Reduzir gaps em mobile */
+  .gap-6 {
+    gap: 1rem !important;
+  }
+  
+  .gap-4 {
+    gap: 0.75rem !important;
+  }
+}
+
+/* =====================================================
+   15. SCROLL E OVERFLOW
+   ===================================================== */
+
+@media screen and (max-width: 767px) {
+  /* Prevenir scroll horizontal */
+  body,
+  html {
+    overflow-x: hidden !important;
+    max-width: 100vw !important;
+  }
+  
+  /* Containers não devem causar overflow */
+  .container,
+  .wrapper,
+  .content {
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+  }
+  
+  /* Tabelas com scroll horizontal suave */
+  .table-container {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+}
+
+/* =====================================================
+   16. ESTADOS DE HOVER E FOCUS (MOBILE)
+   ===================================================== */
+
+@media screen and (max-width: 767px) {
+  /* Remover hover em mobile (usar active) */
+  button:hover,
+  a:hover {
+    background-color: inherit !important;
+  }
+  
+  button:active,
+  a:active {
+    opacity: 0.7 !important;
+    transform: scale(0.98) !important;
+  }
+  
+  /* Focus visível para acessibilidade */
+  button:focus,
+  input:focus,
+  select:focus,
+  textarea:focus {
+    outline: 2px solid #24C36B !important;
+    outline-offset: 2px !important;
+  }
+}
+
+/* =====================================================
+   17. ANIMAÇÕES OTIMIZADAS PARA MOBILE
+   ===================================================== */
+
+@media screen and (max-width: 767px) {
+  /* Reduzir animações em mobile para performance */
+  * {
+    animation-duration: 0.2s !important;
+    transition-duration: 0.2s !important;
+  }
+  
+  /* Desabilitar animações complexas em mobile */
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation: none !important;
+      transition: none !important;
+    }
+  }
+}
+
+/* =====================================================
+   18. UTILITÁRIOS ESPECÍFICOS
+   ===================================================== */
+
+/* Ocultar em mobile */
+.hide-mobile {
+  display: block;
+}
+
+@media screen and (max-width: 767px) {
+  .hide-mobile {
+    display: none !important;
+  }
+}
+
+/* Mostrar apenas em mobile */
+.show-mobile {
+  display: none;
+}
+
+@media screen and (max-width: 767px) {
+  .show-mobile {
+    display: block !important;
+  }
+}
+
+/* Largura total em mobile */
+@media screen and (max-width: 767px) {
+  .mobile-full-width {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
+
+/* =====================================================
+   19. SAFE AREAS (iOS)
+   ===================================================== */
+
+@media screen and (max-width: 767px) {
+  /* Respeitar safe areas do iOS */
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top) !important;
+  }
+  
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom) !important;
+  }
+  
+  .safe-area-left {
+    padding-left: env(safe-area-inset-left) !important;
+  }
+  
+  .safe-area-right {
+    padding-right: env(safe-area-inset-right) !important;
+  }
+}
+
+/* =====================================================
+   20. AJUSTES FINAIS DE COMPATIBILIDADE
+   ===================================================== */
+
+@media screen and (max-width: 767px) {
+  /* Prevenir zoom em inputs no iOS */
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="number"],
+  input[type="password"],
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+  
+  /* Melhorar toque em links e botões */
+  a,
+  button {
+    -webkit-tap-highlight-color: rgba(36, 195, 107, 0.2);
+    touch-action: manipulation;
+  }
+  
+  /* Smooth scroll */
+  html {
+    scroll-behavior: smooth;
+  }
+}

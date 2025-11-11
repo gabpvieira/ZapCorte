@@ -669,32 +669,33 @@ const Appointments = () => {
       }
     >
       {/* Filtros */}
-      <Card className="mb-6">
+      <Card className="mb-4 md:mb-6">
         <CardHeader>
-          <CardTitle className="flex items-center">
-            <Filter className="mr-2 h-5 w-5" />
+          <CardTitle className="flex items-center text-base md:text-lg">
+            <Filter className="mr-2 h-4 w-4 md:h-5 md:w-5" />
             Filtros
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="date-filter">Filtrar por Data</Label>
+          <div className="filters-container grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="filter-item">
+              <Label htmlFor="date-filter" className="text-sm">Filtrar por Data</Label>
               <Input
                 id="date-filter"
                 type="date"
                 lang="pt-BR"
                 value={dateFilter}
                 onChange={(e) => setDateFilter(e.target.value)}
+                className="mt-1"
               />
               <p className="text-xs text-gray-500 mt-1">
                 {dateFilter ? format(new Date(`${dateFilter}T00:00:00`), 'dd/MM/yyyy') : ''}
               </p>
             </div>
-            <div>
-              <Label htmlFor="status-filter">Filtrar por Status</Label>
+            <div className="filter-item">
+              <Label htmlFor="status-filter" className="text-sm">Filtrar por Status</Label>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger>
+                <SelectTrigger className="mt-1">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -754,45 +755,45 @@ const Appointments = () => {
                 exit="hidden"
                 layout
               >
-                <Card className="hover:shadow-lg transition-shadow">
-                  <CardContent className="p-6">
-                    <div className="flex justify-between items-start">
-                      <div className="space-y-3 flex-1">
-                        <div className="flex items-center space-x-4">
+                <Card className="appointment-card hover:shadow-lg transition-shadow mobile-full-width">
+                  <CardContent className="p-4 md:p-6">
+                    <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
+                      <div className="appointment-info space-y-3 flex-1">
+                        <div className="flex flex-col md:flex-row md:items-center md:space-x-4 space-y-2 md:space-y-0">
                           <div className="flex items-center">
-                            <User className="h-4 w-4 mr-2 text-gray-500" />
-                            <span className="font-semibold">{appointment.customer_name}</span>
+                            <User className="h-4 w-4 mr-2 text-gray-500 flex-shrink-0" />
+                            <span className="font-semibold text-sm md:text-base">{appointment.customer_name}</span>
                           </div>
                           <div className="flex items-center">
-                            <Phone className="h-4 w-4 mr-2 text-gray-500" />
-                            <span className="text-sm text-gray-600">{appointment.customer_phone}</span>
+                            <Phone className="h-4 w-4 mr-2 text-gray-500 flex-shrink-0" />
+                            <span className="text-xs md:text-sm text-gray-600">{appointment.customer_phone}</span>
                           </div>
                         </div>
                         
-                        <div className="flex items-center space-x-4">
+                        <div className="flex flex-col md:flex-row md:items-center md:space-x-4 space-y-2 md:space-y-0">
                           <div className="flex items-center">
-                            <Calendar className="h-4 w-4 mr-2 text-gray-500" />
-                            <span className="text-sm">{formatDate(appointment.scheduled_at)}</span>
+                            <Calendar className="h-4 w-4 mr-2 text-gray-500 flex-shrink-0" />
+                            <span className="text-xs md:text-sm">{formatDate(appointment.scheduled_at)}</span>
                           </div>
                           <div className="flex items-center">
-                            <Clock className="h-4 w-4 mr-2 text-gray-500" />
-                            <span className="text-sm">{formatTime(appointment.scheduled_at)}</span>
+                            <Clock className="h-4 w-4 mr-2 text-gray-500 flex-shrink-0" />
+                            <span className="text-xs md:text-sm">{formatTime(appointment.scheduled_at)}</span>
                           </div>
                         </div>
 
                         {appointment.service && (
-                          <div className="text-sm text-gray-600">
+                          <div className="text-xs md:text-sm text-gray-600">
                             <strong>Serviço:</strong> {appointment.service.name} - R$ {appointment.service.price.toFixed(2)}
                           </div>
                         )}
                       </div>
 
-                      <div className="flex flex-col items-end space-y-3">
-                        <Badge variant={getStatusInfo(appointment.status).variant}>
+                      <div className="appointment-actions flex flex-row md:flex-col items-center md:items-end justify-between md:justify-start space-x-2 md:space-x-0 md:space-y-3">
+                        <Badge variant={getStatusInfo(appointment.status).variant} className="text-xs">
                           {getStatusInfo(appointment.status).label}
                         </Badge>
 
-                        <div className="flex space-x-2">
+                        <div className="flex space-x-1 md:space-x-2">
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>

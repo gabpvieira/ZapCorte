@@ -33,7 +33,7 @@ export const DashboardLayout = ({
       <DashboardSidebar />
       
       {/* Main Content */}
-      <div className="md:pl-64">
+      <div className="dashboard-main-content md:pl-64">
         <motion.main
           variants={contentVariants}
           initial="initial"
@@ -42,29 +42,31 @@ export const DashboardLayout = ({
         >
           {/* Header */}
           {(title || subtitle || action) && (
-            <div className="border-b border-border bg-background/95 backdrop-blur-sm sticky top-0 z-30">
-              <div className="container mx-auto px-4 py-6 md:px-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4 ml-12 md:ml-0">
-                    {/* Logo no header do dashboard */}
-                    <img
-                      src={logotipo}
-                      alt="ZapCorte"
-                      className="h-8 w-auto hidden md:block"
-                    />
-                    {title && (
-                      <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
-                        {title}
-                      </h1>
-                    )}
+            <div className="dashboard-header border-b border-border bg-background/95 backdrop-blur-sm sticky top-0 z-30 safe-area-top">
+              <div className="container mx-auto px-4 py-4 md:py-6 md:px-6">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                  <div className="flex flex-col gap-2 ml-12 md:ml-0">
+                    <div className="flex items-center gap-4">
+                      {/* Logo no header do dashboard */}
+                      <img
+                        src={logotipo}
+                        alt="ZapCorte"
+                        className="h-8 w-auto hidden md:block"
+                      />
+                      {title && (
+                        <h1 className="text-xl md:text-2xl lg:text-3xl font-bold tracking-tight">
+                          {title}
+                        </h1>
+                      )}
+                    </div>
                     {subtitle && (
-                      <p className="text-muted-foreground mt-1">
+                      <p className="text-sm md:text-base text-muted-foreground">
                         {subtitle}
                       </p>
                     )}
                   </div>
                   {action && (
-                    <div className="flex items-center space-x-2">
+                    <div className="dashboard-header-actions flex items-center gap-2 w-full md:w-auto">
                       {action}
                     </div>
                   )}
@@ -74,7 +76,7 @@ export const DashboardLayout = ({
           )}
 
           {/* Content */}
-          <div className="container mx-auto px-4 py-6 md:px-6">
+          <div className="container mx-auto px-4 py-4 md:py-6 md:px-6 container-padding">
             {children}
           </div>
         </motion.main>

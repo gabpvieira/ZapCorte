@@ -258,53 +258,53 @@ const Dashboard = () => {
         </Button>
       }
     >
-      <div className="space-y-8">
+      <div className="space-y-6 md:space-y-8">
         {/* Stats */}
-        <div className="mb-8 grid gap-6 md:grid-cols-4">
-          <Card className="border-2">
-            <CardContent className="p-6">
+        <div className="stats-grid grid gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
+          <Card className="stats-card border-2">
+            <CardContent className="p-4 md:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Hoje</p>
-                  <p className="text-3xl font-bold">{stats.todayAppointments}</p>
+                  <p className="text-xs md:text-sm text-muted-foreground">Hoje</p>
+                  <p className="text-2xl md:text-3xl font-bold">{stats.todayAppointments}</p>
                 </div>
-                <Calendar className="h-10 w-10 text-primary" />
+                <Calendar className="h-8 w-8 md:h-10 md:w-10 text-primary" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-2">
-            <CardContent className="p-6">
+          <Card className="stats-card border-2">
+            <CardContent className="p-4 md:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Este Mês</p>
-                  <p className="text-3xl font-bold">{stats.monthAppointments}</p>
+                  <p className="text-xs md:text-sm text-muted-foreground">Este Mês</p>
+                  <p className="text-2xl md:text-3xl font-bold">{stats.monthAppointments}</p>
                 </div>
-                <TrendingUp className="h-10 w-10 text-primary" />
+                <TrendingUp className="h-8 w-8 md:h-10 md:w-10 text-primary" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-2">
-            <CardContent className="p-6">
+          <Card className="stats-card border-2">
+            <CardContent className="p-4 md:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Serviços</p>
-                  <p className="text-3xl font-bold">{stats.totalServices}</p>
+                  <p className="text-xs md:text-sm text-muted-foreground">Serviços</p>
+                  <p className="text-2xl md:text-3xl font-bold">{stats.totalServices}</p>
                 </div>
-                <Clock className="h-10 w-10 text-primary" />
+                <Clock className="h-8 w-8 md:h-10 md:w-10 text-primary" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-2">
-            <CardContent className="p-6">
+          <Card className="stats-card border-2">
+            <CardContent className="p-4 md:p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Plano</p>
-                  <p className="text-xl font-bold capitalize">{stats.planType}</p>
+                  <p className="text-xs md:text-sm text-muted-foreground">Plano</p>
+                  <p className="text-lg md:text-xl font-bold capitalize">{stats.planType}</p>
                 </div>
-                <User className="h-10 w-10 text-primary" />
+                <User className="h-8 w-8 md:h-10 md:w-10 text-primary" />
               </div>
             </CardContent>
           </Card>
@@ -326,22 +326,25 @@ const Dashboard = () => {
                   return (
                     <div
                       key={appointment.id}
-                      className="flex items-center justify-between rounded-lg border border-border p-4 hover:bg-gray-50 transition-colors"
+                      className="appointment-card flex flex-col md:flex-row md:items-center md:justify-between rounded-lg border border-border p-4 hover:bg-gray-50 transition-colors gap-4"
                     >
-                      <div className="flex items-center gap-4">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                          <Clock className="h-6 w-6 text-primary" />
+                      <div className="appointment-card-content flex items-center gap-3 md:gap-4 flex-1">
+                        <div className="flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full bg-primary/10 flex-shrink-0">
+                          <Clock className="h-5 w-5 md:h-6 md:w-6 text-primary" />
                         </div>
-                        <div>
-                          <p className="font-bold">{appointment.customer_name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {appointment.service_name} • {appointment.customer_phone}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-bold text-sm md:text-base truncate">{appointment.customer_name}</p>
+                          <p className="text-xs md:text-sm text-muted-foreground truncate">
+                            {appointment.service_name}
+                          </p>
+                          <p className="text-xs text-muted-foreground md:hidden">
+                            {appointment.customer_phone}
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <div className="text-right">
-                          <p className="font-bold">
+                      <div className="appointment-card-actions flex items-center justify-between md:justify-end gap-3 w-full md:w-auto">
+                        <div className="text-left md:text-right">
+                          <p className="font-bold text-sm md:text-base">
                             {new Date(appointment.scheduled_at).toLocaleTimeString("pt-BR", {
                               hour: "2-digit",
                               minute: "2-digit",
@@ -349,21 +352,19 @@ const Dashboard = () => {
                           </p>
                           <Badge
                             variant={appointment.status === "confirmed" ? "default" : appointment.status === "cancelled" ? "destructive" : "secondary"}
-                            className="text-xs"
+                            className="text-xs mt-1"
                           >
                             {appointment.status === "confirmed" ? "Confirmado" : appointment.status === "cancelled" ? "Cancelado" : "Pendente"}
                           </Badge>
                         </div>
-                        <div className="flex gap-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => openViewModal(appointment)}
-                            className="h-8 w-8 p-0"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => openViewModal(appointment)}
+                          className="h-8 w-8 p-0 flex-shrink-0"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
                       </div>
                     </div>
                   );

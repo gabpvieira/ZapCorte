@@ -455,7 +455,7 @@ const Services = () => {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
+          className="services-grid grid gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
         >
           <AnimatePresence>
             {services.map((service) => (
@@ -467,8 +467,8 @@ const Services = () => {
                 exit="hidden"
                 layout
               >
-                <Card className="overflow-hidden hover:shadow-lg transition-shadow">
-                  <div className="h-48 overflow-hidden">
+                <Card className="service-card overflow-hidden hover:shadow-lg transition-shadow mobile-full-width">
+                  <div className="service-card-image h-40 md:h-48 overflow-hidden">
                     <img
                       src={service.image_url || getPlaceholderImageUrl(400, 300)}
                       alt={service.name}
@@ -479,51 +479,51 @@ const Services = () => {
                       }}
                     />
                   </div>
-                  <CardContent className="p-4">
-                    <h3 className="font-semibold text-lg mb-2">{service.name}</h3>
+                  <CardContent className="service-card-content p-3 md:p-4">
+                    <h3 className="service-card-title font-semibold text-base md:text-lg mb-2">{service.name}</h3>
                     {service.description && (
-                      <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                      <p className="service-card-description text-gray-600 text-xs md:text-sm mb-3 md:mb-4 line-clamp-2">
                         {service.description}
                       </p>
                     )}
-                    <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
+                    <div className="flex items-center justify-between text-xs md:text-sm text-gray-500 mb-3 md:mb-4">
                       <div className="flex items-center">
-                        <DollarSign className="h-4 w-4 mr-1" />
+                        <DollarSign className="h-3 w-3 md:h-4 md:w-4 mr-1" />
                         R$ {service.price.toFixed(2)}
                       </div>
                       <div className="flex items-center">
-                        <Clock className="h-4 w-4 mr-1" />
+                        <Clock className="h-3 w-3 md:h-4 md:w-4 mr-1" />
                         {service.duration}min
                       </div>
                     </div>
-                    <div className="flex space-x-2">
+                    <div className="service-card-actions flex flex-col md:flex-row gap-2">
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => handleEdit(service)}
-                        className="flex-1"
+                        className="flex-1 w-full"
                       >
                         <Edit className="h-4 w-4 mr-1" />
                         Editar
                       </Button>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button variant="destructive" size="sm">
+                          <Button variant="destructive" size="sm" className="w-full md:w-auto">
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </AlertDialogTrigger>
-                        <AlertDialogContent>
+                        <AlertDialogContent className="mobile-full-width">
                           <AlertDialogHeader>
                             <AlertDialogTitle>Excluir Serviço</AlertDialogTitle>
                             <AlertDialogDescription>
                               Tem certeza que deseja excluir "{service.name}"? Esta ação não pode ser desfeita.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogFooter className="flex-col md:flex-row gap-2">
+                            <AlertDialogCancel className="w-full md:w-auto">Cancelar</AlertDialogCancel>
                             <AlertDialogAction
                               onClick={() => handleDelete(service.id)}
-                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              className="w-full md:w-auto bg-destructive text-destructive-foreground hover:bg-destructive/90"
                             >
                               Excluir
                             </AlertDialogAction>
