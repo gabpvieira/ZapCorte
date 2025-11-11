@@ -440,10 +440,6 @@ const Appointments = () => {
     if (acceptingAppointments.has(appointment.id)) {
       return;
     }
-      customerPhone: appointment.customer_phone,
-      barbershopId: barbershop.id,
-      serviceName: appointment.service?.name
-    });
 
     // Adicionar ao set de processamento
     setAcceptingAppointments(prev => new Set(prev).add(appointment.id));
@@ -567,10 +563,6 @@ const Appointments = () => {
     if (!date || !selectedAppointment?.service) return;
 
     try {
-        serviceDuration: selectedAppointment.service.duration,
-        barbershopId: barbershop?.id
-      });
-
       // Usar a mesma função que a página pública usa (com lógica dinâmica)
       const { getAvailableTimeSlots } = await import('@/lib/supabase-queries');
       
@@ -609,9 +601,6 @@ const Appointments = () => {
     setRescheduleLoading(true);
     try {
       const scheduledAt = new Date(`${selectedDate}T${selectedTime}`);
-        customerName: selectedAppointment.customer_name,
-        customerPhone: selectedAppointment.customer_phone
-      });
       
       const { error } = await supabase
         .from("appointments")

@@ -139,11 +139,6 @@ export async function getAvailableTimeSlots(
   // IMPORTANTE: Usar timezone brasileiro para calcular o dia da semana corretamente
   const dateWithTimezone = new Date(date + 'T12:00:00-03:00');
   const dayOfWeek = dateWithTimezone.getDay();
-    date,
-    dateWithTimezone: dateWithTimezone.toISOString(),
-    dayOfWeek,
-    dayName: ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'][dayOfWeek]
-  });
 
   // Primeiro, buscar a barbearia para verificar opening_hours
   const { data: barbershop, error: barbershopError } = await supabase
@@ -200,9 +195,6 @@ export async function getAvailableTimeSlots(
   const breakTime = 5; // 5 minutos de intervalo
   const workStart = new Date(`${date}T${daySchedule.start}-03:00`);
   const workEnd = new Date(`${date}T${daySchedule.end}-03:00`);
-    serviceDuration,
-    breakTime
-  });
 
   // 3. Construir períodos ocupados (agendamento + pausa)
   const busyPeriods: { start: Date; end: Date }[] = [];
