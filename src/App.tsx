@@ -19,10 +19,12 @@ import BarbershopSettings from "./pages/BarbershopSettings";
 import Plan from "./pages/Plan";
 import MyAppointments from "./pages/MyAppointments";
 import WhatsAppSettings from "./pages/WhatsAppSettings";
+import NotificationSettings from "./pages/NotificationSettings";
 import { useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useReminderScheduler } from "@/hooks/useReminderScheduler";
 import ScrollToTop from "@/components/ScrollToTop";
+import { initializeOneSignal } from "@/lib/onesignal";
 
 declare global {
   interface Window {
@@ -66,26 +68,25 @@ const AppContent = () => {
   // Show navbar only on landing page (home)
   const isHomePage = location.pathname === "/";
 
-  // Initialize OneSignal and persist player_id for logged barber
+  // Initialize OneSignal
   useEffect(() => {
     // Evita inicializar na Landing Page
     if (isHomePage) return;
-    if (!user || loading) return;
     
     const appId = import.meta.env.VITE_ONESIGNAL_APP_ID;
     if (!appId) {
-      console.warn('[OneSignal v16] VITE_ONESIGNAL_APP_ID ausente. Pulando inicialização.');
       return;
     }
 
-    // Evita múltiplas inicializações em navegadores, HMR ou re-renders
+    // Evita múltiplas inicializações
     if (window.__ONESIGNAL_INIT_DONE) {
-      console.log('[OneSignal v16] Já inicializado, não repetindo.');
       return;
     }
 
-    // OneSignal v16+ initialization via Deferred
-    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    // Inicializar OneSignal
+    initializeOneSignal().then(() => {
+      window.__ONESIGNAL_INIT_DONE = true;
+    });
     window.OneSignalDeferred.push(async function (OneSignal: any) {
       if (window.__ONESIGNAL_INIT_DONE) return;
 
@@ -188,6 +189,14 @@ const AppContent = () => {
           element={
             <ProtectedRoute>
               <Plan />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/dashboard/notifications" 
+          element={
+            <ProtectedRoute>
+              <NotificationSettings />
             </ProtectedRoute>
           } 
         />
