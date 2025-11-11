@@ -9,12 +9,18 @@
     "dev": "node --watch index.js"
   },
   "dependencies": {
-    "express": "^4.18.2",
+    "@supabase/supabase-js": "^2.78.0",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
-    "@supabase/supabase-js": "^2.78.0"
+    "express": "^4.18.2",
+    "web-push": "^3.6.7"
   },
-  "keywords": ["cakto", "payment", "webhook", "supabase"],
+  "keywords": [
+    "cakto",
+    "payment",
+    "webhook",
+    "supabase"
+  ],
   "author": "ZapCorte Team",
   "license": "MIT"
 }

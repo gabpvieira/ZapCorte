@@ -2,34 +2,35 @@ import { supabase } from '@/lib/supabase';
 import { evolutionApi } from '@/lib/evolutionApi';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { sendNewAppointmentNotification } from '@/lib/onesignal';
 
 export async function notificarNovoAgendamento({
-  playerId,
+  barbershopId,
   customerName,
   scheduledAt,
   customerPhone,
   serviceName,
-  barbershopId,
 }: {
-  playerId: string;
+  barbershopId: string;
   customerName: string;
   scheduledAt: string;
   customerPhone?: string;
   serviceName?: string;
-  barbershopId?: string;
 }) {
   try {
-    // Enviar notificação push via OneSignal
-    await sendNewAppointmentNotification({
-      playerId,
-      customerName,
-      scheduledAt,
-      serviceName,
+    // Enviar notificação push via API
+    await fetch('/api/send-notification', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        barbershopId,
+        customerName,
+        scheduledAt,
+        serviceName,
+      }),
     });
 
     // Enviar lembrete WhatsApp se os dados estiverem disponíveis
-    if (customerPhone && barbershopId) {
+    if (customerPhone) {
       await enviarLembreteWhatsApp({
         barbershopId,
         customerName,
@@ -42,7 +43,6 @@ export async function notificarNovoAgendamento({
 
     return true;
   } catch (error) {
-    console.error("[Notificações] Falha ao enviar:", error);
     return false;
   }
 }

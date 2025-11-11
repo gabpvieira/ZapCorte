@@ -24,15 +24,6 @@ import { useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useReminderScheduler } from "@/hooks/useReminderScheduler";
 import ScrollToTop from "@/components/ScrollToTop";
-import { initializeOneSignal } from "@/lib/onesignal";
-
-declare global {
-  interface Window {
-    OneSignal: any;
-    OneSignalDeferred: any[];
-    __ONESIGNAL_INIT_DONE?: boolean;
-  }
-}
 
 const queryClient = new QueryClient();
 
@@ -68,27 +59,13 @@ const AppContent = () => {
   // Show navbar only on landing page (home)
   const isHomePage = location.pathname === "/";
 
-  // Initialize OneSignal
+  // Registrar Service Worker para notificações
   useEffect(() => {
-    // Evita inicializar na Landing Page
-    if (isHomePage) return;
-    
-    const appId = import.meta.env.VITE_ONESIGNAL_APP_ID;
-    if (!appId) {
-      return;
+    if ('serviceWorker' in navigator && !isHomePage) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {
+        // Erro silenciado
+      });
     }
-
-    // Evita múltiplas inicializações
-    if (window.__ONESIGNAL_INIT_DONE) {
-      return;
-    }
-
-    // Inicializar OneSignal (apenas uma vez)
-    initializeOneSignal().then((success) => {
-      if (success) {
-        window.__ONESIGNAL_INIT_DONE = true;
-      }
-    });
   }, [isHomePage]);
 
   return (

@@ -8,32 +8,29 @@ import { useToast } from '@/hooks/use-toast';
 import { Bell, BellOff, Check, Smartphone, Volume2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import {
-  initializeOneSignal,
-  requestNotificationPermission,
+  isPushSupported,
   isNotificationEnabled,
-  getPlayerId,
-  savePlayerIdToBarbershop,
-  sendPushNotification,
-  isOneSignalConfigured,
-} from '@/lib/onesignal';
+  requestNotificationPermission,
+  subscribeToPush,
+  saveSubscriptionToDatabase,
+  sendTestNotification,
+} from '@/lib/webpush';
 import { useUserData } from '@/hooks/useUserData';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle } from 'lucide-react';
 
 const NotificationSettings = () => {
   const { toast } = useToast();
   const { barbershop } = useUserData();
   const [loading, setLoading] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
-  const [playerId, setPlayerId] = useState<string | null>(null);
+  const [subscription, setSubscription] = useState<PushSubscription | null>(null);
   const [checking, setChecking] = useState(true);
-  const [isConfigured, setIsConfigured] = useState(false);
+  const [isSupported, setIsSupported] = useState(false);
 
   useEffect(() => {
-    const configured = isOneSignalConfigured();
-    setIsConfigured(configured);
+    const supported = isPushSupported();
+    setIsSupported(supported);
     
-    if (configured) {
+    if (supported) {
       checkNotificationStatus();
     } else {
       setChecking(false);
@@ -43,26 +40,20 @@ const NotificationSettings = () => {
   const checkNotificationStatus = async () => {
     setChecking(true);
     try {
-      await initializeOneSignal();
-      const enabled = await isNotificationEnabled();
+      const enabled = isNotificationEnabled();
       setNotificationsEnabled(enabled);
-
-      if (enabled) {
-        const id = await getPlayerId();
-        setPlayerId(id);
-      }
     } catch (error) {
-      console.error('Erro ao verificar status:', error);
+      // Erro silenciado
     } finally {
       setChecking(false);
     }
   };
 
   const handleEnableNotifications = async () => {
-    if (!isConfigured) {
+    if (!isSupported) {
       toast({
-        title: 'OneSignal não configurado',
-        description: 'Entre em contato com o suporte para configurar as notificações',
+        title: 'Não Suportado',
+        description: 'Seu navegador não suporta notificações push',
         variant: 'destructive',
       });
       return;
@@ -79,19 +70,6 @@ const NotificationSettings = () => {
 
     setLoading(true);
     try {
-      // Inicializar OneSignal
-      const initialized = await initializeOneSignal();
-      
-      if (!initialized) {
-        toast({
-          title: 'Erro',
-          description: 'Não foi possível inicializar o sistema de notificações',
-          variant: 'destructive',
-        });
-        setLoading(false);
-        return;
-      }
-
       // Solicitar permissão
       const granted = await requestNotificationPermission();
 
@@ -101,23 +79,25 @@ const NotificationSettings = () => {
           description: 'Você precisa permitir notificações nas configurações do navegador',
           variant: 'destructive',
         });
+        setLoading(false);
         return;
       }
 
-      // Obter Player ID
-      const id = await getPlayerId();
+      // Inscrever para push
+      const sub = await subscribeToPush();
       
-      if (!id) {
+      if (!sub) {
         toast({
           title: 'Erro',
-          description: 'Não foi possível obter o ID de notificação',
+          description: 'Não foi possível criar a inscrição',
           variant: 'destructive',
         });
+        setLoading(false);
         return;
       }
 
       // Salvar no banco
-      const saved = await savePlayerIdToBarbershop(barbershop.id, id);
+      const saved = await saveSubscriptionToDatabase(barbershop.id, sub);
 
       if (!saved) {
         toast({
@@ -125,10 +105,11 @@ const NotificationSettings = () => {
           description: 'Não foi possível salvar as configurações',
           variant: 'destructive',
         });
+        setLoading(false);
         return;
       }
 
-      setPlayerId(id);
+      setSubscription(sub);
       setNotificationsEnabled(true);
 
       toast({
@@ -136,7 +117,6 @@ const NotificationSettings = () => {
         description: 'Você receberá alertas de novos agendamentos',
       });
     } catch (error) {
-      console.error('Erro ao ativar notificações:', error);
       toast({
         title: 'Erro',
         description: 'Não foi possível ativar as notificações',
@@ -148,7 +128,16 @@ const NotificationSettings = () => {
   };
 
   const handleTestNotification = async () => {
-    if (!playerId) {
+    if (!barbershop?.id) {
+      toast({
+        title: 'Erro',
+        description: 'Barbearia não encontrada',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!notificationsEnabled) {
       toast({
         title: 'Erro',
         description: 'Notificações não estão ativadas',
@@ -159,12 +148,7 @@ const NotificationSettings = () => {
 
     setLoading(true);
     try {
-      const success = await sendPushNotification({
-        playerId,
-        title: '🎉 Teste de Notificação',
-        message: 'Suas notificações estão funcionando perfeitamente!',
-        data: { type: 'test' },
-      });
+      const success = await sendTestNotification(barbershop.id);
 
       if (success) {
         toast({
@@ -179,7 +163,6 @@ const NotificationSettings = () => {
         });
       }
     } catch (error) {
-      console.error('Erro ao testar notificação:', error);
       toast({
         title: 'Erro',
         description: 'Falha ao enviar notificação de teste',
@@ -206,24 +189,6 @@ const NotificationSettings = () => {
       subtitle="Configure alertas de novos agendamentos"
     >
       <div className="max-w-2xl mx-auto space-y-6">
-        {/* Alerta de Configuração */}
-        {!isConfigured && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>OneSignal não configurado</AlertTitle>
-            <AlertDescription>
-              As notificações push ainda não foram configuradas neste ambiente. 
-              Entre em contato com o suporte técnico para ativar este recurso.
-              <br /><br />
-              <strong>Variáveis necessárias:</strong>
-              <ul className="list-disc list-inside mt-2">
-                <li>VITE_ONESIGNAL_APP_ID</li>
-                <li>VITE_ONESIGNAL_REST_API_KEY</li>
-              </ul>
-            </AlertDescription>
-          </Alert>
-        )}
-
         {/* Status Card */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -298,7 +263,7 @@ const NotificationSettings = () => {
                 {!notificationsEnabled ? (
                   <Button
                     onClick={handleEnableNotifications}
-                    disabled={loading || !isConfigured}
+                    disabled={loading || !isSupported}
                     className="w-full"
                     size="lg"
                   >
@@ -338,10 +303,13 @@ const NotificationSettings = () => {
               </div>
 
               {/* Info adicional */}
-              {notificationsEnabled && playerId && (
+              {notificationsEnabled && subscription && (
                 <div className="p-4 bg-muted rounded-lg">
                   <p className="text-xs text-muted-foreground">
-                    <strong>ID de Notificação:</strong> {playerId.substring(0, 20)}...
+                    <strong>Status:</strong> Notificações configuradas com sucesso
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Você receberá alertas em tempo real de novos agendamentos
                   </p>
                 </div>
               )}

@@ -11,29 +11,6 @@ import { getBarbershopBySlug, getBarbershopServices, createAppointment, getAvail
 import { supabase } from "@/lib/supabase";
 import { notificarNovoAgendamento } from '@/lib/notifications';
 import "@/styles/booking-premium.css";
-
-async function registrarPushBarbeiro(barbershopId: string) {
-  if (!window.OneSignalDeferred) return;
-
-  window.OneSignalDeferred.push(async function (OneSignal: any) {
-    const permission = await OneSignal.Notifications.permissionNative();
-    if (permission !== 'granted') {
-      await OneSignal.Notifications.requestPermission();
-    }
-
-    const playerId = await OneSignal.User.getId();
-
-    // Enviar para o Supabase
-    const { error } = await supabase
-      .from('barbershops')
-      .update({ player_id: playerId })
-      .eq('id', barbershopId);
-
-    if (error) {
-      // Erro silenciado em produção
-    }
-  });
-}
 import type { Barbershop, Service } from "@/lib/supabase";
 import WeeklyDatePicker from "@/components/WeeklyDatePicker";
 import { format } from "date-fns";
@@ -215,25 +192,15 @@ const Booking = () => {
         // Não bloqueia o agendamento se falhar
       }
 
-      // Registrar push do barbeiro e enviar notificação
+      // Enviar notificação push para o barbeiro
       try {
-        // Registrar player_id do barbeiro
-        await registrarPushBarbeiro(barbershop.id);
-
-        // Buscar player_id atualizado
-        const { data: barberData } = await (await import("@/lib/supabase")).supabase
-          .from('barbershops')
-          .select('player_id')
-          .eq('id', barbershop.id)
-          .single();
-
-        if (barberData?.player_id) {
-          await notificarNovoAgendamento({
-            playerId: barberData.player_id,
-            customerName,
-            scheduledAt,
-          });
-        }
+        await notificarNovoAgendamento({
+          barbershopId: barbershop.id,
+          customerName,
+          scheduledAt,
+          customerPhone,
+          serviceName: service.name,
+        });
       } catch (notifyErr) {
         // Notificação falhou silenciosamente
       }
