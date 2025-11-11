@@ -7,6 +7,8 @@ export interface WhatsAppSettings {
   reminders_enabled: boolean;
   reminder_interval: '30' | '60'; // minutos
   reminder_message: string;
+  confirmation_message?: string;
+  reschedule_message?: string;
 }
 
 const DEFAULT_SETTINGS: WhatsAppSettings = {
@@ -33,7 +35,7 @@ export const useWhatsAppSettings = () => {
       setLoading(true);
       const { data: barbershop, error } = await supabase
         .from('barbershops')
-        .select('whatsapp_reminders_enabled, whatsapp_reminder_interval, whatsapp_reminder_message')
+        .select('whatsapp_reminders_enabled, whatsapp_reminder_interval, whatsapp_reminder_message, confirmation_message, reschedule_message')
         .eq('user_id', user.id)
         .single();
 
@@ -44,6 +46,8 @@ export const useWhatsAppSettings = () => {
           reminders_enabled: barbershop.whatsapp_reminders_enabled ?? DEFAULT_SETTINGS.reminders_enabled,
           reminder_interval: barbershop.whatsapp_reminder_interval ?? DEFAULT_SETTINGS.reminder_interval,
           reminder_message: barbershop.whatsapp_reminder_message ?? DEFAULT_SETTINGS.reminder_message,
+          confirmation_message: barbershop.confirmation_message,
+          reschedule_message: barbershop.reschedule_message,
         });
       }
     } catch (error) {
@@ -83,13 +87,23 @@ export const useWhatsAppSettings = () => {
         }
       }
 
+      const updateData: any = {
+        whatsapp_reminders_enabled: updatedSettings.reminders_enabled,
+        whatsapp_reminder_interval: updatedSettings.reminder_interval,
+        whatsapp_reminder_message: updatedSettings.reminder_message,
+      };
+
+      // Adicionar mensagens personalizadas se existirem
+      if (updatedSettings.confirmation_message !== undefined) {
+        updateData.confirmation_message = updatedSettings.confirmation_message;
+      }
+      if (updatedSettings.reschedule_message !== undefined) {
+        updateData.reschedule_message = updatedSettings.reschedule_message;
+      }
+
       const { error } = await supabase
         .from('barbershops')
-        .update({
-          whatsapp_reminders_enabled: updatedSettings.reminders_enabled,
-          whatsapp_reminder_interval: updatedSettings.reminder_interval,
-          whatsapp_reminder_message: updatedSettings.reminder_message,
-        })
+        .update(updateData)
         .eq('user_id', user.id);
 
       if (error) throw error;
@@ -195,7 +209,7 @@ export const useWhatsAppSettings = () => {
         setLoading(true);
         const { data: barbershop, error } = await supabase
           .from('barbershops')
-          .select('whatsapp_reminders_enabled, whatsapp_reminder_interval, whatsapp_reminder_message')
+          .select('whatsapp_reminders_enabled, whatsapp_reminder_interval, whatsapp_reminder_message, confirmation_message, reschedule_message')
           .eq('user_id', user.id)
           .single();
 
@@ -208,6 +222,8 @@ export const useWhatsAppSettings = () => {
             reminders_enabled: barbershop.whatsapp_reminders_enabled ?? DEFAULT_SETTINGS.reminders_enabled,
             reminder_interval: barbershop.whatsapp_reminder_interval ?? DEFAULT_SETTINGS.reminder_interval,
             reminder_message: barbershop.whatsapp_reminder_message ?? DEFAULT_SETTINGS.reminder_message,
+            confirmation_message: barbershop.confirmation_message,
+            reschedule_message: barbershop.reschedule_message,
           });
         }
       } catch (error) {

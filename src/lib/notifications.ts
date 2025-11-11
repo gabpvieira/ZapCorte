@@ -95,7 +95,7 @@ export async function enviarLembreteWhatsApp({
     // Buscar dados da barbearia e verificar se WhatsApp está conectado
     const { data: barbershop, error: barbershopError } = await supabase
       .from('barbershops')
-      .select('whatsapp_session_id, whatsapp_connected, name, user_id')
+      .select('whatsapp_session_id, whatsapp_connected, name, user_id, confirmation_message, reminder_message, reschedule_message')
       .eq('id', barbershopId)
       .single();
 
@@ -129,14 +129,26 @@ export async function enviarLembreteWhatsApp({
     const diaSemana = format(date, "EEEE", { locale: ptBR });
     const horaFormatada = format(date, "HH:mm");
 
-    // Gerar mensagem baseada no tipo
-    let mensagem = '';
-    
-    switch (tipo) {
-      case 'confirmacao':
-        mensagem = `🎉 *Agendamento Confirmado!*
+    // Extrair primeiro nome
+    const primeiroNome = customerName.split(' ')[0];
 
-Olá *${customerName}*! 
+    // Função para substituir variáveis na mensagem
+    const substituirVariaveis = (template: string) => {
+      return template
+        .replace(/\{\{primeiro_nome\}\}/g, primeiroNome)
+        .replace(/\{\{servico\}\}/g, serviceName)
+        .replace(/\{\{data\}\}/g, dataFormatada)
+        .replace(/\{\{hora\}\}/g, horaFormatada)
+        .replace(/\{\{barbearia\}\}/g, barbershop.name)
+        .replace(/\{\{barbeiro\}\}/g, barbeiroNome)
+        .replace(/\{\{dia_semana\}\}/g, diaSemana);
+    };
+
+    // Mensagens padrão caso não haja personalização
+    const mensagensPadrao = {
+      confirmacao: `🎉 *Agendamento Confirmado!*
+
+Olá *${primeiroNome}*! 
 
 Seu agendamento foi confirmado com sucesso:
 
@@ -148,13 +160,10 @@ Seu agendamento foi confirmado com sucesso:
 
 Estamos ansiosos para atendê-lo!
 
-_Mensagem enviada automaticamente pelo ZapCorte_`;
-        break;
+_Mensagem enviada automaticamente pelo ZapCorte_`,
+      lembrete: `⏰ *Lembrete de Agendamento*
 
-      case 'lembrete':
-        mensagem = `⏰ *Lembrete de Agendamento*
-
-Olá *${customerName}*!
+Olá *${primeiroNome}*!
 
 Este é um lembrete do seu agendamento:
 
@@ -166,13 +175,10 @@ Este é um lembrete do seu agendamento:
 
 Nos vemos em breve!
 
-_Mensagem enviada automaticamente pelo ZapCorte_`;
-        break;
+_Mensagem enviada automaticamente pelo ZapCorte_`,
+      cancelamento: `❌ *Agendamento Cancelado*
 
-      case 'cancelamento':
-        mensagem = `❌ *Agendamento Cancelado*
-
-Olá *${customerName}*,
+Olá *${primeiroNome}*,
 
 Seu agendamento foi cancelado:
 
@@ -182,7 +188,29 @@ Seu agendamento foi cancelado:
 
 Para reagendar, entre em contato conosco.
 
-_Mensagem enviada automaticamente pelo ZapCorte_`;
+_Mensagem enviada automaticamente pelo ZapCorte_`
+    };
+
+    // Gerar mensagem baseada no tipo, usando personalizada se disponível
+    let mensagem = '';
+    
+    switch (tipo) {
+      case 'confirmacao':
+        mensagem = barbershop.confirmation_message 
+          ? substituirVariaveis(barbershop.confirmation_message)
+          : mensagensPadrao.confirmacao;
+        break;
+
+      case 'lembrete':
+        mensagem = barbershop.reminder_message 
+          ? substituirVariaveis(barbershop.reminder_message)
+          : mensagensPadrao.lembrete;
+        break;
+
+      case 'cancelamento':
+        mensagem = barbershop.reschedule_message 
+          ? substituirVariaveis(barbershop.reschedule_message)
+          : mensagensPadrao.cancelamento;
         break;
     }
 
@@ -192,6 +220,9 @@ _Mensagem enviada automaticamente pelo ZapCorte_`;
       customerPhone,
       customerName,
       tipo,
+      mensagemPersonalizada: tipo === 'confirmacao' ? !!barbershop.confirmation_message : 
+                             tipo === 'lembrete' ? !!barbershop.reminder_message : 
+                             !!barbershop.reschedule_message,
       mensagemLength: mensagem.length
     });
 

@@ -216,8 +216,8 @@ const Booking = () => {
       }
 
       toast({
-        title: "Agendamento Confirmado! ✅",
-        description: `Seu horário foi reservado para ${selectedTime} do dia ${selectedDate.toLocaleDateString('pt-BR')}. Você receberá um lembrete no WhatsApp.`,
+        title: "Agendamento Realizado! 📅",
+        description: `Seu horário foi reservado para ${selectedTime} do dia ${selectedDate.toLocaleDateString('pt-BR')}. Em breve você receberá a confirmação do barbeiro pelo WhatsApp.`,
       });
 
       // Redirect back after 2 seconds

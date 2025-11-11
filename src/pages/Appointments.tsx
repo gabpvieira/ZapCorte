@@ -81,6 +81,7 @@ const Appointments = () => {
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [statusUpdateLoading, setStatusUpdateLoading] = useState(false);
   const [notesUpdateLoading, setNotesUpdateLoading] = useState(false);
+  const [acceptingAppointments, setAcceptingAppointments] = useState<Set<string>>(new Set());
   
   // Estados para reagendamento
   const [rescheduleDialogOpen, setRescheduleDialogOpen] = useState(false);
@@ -381,6 +382,11 @@ const Appointments = () => {
       return;
     }
 
+    // Verificar se já está processando este agendamento
+    if (acceptingAppointments.has(appointment.id)) {
+      return;
+    }
+
     console.log('[Aceitar] Iniciando confirmação:', {
       appointmentId: appointment.id,
       customerName: appointment.customer_name,
@@ -388,6 +394,9 @@ const Appointments = () => {
       barbershopId: barbershop.id,
       serviceName: appointment.service?.name
     });
+
+    // Adicionar ao set de processamento
+    setAcceptingAppointments(prev => new Set(prev).add(appointment.id));
 
     try {
       // Atualizar status para confirmado
@@ -429,6 +438,13 @@ const Appointments = () => {
         title: "Erro",
         description: "Não foi possível confirmar o agendamento.",
         variant: "destructive",
+      });
+    } finally {
+      // Remover do set de processamento
+      setAcceptingAppointments(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(appointment.id);
+        return newSet;
       });
     }
   };
@@ -870,13 +886,18 @@ const Appointments = () => {
                                     variant="default"
                                     size="sm"
                                     onClick={() => handleAcceptAppointment(appointment)}
-                                    className="bg-green-600 hover:bg-green-700"
+                                    disabled={acceptingAppointments.has(appointment.id)}
+                                    className="bg-green-600 hover:bg-green-700 disabled:opacity-50"
                                   >
-                                    <CheckCircle className="h-4 w-4" />
+                                    {acceptingAppointments.has(appointment.id) ? (
+                                      <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                    ) : (
+                                      <CheckCircle className="h-4 w-4" />
+                                    )}
                                   </Button>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                  <p>Aceitar agendamento</p>
+                                  <p>{acceptingAppointments.has(appointment.id) ? 'Confirmando...' : 'Aceitar agendamento'}</p>
                                 </TooltipContent>
                               </Tooltip>
                             </TooltipProvider>

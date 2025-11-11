@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -58,6 +58,55 @@ const WhatsAppConnection: React.FC = () => {
   const [testingMessage, setTestingMessage] = useState(false);
   const [testMessageResult, setTestMessageResult] = useState<string | null>(null);
 
+  // State local para as mensagens (digitação livre)
+  const [localConfirmationMessage, setLocalConfirmationMessage] = useState('');
+  const [localRescheduleMessage, setLocalRescheduleMessage] = useState('');
+  const [localReminderMessage, setLocalReminderMessage] = useState('');
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [savingMessages, setSavingMessages] = useState(false);
+
+  // Mensagens padrão
+  const defaultMessages = {
+    confirmation: `Olá {nome}! ✅
+
+Seu agendamento foi confirmado com sucesso!
+
+📅 Data: {data}
+🕐 Horário: {hora}
+✂️ Serviço: {servico}
+
+Nos vemos em breve! 😊`,
+    
+    reschedule: `Olá {nome}! 🔄
+
+Seu agendamento foi reagendado:
+
+📅 Nova Data: {data}
+🕐 Novo Horário: {hora}
+✂️ Serviço: {servico}
+
+Qualquer dúvida, estamos à disposição!`,
+    
+    reminder: `Olá {nome}! ⏰
+
+Lembrete: você tem um agendamento hoje!
+
+🕐 Horário: {hora}
+✂️ Serviço: {servico}
+
+Nos vemos em breve! ✂️`
+  };
+
+  // Sincronizar state local com settings quando carregar
+  useEffect(() => {
+    if (!settingsLoading) {
+      setLocalConfirmationMessage(settings.confirmation_message || defaultMessages.confirmation);
+      setLocalRescheduleMessage(settings.reschedule_message || defaultMessages.reschedule);
+      setLocalReminderMessage(settings.reminder_message || defaultMessages.reminder);
+      setHasUnsavedChanges(false);
+    }
+  }, [settings, settingsLoading]);
+
   const testApiConnection = async () => {
     setTestingConnection(true);
     setTestResult(null);
@@ -94,12 +143,40 @@ const WhatsAppConnection: React.FC = () => {
     }
   };
 
+  // Salvar imediatamente (para switches e selects)
   const handleSettingChange = async (key: keyof typeof settings, value: any) => {
     try {
       await saveSettings({ [key]: value });
     } catch (error) {
-      // Error is handled in the hook and displayed in the UI
       console.error('Erro ao alterar configuração:', error);
+    }
+  };
+
+  // Atualizar mensagem localmente (digitação livre)
+  const handleMessageChange = (key: 'confirmation_message' | 'reschedule_message' | 'reminder_message', value: string) => {
+    // Atualizar state local imediatamente
+    if (key === 'confirmation_message') setLocalConfirmationMessage(value);
+    if (key === 'reschedule_message') setLocalRescheduleMessage(value);
+    if (key === 'reminder_message') setLocalReminderMessage(value);
+    
+    // Marcar como tendo alterações não salvas
+    setHasUnsavedChanges(true);
+  };
+
+  // Salvar todas as mensagens de uma vez
+  const handleSaveMessages = async () => {
+    try {
+      setSavingMessages(true);
+      await saveSettings({
+        confirmation_message: localConfirmationMessage,
+        reschedule_message: localRescheduleMessage,
+        reminder_message: localReminderMessage,
+      });
+      setHasUnsavedChanges(false);
+    } catch (error) {
+      console.error('Erro ao salvar mensagens:', error);
+    } finally {
+      setSavingMessages(false);
     }
   };
 
@@ -475,9 +552,9 @@ const WhatsAppConnection: React.FC = () => {
                   </p>
                   <Textarea
                     placeholder="Digite a mensagem de confirmação..."
-                    value={settings.confirmation_message || ''}
-                    onChange={(e) => handleSettingChange('confirmation_message', e.target.value)}
-                    disabled={settingsLoading || settingsSaving}
+                    value={localConfirmationMessage}
+                    onChange={(e) => handleMessageChange('confirmation_message', e.target.value)}
+                    disabled={settingsLoading}
                     rows={6}
                     className="font-mono text-sm"
                   />
@@ -494,7 +571,7 @@ const WhatsAppConnection: React.FC = () => {
                     <span className="text-xs font-medium text-green-600">Preview</span>
                   </div>
                   <div className="whitespace-pre-wrap text-sm">
-                    {(settings.confirmation_message || '')
+                    {localConfirmationMessage
                       .replace(/{nome}/g, 'João')
                       .replace(/{data}/g, '15/11/2024')
                       .replace(/{hora}/g, '14:30')
@@ -516,9 +593,9 @@ const WhatsAppConnection: React.FC = () => {
                   </p>
                   <Textarea
                     placeholder="Digite a mensagem de reagendamento..."
-                    value={settings.reschedule_message || ''}
-                    onChange={(e) => handleSettingChange('reschedule_message', e.target.value)}
-                    disabled={settingsLoading || settingsSaving}
+                    value={localRescheduleMessage}
+                    onChange={(e) => handleMessageChange('reschedule_message', e.target.value)}
+                    disabled={settingsLoading}
                     rows={6}
                     className="font-mono text-sm"
                   />
@@ -535,7 +612,7 @@ const WhatsAppConnection: React.FC = () => {
                     <span className="text-xs font-medium text-blue-600">Preview</span>
                   </div>
                   <div className="whitespace-pre-wrap text-sm">
-                    {(settings.reschedule_message || '')
+                    {localRescheduleMessage
                       .replace(/{nome}/g, 'João')
                       .replace(/{data}/g, '15/11/2024')
                       .replace(/{hora}/g, '14:30')
@@ -596,9 +673,9 @@ const WhatsAppConnection: React.FC = () => {
                       </p>
                       <Textarea
                         placeholder="Digite a mensagem de lembrete..."
-                        value={settings.reminder_message}
-                        onChange={(e) => handleSettingChange('reminder_message', e.target.value)}
-                        disabled={settingsLoading || settingsSaving}
+                        value={localReminderMessage}
+                        onChange={(e) => handleMessageChange('reminder_message', e.target.value)}
+                        disabled={settingsLoading}
                         rows={6}
                         className="font-mono text-sm"
                       />
@@ -620,7 +697,7 @@ const WhatsAppConnection: React.FC = () => {
                         <span className="text-xs font-medium text-purple-600">Preview</span>
                       </div>
                       <div className="whitespace-pre-wrap text-sm">
-                        {settings.reminder_message
+                        {localReminderMessage
                           .replace(/{nome}/g, 'João')
                           .replace(/{data}/g, '15/11/2024')
                           .replace(/{hora}/g, '14:30')
@@ -633,10 +710,46 @@ const WhatsAppConnection: React.FC = () => {
               </TabsContent>
             </Tabs>
 
-            {settingsSaving && (
-              <Alert className="mt-4">
-                <RefreshCw className="h-4 w-4 animate-spin" />
-                <AlertDescription>Salvando configurações...</AlertDescription>
+            {/* Botão Salvar */}
+            <div className="mt-6 flex items-center justify-between p-4 bg-muted/30 rounded-lg border border-border">
+              <div className="flex items-center gap-2">
+                {hasUnsavedChanges && (
+                  <div className="flex items-center gap-2 text-sm text-amber-600">
+                    <AlertCircle className="h-4 w-4" />
+                    <span>Você tem alterações não salvas</span>
+                  </div>
+                )}
+                {!hasUnsavedChanges && !savingMessages && (
+                  <div className="flex items-center gap-2 text-sm text-green-600">
+                    <CheckCircle2 className="h-4 w-4" />
+                    <span>Todas as alterações salvas</span>
+                  </div>
+                )}
+              </div>
+              <Button
+                onClick={handleSaveMessages}
+                disabled={!hasUnsavedChanges || savingMessages}
+                size="lg"
+                className="min-w-[150px]"
+              >
+                {savingMessages ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    Salvando...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="h-4 w-4 mr-2" />
+                    Salvar Mensagens
+                  </>
+                )}
+              </Button>
+            </div>
+
+            {settingsError && (
+              <Alert variant="destructive" className="mt-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{settingsError}</AlertDescription>
               </Alert>
             )}
           </CardContent>

@@ -1,9 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, User, TrendingUp, ExternalLink, AlertCircle, Eye, SquarePen, Trash2, Phone } from "lucide-react";
+import { Calendar, Clock, User, TrendingUp, ExternalLink, AlertCircle, Eye, SquarePen, Trash2, Phone, Plus, Scissors, CalendarCheck } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { format, parseISO } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { useUserData } from "@/hooks/useUserData";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState, useEffect } from "react";
@@ -39,12 +40,18 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
+import { getAvailableTimeSlots, createAppointment } from "@/lib/supabase-queries";
+import { motion } from "framer-motion";
+import WeeklyDatePicker from "@/components/WeeklyDatePicker";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { profile, barbershop, services, loading: userLoading, error: userError, refetch: refetchUser } = useUserData();
   const { stats, todayAppointments, loading: dashboardLoading, error: dashboardError, refetch: refetchDashboard } = useDashboardData(barbershop?.id);
+  
+  const { toast } = useToast();
   
   // Estados para o modal e ações
   const [selectedAppointment, setSelectedAppointment] = useState(null);
@@ -54,6 +61,16 @@ const Dashboard = () => {
   const [rescheduleLoading, setRescheduleLoading] = useState(false);
   const [editDate, setEditDate] = useState<string>("");
   const [editTime, setEditTime] = useState<string>("");
+  
+  // Estados para novo agendamento
+  const [newAppointmentOpen, setNewAppointmentOpen] = useState(false);
+  const [selectedService, setSelectedService] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
+  const [timeSlots, setTimeSlots] = useState<{ time: string; available: boolean }[]>([]);
+  const [submitting, setSubmitting] = useState(false);
   
   // Dashboard render tracking removed for production
   
@@ -183,6 +200,123 @@ const Dashboard = () => {
     }
   };
 
+  // Funções para novo agendamento
+  const openNewAppointmentModal = () => {
+    setNewAppointmentOpen(true);
+    setSelectedDate(new Date());
+  };
+
+  const closeNewAppointmentModal = () => {
+    setNewAppointmentOpen(false);
+    setSelectedService(null);
+    setSelectedDate(null);
+    setSelectedTime(null);
+    setCustomerName("");
+    setCustomerPhone("");
+    setTimeSlots([]);
+  };
+
+  // Carregar horários disponíveis quando serviço ou data mudam
+  useEffect(() => {
+    const loadTimeSlots = async () => {
+      if (!barbershop || !selectedService || !selectedDate) return;
+      
+      try {
+        const dateString = format(selectedDate, 'yyyy-MM-dd');
+        const slots = await getAvailableTimeSlots(barbershop.id, selectedService, dateString);
+        setTimeSlots(slots);
+        setSelectedTime(null);
+      } catch (error) {
+        console.error('Erro ao carregar horários:', error);
+        setTimeSlots([]);
+      }
+    };
+
+    loadTimeSlots();
+  }, [barbershop, selectedService, selectedDate]);
+
+  // Atualização em tempo real dos horários
+  useEffect(() => {
+    if (!barbershop || !selectedService || !selectedDate) return;
+
+    const dateString = format(selectedDate, 'yyyy-MM-dd');
+
+    const refreshSlots = async () => {
+      try {
+        const slots = await getAvailableTimeSlots(barbershop.id, selectedService, dateString);
+        setTimeSlots(slots);
+      } catch (error) {
+        console.error('Erro ao atualizar horários (realtime):', error);
+      }
+    };
+
+    const channel = supabase.channel('realtime-appointments-dashboard')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'appointments',
+          filter: `barbershop_id=eq.${barbershop.id}`,
+        },
+        () => {
+          refreshSlots();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [barbershop, selectedService, selectedDate]);
+
+  const handleNewAppointmentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!selectedTime || !customerName || !customerPhone || !barbershop || !selectedService || !selectedDate) {
+      toast({
+        title: "Erro",
+        description: "Por favor, preencha todos os campos",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      
+      const dateString = format(selectedDate, 'yyyy-MM-dd');
+      const scheduledAt = `${dateString}T${selectedTime}:00-03:00`;
+      
+      await createAppointment({
+        barbershop_id: barbershop.id,
+        service_id: selectedService,
+        customer_name: customerName,
+        customer_phone: customerPhone,
+        scheduled_at: scheduledAt,
+        status: 'confirmed'
+      });
+
+      toast({
+        title: "Agendamento Criado! 📅",
+        description: `Horário reservado para ${selectedTime} do dia ${selectedDate.toLocaleDateString('pt-BR')}.`,
+      });
+
+      closeNewAppointmentModal();
+      refetchDashboard();
+      
+    } catch (error) {
+      console.error('Erro ao criar agendamento:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao criar agendamento. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   // Se autenticacao finalizou e não há usuário, redireciona para login
   useEffect(() => {
     if (!authLoading && !user) {
@@ -259,6 +393,83 @@ const Dashboard = () => {
       }
     >
       <div className="space-y-6 md:space-y-8">
+        {/* Atalhos Rápidos Premium */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="grid gap-4 grid-cols-1 md:grid-cols-3"
+        >
+          {/* Novo Agendamento */}
+          <motion.div
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <Card 
+              className="cursor-pointer border-2 hover:border-primary transition-all hover:shadow-xl bg-gradient-to-br from-primary/5 to-primary/10"
+              onClick={openNewAppointmentModal}
+            >
+              <CardContent className="p-6">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 rounded-xl bg-primary/10">
+                    <Plus className="h-8 w-8 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-bold text-lg mb-1">Novo Agendamento</h3>
+                    <p className="text-sm text-muted-foreground">Criar agendamento rápido</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* Ver Agendamentos */}
+          <motion.div
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <Card 
+              className="cursor-pointer border-2 hover:border-blue-500 transition-all hover:shadow-xl bg-gradient-to-br from-blue-500/5 to-blue-500/10"
+              onClick={() => navigate('/appointments')}
+            >
+              <CardContent className="p-6">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 rounded-xl bg-blue-500/10">
+                    <CalendarCheck className="h-8 w-8 text-blue-500" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-bold text-lg mb-1">Ver Agendamentos</h3>
+                    <p className="text-sm text-muted-foreground">Gerenciar todos os horários</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* Meus Serviços */}
+          <motion.div
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <Card 
+              className="cursor-pointer border-2 hover:border-purple-500 transition-all hover:shadow-xl bg-gradient-to-br from-purple-500/5 to-purple-500/10"
+              onClick={() => navigate('/services')}
+            >
+              <CardContent className="p-6">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 rounded-xl bg-purple-500/10">
+                    <Scissors className="h-8 w-8 text-purple-500" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-bold text-lg mb-1">Meus Serviços</h3>
+                    <p className="text-sm text-muted-foreground">Gerenciar serviços</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </motion.div>
+
         {/* Stats */}
         <div className="stats-grid grid gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
           <Card className="stats-card border-2">
@@ -411,6 +622,207 @@ const Dashboard = () => {
         )}
       </div>
       
+      {/* Modal de Novo Agendamento - Estilo Premium */}
+      <Dialog open={newAppointmentOpen} onOpenChange={setNewAppointmentOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold flex items-center gap-2">
+              <Plus className="h-6 w-6 text-primary" />
+              Novo Agendamento
+            </DialogTitle>
+            <DialogDescription>
+              Crie um agendamento rápido para seu cliente
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleNewAppointmentSubmit} className="space-y-6">
+            {/* Informações do Cliente */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="h-8 w-1 bg-primary rounded-full" />
+                <h3 className="text-lg font-semibold">Dados do Cliente</h3>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="customer_name">Nome Completo</Label>
+                  <Input
+                    id="customer_name"
+                    value={customerName}
+                    onChange={(e) => setCustomerName(e.target.value)}
+                    placeholder="Nome do cliente"
+                    required
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="customer_phone">WhatsApp</Label>
+                  <Input
+                    id="customer_phone"
+                    type="tel"
+                    value={customerPhone}
+                    onChange={(e) => setCustomerPhone(e.target.value)}
+                    placeholder="(11) 99999-9999"
+                    required
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Seleção de Serviço */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="h-8 w-1 bg-primary rounded-full" />
+                <h3 className="text-lg font-semibold">Escolha o Serviço</h3>
+              </div>
+              <Select value={selectedService || ""} onValueChange={setSelectedService} required>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um serviço" />
+                </SelectTrigger>
+                <SelectContent>
+                  {services.map((service) => (
+                    <SelectItem key={service.id} value={service.id}>
+                      {service.name} - R$ {service.price.toFixed(2)} ({service.duration} min)
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Seleção de Data */}
+            {selectedService && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="space-y-3"
+              >
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-1 bg-primary rounded-full" />
+                  <h3 className="text-lg font-semibold">Selecione a Data</h3>
+                </div>
+                <div className="rounded-xl overflow-hidden border border-border/50 bg-background/50">
+                  <WeeklyDatePicker
+                    selectedDate={selectedDate}
+                    onDateSelect={setSelectedDate}
+                    minDate={new Date()}
+                  />
+                </div>
+              </motion.div>
+            )}
+
+            {/* Seleção de Horário */}
+            {selectedDate && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="space-y-3"
+              >
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-1 bg-primary rounded-full" />
+                  <h3 className="text-lg font-semibold">Escolha o Horário</h3>
+                </div>
+                
+                {timeSlots.length === 0 ? (
+                  <div className="text-center py-12 px-4 rounded-xl bg-muted/30 border border-dashed border-border">
+                    <Clock className="h-12 w-12 mx-auto mb-3 text-muted-foreground/50" />
+                    <p className="text-sm text-muted-foreground">
+                      Nenhum horário disponível para esta data.
+                    </p>
+                    <p className="text-xs text-muted-foreground/70 mt-1">
+                      Tente selecionar outra data
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+                    {timeSlots.map((slot, index) => (
+                      <motion.div
+                        key={slot.time}
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: index * 0.03 }}
+                      >
+                        <Button
+                          type="button"
+                          variant={selectedTime === slot.time ? "default" : "outline"}
+                          onClick={() => slot.available && setSelectedTime(slot.time)}
+                          disabled={!slot.available}
+                          className={`w-full h-12 text-sm font-semibold transition-all ${
+                            selectedTime === slot.time 
+                              ? "shadow-lg shadow-primary/30 scale-105" 
+                              : "hover:scale-105 hover:shadow-md"
+                          } ${
+                            !slot.available 
+                              ? "opacity-30 cursor-not-allowed hover:scale-100" 
+                              : ""
+                          }`}
+                        >
+                          {slot.time}
+                        </Button>
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
+              </motion.div>
+            )}
+
+            {/* Resumo */}
+            {selectedTime && selectedDate && selectedService && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 border border-green-200 dark:border-green-800 rounded-xl p-4"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                    <CalendarCheck className="h-5 w-5 text-green-600 dark:text-green-400" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-green-900 dark:text-green-100 mb-1">
+                      Resumo do Agendamento
+                    </p>
+                    <div className="space-y-1 text-sm text-green-700 dark:text-green-300">
+                      <p><strong>Cliente:</strong> {customerName || "..."}</p>
+                      <p><strong>Serviço:</strong> {services.find(s => s.id === selectedService)?.name}</p>
+                      <p><strong>Data:</strong> {format(selectedDate, "dd/MM/yyyy", { locale: ptBR })}</p>
+                      <p><strong>Horário:</strong> {selectedTime}</p>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button 
+                type="button"
+                variant="outline" 
+                onClick={closeNewAppointmentModal}
+                className="w-full sm:w-auto"
+              >
+                Cancelar
+              </Button>
+              <Button 
+                type="submit"
+                disabled={!selectedTime || !customerName || !customerPhone || submitting}
+                className="w-full sm:w-auto"
+              >
+                {submitting ? (
+                  <>
+                    <div className="h-4 w-4 mr-2 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Criando...
+                  </>
+                ) : (
+                  <>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Criar Agendamento
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
       {/* Modal de Visualização Detalhada */}
       <Dialog open={viewModalOpen} onOpenChange={setViewModalOpen}>
         <DialogContent className="max-w-md">
