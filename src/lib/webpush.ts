@@ -235,7 +235,17 @@ export async function saveSubscriptionToDatabase(
  */
 export async function sendTestNotification(barbershopId: string): Promise<boolean> {
   try {
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+    // Detecta ambiente automaticamente
+    const isProduction = window.location.hostname !== 'localhost';
+    
+    // Em produção, usa a mesma URL base (Vercel Functions)
+    // Em desenvolvimento, usa o servidor local
+    const apiUrl = isProduction 
+      ? window.location.origin  // https://zapcorte.vercel.app
+      : (import.meta.env.VITE_API_URL || 'http://localhost:3001');
+    
+    console.log('🌐 Enviando para:', apiUrl);
+    
     const response = await fetch(`${apiUrl}/api/send-notification`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -244,9 +254,26 @@ export async function sendTestNotification(barbershopId: string): Promise<boolea
       }),
     });
 
-    return response.ok;
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ Erro da API:', errorText);
+      
+      let errorMessage = 'Erro ao enviar notificação';
+      try {
+        const errorJson = JSON.parse(errorText);
+        errorMessage = errorJson.error || errorMessage;
+      } catch (e) {
+        errorMessage = errorText || errorMessage;
+      }
+      
+      throw new Error(errorMessage);
+    }
+
+    const result = await response.json();
+    console.log('✅ Resposta da API:', result);
+    return true;
   } catch (error) {
-    console.error('Erro ao enviar notificação de teste:', error);
+    console.error('❌ Erro ao enviar notificação de teste:', error);
     return false;
   }
 }

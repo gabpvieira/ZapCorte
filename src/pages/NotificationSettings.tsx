@@ -35,15 +35,39 @@ const NotificationSettings = () => {
     } else {
       setChecking(false);
     }
-  }, []);
+  }, [barbershop?.id]);
 
   const checkNotificationStatus = async () => {
     setChecking(true);
     try {
-      const enabled = isNotificationEnabled();
-      setNotificationsEnabled(enabled);
+      // Verificar permissão do navegador
+      const hasPermission = isNotificationEnabled();
+      
+      if (!hasPermission) {
+        setNotificationsEnabled(false);
+        setChecking(false);
+        return;
+      }
+
+      // Verificar se tem subscription salva no banco
+      if (barbershop?.id) {
+        const { supabase } = await import('@/lib/supabase');
+        const { data, error } = await supabase
+          .from('push_subscriptions')
+          .select('id')
+          .eq('barbershop_id', barbershop.id)
+          .eq('is_active', true)
+          .limit(1);
+
+        if (!error && data && data.length > 0) {
+          setNotificationsEnabled(true);
+        } else {
+          setNotificationsEnabled(false);
+        }
+      }
     } catch (error) {
-      // Erro silenciado
+      console.error('Erro ao verificar status:', error);
+      setNotificationsEnabled(false);
     } finally {
       setChecking(false);
     }
