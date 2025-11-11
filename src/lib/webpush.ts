@@ -125,18 +125,33 @@ export async function saveSubscriptionToDatabase(
   barbershopId: string,
   subscription: PushSubscription
 ): Promise<boolean> {
-  const { supabase } = await import('@/lib/supabase');
-  
-  const { error } = await supabase
-    .from('barbershops')
-    .update({
-      push_subscription: subscription.toJSON(),
-      push_enabled: true,
-      push_last_updated: new Date().toISOString()
-    })
-    .eq('id', barbershopId);
+  try {
+    const { supabase } = await import('@/lib/supabase');
+    
+    const subscriptionData = subscription.toJSON();
+    console.log('💾 Salvando subscription:', { barbershopId, subscriptionData });
+    
+    const { data, error } = await supabase
+      .from('barbershops')
+      .update({
+        push_subscription: subscriptionData,
+        push_enabled: true,
+        push_last_updated: new Date().toISOString()
+      })
+      .eq('id', barbershopId)
+      .select();
 
-  return !error;
+    if (error) {
+      console.error('❌ Erro ao salvar subscription:', error);
+      return false;
+    }
+
+    console.log('✅ Subscription salva com sucesso:', data);
+    return true;
+  } catch (error) {
+    console.error('❌ Erro ao salvar subscription:', error);
+    return false;
+  }
 }
 
 /**
@@ -144,19 +159,18 @@ export async function saveSubscriptionToDatabase(
  */
 export async function sendTestNotification(barbershopId: string): Promise<boolean> {
   try {
-    const response = await fetch('/api/send-notification', {
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+    const response = await fetch(`${apiUrl}/api/send-notification`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         barbershopId,
-        customerName: 'Cliente Teste',
-        scheduledAt: new Date().toISOString(),
-        serviceName: 'Corte de Cabelo',
       }),
     });
 
     return response.ok;
   } catch (error) {
+    console.error('Erro ao enviar notificação de teste:', error);
     return false;
   }
 }

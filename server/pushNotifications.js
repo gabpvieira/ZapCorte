@@ -3,10 +3,10 @@
  * Usando Web Push API + VAPID
  */
 
-const webpush = require('web-push');
+import webpush from 'web-push';
 
 // Chaves VAPID geradas
-const VAPID_PUBLIC_KEY = 'BKgmKhuhrgdKq_1htzMDYWUKt4DjAU1EyP5iFGTdjv9HT4L9t_qt9pa_j3J95uE2FKiqO1LKc7dfV8-cYPB5law';
+export const VAPID_PUBLIC_KEY = 'BKgmKhuhrgdKq_1htzMDYWUKt4DjAU1EyP5iFGTdjv9HT4L9t_qt9pa_j3J95uE2FKiqO1LKc7dfV8-cYPB5law';
 const VAPID_PRIVATE_KEY = 'dlMUU4XLFxaZk7NvJg3zqmcChMrat5FhKdIH2YHqVPs';
 
 // Configurar VAPID
@@ -19,7 +19,7 @@ webpush.setVapidDetails(
 /**
  * Envia notificação push para um usuário
  */
-async function sendPushNotification(subscription, payload) {
+export async function sendPushNotification(subscription, payload) {
   try {
     await webpush.sendNotification(subscription, JSON.stringify(payload));
     return { success: true };
@@ -32,7 +32,7 @@ async function sendPushNotification(subscription, payload) {
 /**
  * Envia notificação de novo agendamento
  */
-async function sendNewAppointmentNotification(subscription, data) {
+export async function sendNewAppointmentNotification(subscription, data) {
   const { customerName, scheduledAt, serviceName } = data;
   
   const date = new Date(scheduledAt);
@@ -60,8 +60,20 @@ async function sendNewAppointmentNotification(subscription, data) {
   return await sendPushNotification(subscription, payload);
 }
 
-module.exports = {
-  VAPID_PUBLIC_KEY,
-  sendPushNotification,
-  sendNewAppointmentNotification,
-};
+/**
+ * Envia notificação de teste
+ */
+export async function sendTestNotification(subscription) {
+  const payload = {
+    title: '✅ Notificação de Teste',
+    body: 'Suas notificações estão funcionando perfeitamente!',
+    icon: '/zapcorte-icon.png',
+    badge: '/zapcorte-icon.png',
+    data: {
+      url: '/dashboard/notifications',
+      type: 'test',
+    },
+  };
+
+  return await sendPushNotification(subscription, payload);
+}

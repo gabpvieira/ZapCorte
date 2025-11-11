@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
 import * as caktoService from './caktoService.js';
+import * as pushService from './pushNotifications.js';
 
 dotenv.config();
 
@@ -44,6 +45,68 @@ app.get('/api/plans', (req, res) => {
       checkoutUrl: `https://pay.cakto.com.br/${process.env.CAKTO_PRODUCT_ID_PRO}`
     }
   });
+});
+
+// Rota para enviar notificação de teste
+app.post('/api/send-notification', async (req, res) => {
+  console.log('📨 Requisição de notificação recebida:', req.body);
+
+  try {
+    const { barbershopId, customerName, scheduledAt, serviceName } = req.body;
+
+    if (!barbershopId) {
+      return res.status(400).json({ error: 'barbershopId é obrigatório' });
+    }
+
+    // Buscar subscription da barbearia
+    const { data: barbershop, error } = await supabase
+      .from('barbershops')
+      .select('push_subscription, push_enabled')
+      .eq('id', barbershopId)
+      .single();
+
+    if (error || !barbershop) {
+      console.error('Erro ao buscar barbearia:', error);
+      return res.status(404).json({ error: 'Barbearia não encontrada' });
+    }
+
+    if (!barbershop.push_enabled || !barbershop.push_subscription) {
+      return res.status(400).json({ error: 'Notificações não estão habilitadas' });
+    }
+
+    // Enviar notificação
+    let result;
+    if (customerName && scheduledAt && serviceName) {
+      // Notificação de agendamento
+      result = await pushService.sendNewAppointmentNotification(
+        barbershop.push_subscription,
+        { customerName, scheduledAt, serviceName }
+      );
+    } else {
+      // Notificação de teste
+      result = await pushService.sendTestNotification(barbershop.push_subscription);
+    }
+
+    if (result.success) {
+      // Registrar no histórico
+      await supabase.from('push_notifications').insert({
+        barbershop_id: barbershopId,
+        title: customerName ? '🎉 Novo Agendamento!' : '✅ Notificação de Teste',
+        body: customerName 
+          ? `${customerName} agendou ${serviceName}` 
+          : 'Suas notificações estão funcionando!',
+        status: 'sent',
+        sent_at: new Date().toISOString(),
+      });
+
+      return res.json({ success: true, message: 'Notificação enviada com sucesso' });
+    } else {
+      return res.status(500).json({ error: 'Falha ao enviar notificação', details: result.error });
+    }
+  } catch (error) {
+    console.error('Erro ao enviar notificação:', error);
+    return res.status(500).json({ error: 'Erro interno do servidor', message: error.message });
+  }
 });
 
 // Webhook do Cakto
