@@ -16,11 +16,17 @@ const ONESIGNAL_APP_ID = import.meta.env.VITE_ONESIGNAL_APP_ID;
 const ONESIGNAL_REST_API_KEY = import.meta.env.VITE_ONESIGNAL_REST_API_KEY;
 
 /**
+ * Verifica se o OneSignal está configurado
+ */
+export function isOneSignalConfigured(): boolean {
+  return !!(ONESIGNAL_APP_ID && ONESIGNAL_REST_API_KEY);
+}
+
+/**
  * Inicializa o OneSignal
  */
-export async function initializeOneSignal() {
+export async function initializeOneSignal(): Promise<boolean> {
   if (!ONESIGNAL_APP_ID) {
-    console.warn('[OneSignal] App ID não configurado');
     return false;
   }
 
@@ -32,19 +38,16 @@ export async function initializeOneSignal() {
         appId: ONESIGNAL_APP_ID,
         safari_web_id: "web.onesignal.auto.xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
         notifyButton: {
-          enable: false, // Vamos usar nosso próprio botão
+          enable: false,
         },
         allowLocalhostAsSecureOrigin: true,
         serviceWorkerParam: { scope: '/' },
         serviceWorkerPath: 'OneSignalSDKWorker.js',
       });
-
-      console.log('[OneSignal] Inicializado com sucesso');
     });
 
     return true;
   } catch (error) {
-    console.error('[OneSignal] Erro ao inicializar:', error);
     return false;
   }
 }

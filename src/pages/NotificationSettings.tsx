@@ -14,8 +14,11 @@ import {
   getPlayerId,
   savePlayerIdToBarbershop,
   sendPushNotification,
+  isOneSignalConfigured,
 } from '@/lib/onesignal';
 import { useUserData } from '@/hooks/useUserData';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 
 const NotificationSettings = () => {
   const { toast } = useToast();
@@ -24,9 +27,17 @@ const NotificationSettings = () => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [playerId, setPlayerId] = useState<string | null>(null);
   const [checking, setChecking] = useState(true);
+  const [isConfigured, setIsConfigured] = useState(false);
 
   useEffect(() => {
-    checkNotificationStatus();
+    const configured = isOneSignalConfigured();
+    setIsConfigured(configured);
+    
+    if (configured) {
+      checkNotificationStatus();
+    } else {
+      setChecking(false);
+    }
   }, []);
 
   const checkNotificationStatus = async () => {
@@ -48,6 +59,15 @@ const NotificationSettings = () => {
   };
 
   const handleEnableNotifications = async () => {
+    if (!isConfigured) {
+      toast({
+        title: 'OneSignal não configurado',
+        description: 'Entre em contato com o suporte para configurar as notificações',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     if (!barbershop?.id) {
       toast({
         title: 'Erro',
@@ -60,7 +80,17 @@ const NotificationSettings = () => {
     setLoading(true);
     try {
       // Inicializar OneSignal
-      await initializeOneSignal();
+      const initialized = await initializeOneSignal();
+      
+      if (!initialized) {
+        toast({
+          title: 'Erro',
+          description: 'Não foi possível inicializar o sistema de notificações',
+          variant: 'destructive',
+        });
+        setLoading(false);
+        return;
+      }
 
       // Solicitar permissão
       const granted = await requestNotificationPermission();
@@ -176,6 +206,24 @@ const NotificationSettings = () => {
       subtitle="Configure alertas de novos agendamentos"
     >
       <div className="max-w-2xl mx-auto space-y-6">
+        {/* Alerta de Configuração */}
+        {!isConfigured && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>OneSignal não configurado</AlertTitle>
+            <AlertDescription>
+              As notificações push ainda não foram configuradas neste ambiente. 
+              Entre em contato com o suporte técnico para ativar este recurso.
+              <br /><br />
+              <strong>Variáveis necessárias:</strong>
+              <ul className="list-disc list-inside mt-2">
+                <li>VITE_ONESIGNAL_APP_ID</li>
+                <li>VITE_ONESIGNAL_REST_API_KEY</li>
+              </ul>
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Status Card */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -250,7 +298,7 @@ const NotificationSettings = () => {
                 {!notificationsEnabled ? (
                   <Button
                     onClick={handleEnableNotifications}
-                    disabled={loading}
+                    disabled={loading || !isConfigured}
                     className="w-full"
                     size="lg"
                   >
