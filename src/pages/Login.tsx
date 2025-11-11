@@ -49,7 +49,6 @@ const Login = () => {
         }, 100);
       }
     } catch (error) {
-      console.error('Erro inesperado no login:', error);
       toast({
         title: "Erro inesperado",
         description: "Ocorreu um erro durante o login. Tente novamente.",

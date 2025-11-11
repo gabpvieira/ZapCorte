@@ -108,7 +108,6 @@ const Appointments = () => {
       fetchCustomers();
     } else if (barbershop === null) {
       // Se barbershop é null (não undefined), significa que já foi carregado mas não existe
-      console.log('ℹ️ Nenhuma barbearia encontrada para este usuário');
       setLoading(false);
     }
   }, [barbershop?.id, barbershop]);
@@ -117,7 +116,6 @@ const Appointments = () => {
   useEffect(() => {
     const fallbackTimer = setTimeout(() => {
       if (loading) {
-        console.warn('⚠️ Loading não finalizou em 10s, forçando finalização');
         setLoading(false);
       }
     }, 10000);
@@ -135,7 +133,7 @@ const Appointments = () => {
       if (error) throw error;
       setServices(data || []);
     } catch (error) {
-      console.error("Erro ao buscar serviços:", error);
+      // Erro silenciado
     }
   };
 
@@ -150,7 +148,7 @@ const Appointments = () => {
       if (error) throw error;
       setCustomers(data || []);
     } catch (error) {
-      console.error("Erro ao buscar clientes:", error);
+      // Erro silenciado
     }
   };
 
@@ -169,7 +167,6 @@ const Appointments = () => {
       if (error) throw error;
       setAppointments(data || []);
     } catch (error) {
-      console.error("Erro ao buscar agendamentos:", error);
       toast({
         title: "Erro",
         description: "Não foi possível carregar os agendamentos.",
@@ -266,7 +263,6 @@ const Appointments = () => {
               : "Agendamento criado com sucesso!",
           });
         } catch (whatsappError) {
-          console.warn('Erro ao enviar WhatsApp:', whatsappError);
           toast({
             title: "Sucesso",
             description: "Agendamento criado com sucesso!",
@@ -278,7 +274,6 @@ const Appointments = () => {
       resetForm();
       fetchAppointments();
     } catch (error) {
-      console.error("Erro ao salvar agendamento:", error);
       toast({
         title: "Erro",
         description: "Não foi possível salvar o agendamento.",
@@ -316,7 +311,6 @@ const Appointments = () => {
 
       fetchAppointments();
     } catch (error) {
-      console.error("Erro ao excluir agendamento:", error);
       toast({
         title: "Erro",
         description: "Não foi possível excluir o agendamento.",
@@ -341,7 +335,6 @@ const Appointments = () => {
 
       fetchAppointments();
     } catch (error) {
-      console.error("Erro ao atualizar status:", error);
       toast({
         title: "Erro",
         description: "Não foi possível atualizar o status.",
@@ -427,7 +420,6 @@ const Appointments = () => {
       fetchAppointments();
       closeViewModal();
     } catch (error) {
-      console.error("Erro ao atualizar status:", error);
       toast({
         title: "Erro",
         description: "Não foi possível atualizar o status.",
@@ -441,7 +433,6 @@ const Appointments = () => {
   // Função para aceitar agendamento e enviar mensagem WhatsApp
   const handleAcceptAppointment = async (appointment: Appointment) => {
     if (!barbershop?.id) {
-      console.error('[Aceitar] Barbearia não encontrada');
       return;
     }
 
@@ -449,10 +440,6 @@ const Appointments = () => {
     if (acceptingAppointments.has(appointment.id)) {
       return;
     }
-
-    console.log('[Aceitar] Iniciando confirmação:', {
-      appointmentId: appointment.id,
-      customerName: appointment.customer_name,
       customerPhone: appointment.customer_phone,
       barbershopId: barbershop.id,
       serviceName: appointment.service?.name
@@ -469,11 +456,8 @@ const Appointments = () => {
         .eq("id", appointment.id);
 
       if (error) {
-        console.error('[Aceitar] Erro ao atualizar status:', error);
         throw error;
       }
-
-      console.log('[Aceitar] Status atualizado com sucesso, enviando WhatsApp...');
 
       // Enviar mensagem de confirmação via WhatsApp
       const mensagemEnviada = await enviarLembreteWhatsApp({
@@ -485,8 +469,6 @@ const Appointments = () => {
         tipo: 'confirmacao',
       });
 
-      console.log('[Aceitar] Resultado do envio WhatsApp:', mensagemEnviada);
-
       toast({
         title: "Agendamento Confirmado!",
         description: mensagemEnviada 
@@ -496,7 +478,6 @@ const Appointments = () => {
 
       fetchAppointments();
     } catch (error) {
-      console.error("[Aceitar] Erro ao aceitar agendamento:", error);
       toast({
         title: "Erro",
         description: "Não foi possível confirmar o agendamento.",
@@ -529,7 +510,6 @@ const Appointments = () => {
 
       fetchAppointments();
     } catch (error) {
-      console.error("Erro ao atualizar observações:", error);
       toast({
         title: "Erro",
         description: "Não foi possível atualizar as observações.",
@@ -557,7 +537,6 @@ const Appointments = () => {
       fetchAppointments();
       closeViewModal();
     } catch (error) {
-      console.error("Erro ao excluir agendamento:", error);
       toast({
         title: "Erro",
         description: "Não foi possível excluir o agendamento.",
@@ -588,9 +567,6 @@ const Appointments = () => {
     if (!date || !selectedAppointment?.service) return;
 
     try {
-      console.log('[Reagendar] Buscando horários disponíveis:', {
-        date,
-        serviceId: selectedAppointment.service_id,
         serviceDuration: selectedAppointment.service.duration,
         barbershopId: barbershop?.id
       });
@@ -604,14 +580,10 @@ const Appointments = () => {
         date
       );
 
-      console.log('[Reagendar] Horários recebidos:', timeSlots);
-
       // Filtrar apenas os horários disponíveis
       const availableSlots = timeSlots
         .filter(slot => slot.available)
         .map(slot => slot.time);
-
-      console.log('[Reagendar] Horários disponíveis:', availableSlots);
 
       setAvailableSlots(availableSlots);
 
@@ -622,7 +594,6 @@ const Appointments = () => {
         });
       }
     } catch (error) {
-      console.error("[Reagendar] Erro ao buscar horários disponíveis:", error);
       toast({
         title: "Erro",
         description: "Não foi possível carregar os horários disponíveis.",
@@ -633,11 +604,14 @@ const Appointments = () => {
   };
 
   const handleReschedule = async () => {
-    if (!selectedAppointment || !selectedDate || !selectedTime) return;
+    if (!selectedAppointment || !selectedDate || !selectedTime || !barbershop?.id) return;
 
     setRescheduleLoading(true);
     try {
       const scheduledAt = new Date(`${selectedDate}T${selectedTime}`);
+        customerName: selectedAppointment.customer_name,
+        customerPhone: selectedAppointment.customer_phone
+      });
       
       const { error } = await supabase
         .from("appointments")
@@ -646,16 +620,34 @@ const Appointments = () => {
 
       if (error) throw error;
 
-      toast({
-        title: "Sucesso",
-        description: "Agendamento reagendado com sucesso!",
-      });
+      // Enviar mensagem de reagendamento via WhatsApp
+      try {
+        const mensagemEnviada = await enviarLembreteWhatsApp({
+          barbershopId: barbershop.id,
+          customerName: selectedAppointment.customer_name,
+          customerPhone: selectedAppointment.customer_phone,
+          scheduledAt: scheduledAt.toISOString(),
+          serviceName: selectedAppointment.service?.name || 'Serviço',
+          tipo: 'reagendamento',
+        });
+
+        toast({
+          title: "Agendamento Reagendado! 🔄",
+          description: mensagemEnviada 
+            ? "Agendamento reagendado e mensagem enviada via WhatsApp."
+            : "Agendamento reagendado com sucesso!",
+        });
+      } catch (whatsappError) {
+        toast({
+          title: "Sucesso",
+          description: "Agendamento reagendado com sucesso!",
+        });
+      }
 
       fetchAppointments();
       closeRescheduleDialog();
       closeViewModal();
     } catch (error) {
-      console.error("Erro ao reagendar:", error);
       toast({
         title: "Erro",
         description: "Não foi possível reagendar o agendamento.",

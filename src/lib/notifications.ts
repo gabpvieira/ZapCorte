@@ -89,7 +89,7 @@ export async function enviarLembreteWhatsApp({
   customerPhone: string;
   scheduledAt: string;
   serviceName: string;
-  tipo?: 'confirmacao' | 'lembrete' | 'cancelamento';
+  tipo?: 'confirmacao' | 'lembrete' | 'cancelamento' | 'reagendamento';
 }) {
   try {
     // Buscar dados da barbearia e verificar se WhatsApp está conectado
@@ -188,6 +188,21 @@ Seu agendamento foi cancelado:
 
 Para reagendar, entre em contato conosco.
 
+_Mensagem enviada automaticamente pelo ZapCorte_`,
+      reagendamento: `🔄 *Agendamento Reagendado!*
+
+Olá *${primeiroNome}*!
+
+Seu agendamento foi reagendado com sucesso:
+
+📅 *Nova Data:* ${diaSemana}, ${dataFormatada}
+🕐 *Novo Horário:* ${horaFormatada}
+✂️ *Serviço:* ${serviceName}
+👨‍💼 *Profissional:* ${barbeiroNome}
+🏪 *Local:* ${barbershop.name}
+
+Qualquer dúvida, estamos à disposição!
+
 _Mensagem enviada automaticamente pelo ZapCorte_`
     };
 
@@ -211,6 +226,12 @@ _Mensagem enviada automaticamente pelo ZapCorte_`
         mensagem = barbershop.reschedule_message 
           ? substituirVariaveis(barbershop.reschedule_message)
           : mensagensPadrao.cancelamento;
+        break;
+
+      case 'reagendamento':
+        mensagem = barbershop.reschedule_message 
+          ? substituirVariaveis(barbershop.reschedule_message)
+          : mensagensPadrao.reagendamento;
         break;
     }
 

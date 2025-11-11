@@ -87,7 +87,6 @@ const Services = () => {
         }
       }
     } catch (error) {
-      console.error("Erro ao buscar serviços:", error);
       toast({
         title: "Erro",
         description: "Não foi possível carregar os serviços.",
@@ -200,7 +199,6 @@ const Services = () => {
           duration: 8000,
         });
       } else {
-        console.error("Erro ao salvar serviço:", error);
         toast({
           title: "Erro",
           description: "Não foi possível salvar o serviço.",
@@ -245,7 +243,6 @@ const Services = () => {
 
       fetchServices();
     } catch (error) {
-      console.error("Erro ao excluir serviço:", error);
       toast({
         title: "Erro",
         description: "Não foi possível excluir o serviço.",
@@ -257,8 +254,8 @@ const Services = () => {
   if (loading) {
     return (
       <DashboardLayout title="Meus Serviços" subtitle="Gerencie seu catálogo">
-        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-          {[...Array(6)].map((_, i) => (
+        <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-5">
+          {[...Array(10)].map((_, i) => (
             <Card key={i} className="animate-pulse overflow-hidden">
               <div className="h-32 sm:h-40 bg-muted"></div>
               <CardContent className="p-3 sm:p-4 space-y-2">
@@ -416,7 +413,7 @@ const Services = () => {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+          className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-5"
         >
           <AnimatePresence>
             {services.map((service) => (
@@ -430,62 +427,62 @@ const Services = () => {
               >
                 <Card className="overflow-hidden hover:shadow-lg transition-all group">
                   {/* Imagem */}
-                  <div className="relative h-32 sm:h-40 overflow-hidden bg-muted">
+                  <div className="relative aspect-square overflow-hidden bg-muted">
                     <img
-                      src={service.image_url || getPlaceholderImageUrl(400, 300)}
+                      src={service.image_url || getPlaceholderImageUrl(400, 400)}
                       alt={service.name}
                       className="w-full h-full object-cover transition-transform group-hover:scale-110"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
-                        target.src = getPlaceholderImageUrl(400, 300);
+                        target.src = getPlaceholderImageUrl(400, 400);
                       }}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                   </div>
 
                   {/* Conteúdo */}
-                  <CardContent className="p-3 sm:p-4">
-                    <h3 className="font-bold text-base sm:text-lg mb-1 line-clamp-1">
+                  <CardContent className="p-2 lg:p-3">
+                    <h3 className="font-bold text-sm lg:text-sm mb-1 line-clamp-1 lg:line-clamp-2">
                       {service.name}
                     </h3>
                     
                     {service.description && (
-                      <p className="text-xs sm:text-sm text-muted-foreground mb-3 line-clamp-2">
+                      <p className="text-xs lg:text-xs text-muted-foreground mb-2 lg:mb-2 line-clamp-2">
                         {service.description}
                       </p>
                     )}
 
                     {/* Info */}
-                    <div className="flex items-center gap-3 sm:gap-4 mb-3 text-xs sm:text-sm">
-                      <div className="flex items-center gap-1 text-primary font-semibold">
-                        <DollarSign className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                    <div className="flex items-center gap-2 lg:gap-2 mb-2 lg:mb-2 text-xs lg:text-xs">
+                      <div className="flex items-center gap-0.5 lg:gap-0.5 text-primary font-semibold">
+                        <DollarSign className="h-3 w-3 lg:h-3 lg:w-3" />
                         R$ {service.price.toFixed(2)}
                       </div>
-                      <div className="flex items-center gap-1 text-muted-foreground">
-                        <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                      <div className="flex items-center gap-0.5 lg:gap-0.5 text-muted-foreground">
+                        <Clock className="h-3 w-3 lg:h-3 lg:w-3" />
                         {service.duration}min
                       </div>
                     </div>
 
                     {/* Actions */}
-                    <div className="flex gap-2">
+                    <div className="flex gap-1.5 lg:gap-1.5">
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => handleEdit(service)}
-                        className="flex-1 h-9 text-xs sm:text-sm"
+                        className="flex-1 h-8 lg:h-8 text-xs lg:text-xs px-2 lg:px-2"
                       >
-                        <Edit className="h-3.5 w-3.5 sm:h-4 sm:w-4 sm:mr-1" />
-                        <span className="hidden sm:inline">Editar</span>
+                        <Edit className="h-3 w-3 lg:h-3 lg:w-3 lg:mr-1" />
+                        <span className="hidden lg:inline">Editar</span>
                       </Button>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button 
                             variant="ghost" 
                             size="sm" 
-                            className="h-9 px-3 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            className="h-8 lg:h-8 px-2 lg:px-2 text-destructive hover:text-destructive hover:bg-destructive/10"
                           >
-                            <Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                            <Trash2 className="h-3 w-3 lg:h-3 lg:w-3" />
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent className="max-w-[90vw] sm:max-w-md">

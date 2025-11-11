@@ -11,7 +11,8 @@ const Plan = () => {
   const { profile, barbershop } = useUserData();
   const { stats, loading: dashboardLoading } = useDashboardData(barbershop?.id);
 
-  const currentPlan = barbershop?.plan_type || profile?.plan_type || 'freemium';
+  // Priorizar o plano do profile (fonte da verdade) sobre o da barbershop
+  const currentPlan = profile?.plan_type || barbershop?.plan_type || 'freemium';
   
   const planLimits = {
     freemium: {

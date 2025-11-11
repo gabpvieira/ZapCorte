@@ -127,7 +127,6 @@ const Dashboard = () => {
       refetchDashboard();
       
     } catch (error) {
-      console.error('Erro ao atualizar status:', error);
       alert('Erro ao atualizar status do agendamento');
     } finally {
       setStatusUpdateLoading(false);
@@ -155,7 +154,6 @@ const Dashboard = () => {
       refetchDashboard();
       
     } catch (error) {
-      console.error('Erro ao atualizar observações:', error);
       alert('Erro ao atualizar observações do agendamento');
     } finally {
       setNotesUpdateLoading(false);
@@ -177,7 +175,6 @@ const Dashboard = () => {
       closeViewModal();
       
     } catch (error) {
-      console.error('Erro ao excluir agendamento:', error);
       alert('Erro ao excluir agendamento');
     }
   };
@@ -198,7 +195,6 @@ const Dashboard = () => {
       refetchDashboard();
       alert("Agendamento atualizado com sucesso.");
     } catch (error) {
-      console.error("Erro ao reagendar:", error);
       alert("Erro ao reagendar agendamento.");
     } finally {
       setRescheduleLoading(false);
@@ -238,7 +234,7 @@ const Dashboard = () => {
         if (error) throw error;
         setCustomers(data || []);
       } catch (error) {
-        console.error('Erro ao buscar clientes:', error);
+        // Erro silenciado
       }
     };
 
@@ -256,7 +252,6 @@ const Dashboard = () => {
         setTimeSlots(slots);
         setSelectedTime(null);
       } catch (error) {
-        console.error('Erro ao carregar horários:', error);
         setTimeSlots([]);
       }
     };
@@ -275,7 +270,7 @@ const Dashboard = () => {
         const slots = await getAvailableTimeSlots(barbershop.id, selectedService, dateString);
         setTimeSlots(slots);
       } catch (error) {
-        console.error('Erro ao atualizar horários (realtime):', error);
+        // Erro silenciado
       }
     };
 
@@ -347,7 +342,6 @@ const Dashboard = () => {
             : `Horário reservado para ${selectedTime} do dia ${selectedDate.toLocaleDateString('pt-BR')}.`,
         });
       } catch (whatsappError) {
-        console.warn('Erro ao enviar WhatsApp:', whatsappError);
         toast({
           title: "Agendamento Criado! 📅",
           description: `Horário reservado para ${selectedTime} do dia ${selectedDate.toLocaleDateString('pt-BR')}.`,
@@ -358,7 +352,6 @@ const Dashboard = () => {
       refetchDashboard();
       
     } catch (error) {
-      console.error('Erro ao criar agendamento:', error);
       toast({
         title: "Erro",
         description: "Erro ao criar agendamento. Tente novamente.",

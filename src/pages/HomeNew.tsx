@@ -306,44 +306,162 @@ const HomeNew = () => {
       </section>
 
       {/* Problems Section */}
-      <section className="py-20 bg-[#18181B]/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="py-32 bg-gradient-to-b from-[#18181B]/50 via-[#0C0C0C] to-[#18181B]/50 relative overflow-hidden">
+        {/* Animated Background Elements */}
+        <div className="absolute inset-0 pointer-events-none">
+          <motion.div
+            className="absolute top-20 left-10 w-64 h-64 bg-red-500/5 rounded-full blur-3xl"
+            animate={{
+              scale: [1, 1.3, 1],
+              opacity: [0.3, 0.5, 0.3],
+            }}
+            transition={{ duration: 8, repeat: Infinity }}
+          />
+          <motion.div
+            className="absolute bottom-20 right-10 w-80 h-80 bg-red-500/5 rounded-full blur-3xl"
+            animate={{
+              scale: [1.3, 1, 1.3],
+              opacity: [0.5, 0.3, 0.5],
+            }}
+            transition={{ duration: 10, repeat: Infinity }}
+          />
+        </div>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center mb-16"
+            className="text-center mb-20"
           >
-            <h2 className="text-4xl font-bold mb-4">Cansado desses problemas?</h2>
-            <p className="text-xl text-gray-300">Você não está sozinho. Veja o que outros barbeiros enfrentam:</p>
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              whileInView={{ scale: 1, opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+              className="inline-flex items-center gap-2 px-6 py-3 bg-red-500/10 border border-red-500/20 rounded-full mb-6"
+            >
+              <span className="text-red-400 text-sm font-semibold">⚠️ Problemas Comuns</span>
+            </motion.div>
+            <h2 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-white via-gray-200 to-gray-400 bg-clip-text text-transparent">
+              Cansado desses problemas?
+            </h2>
+            <p className="text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto">
+              Você não está sozinho. Veja o que outros barbeiros enfrentam:
+            </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
             {[
-              { icon: "📞", title: "Ligações constantes", desc: "Interrompem seus atendimentos o dia todo" },
-              { icon: "📝", title: "Agenda desorganizada", desc: "Caderno cheio de rasuras e confusão" },
-              { icon: "❌", title: "Clientes faltando", desc: "Horários vazios por esquecimento" },
-              { icon: "⏰", title: "Perda de tempo", desc: "Horas confirmando agendamentos manualmente" },
-              { icon: "💸", title: "Dinheiro na mesa", desc: "Perde clientes que não conseguem agendar" },
-              { icon: "😰", title: "Estresse desnecessário", desc: "Gestão manual é cansativa e ineficiente" }
+              { 
+                icon: "🔴", 
+                title: "Ligações constantes", 
+                desc: "Interrompem seus atendimentos o dia todo",
+                gradient: "from-red-500/10 to-red-600/5",
+                borderColor: "border-red-500/30",
+                iconBg: "bg-red-500/10"
+              },
+              { 
+                icon: "📋", 
+                title: "Agenda desorganizada", 
+                desc: "Caderno cheio de rasuras e confusão",
+                gradient: "from-orange-500/10 to-orange-600/5",
+                borderColor: "border-orange-500/30",
+                iconBg: "bg-orange-500/10"
+              },
+              { 
+                icon: "❌", 
+                title: "Clientes faltando", 
+                desc: "Horários vazios por esquecimento",
+                gradient: "from-pink-500/10 to-pink-600/5",
+                borderColor: "border-pink-500/30",
+                iconBg: "bg-pink-500/10"
+              },
+              { 
+                icon: "⏰", 
+                title: "Perda de tempo", 
+                desc: "Horas confirmando agendamentos manualmente",
+                gradient: "from-purple-500/10 to-purple-600/5",
+                borderColor: "border-purple-500/30",
+                iconBg: "bg-purple-500/10"
+              },
+              { 
+                icon: "💸", 
+                title: "Dinheiro na mesa", 
+                desc: "Perde clientes que não conseguem agendar",
+                gradient: "from-yellow-500/10 to-yellow-600/5",
+                borderColor: "border-yellow-500/30",
+                iconBg: "bg-yellow-500/10"
+              },
+              { 
+                icon: "😰", 
+                title: "Estresse desnecessário", 
+                desc: "Gestão manual é cansativa e ineficiente",
+                gradient: "from-blue-500/10 to-blue-600/5",
+                borderColor: "border-blue-500/30",
+                iconBg: "bg-blue-500/10"
+              }
             ].map((problem, i) => (
               <motion.div
                 key={i}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
+                transition={{ delay: i * 0.1, duration: 0.5 }}
+                whileHover={{ 
+                  scale: 1.05,
+                  transition: { duration: 0.2 }
+                }}
               >
-                <Card className="bg-[#0C0C0C] border-[#27272A] hover:border-red-500/50 transition-colors h-full">
-                  <CardContent className="p-6">
-                    <div className="text-4xl mb-4">{problem.icon}</div>
-                    <h3 className="text-xl font-semibold mb-2">{problem.title}</h3>
-                    <p className="text-gray-400">{problem.desc}</p>
+                <Card className={`bg-gradient-to-br ${problem.gradient} border-2 ${problem.borderColor} hover:border-red-400/50 transition-all duration-300 h-full backdrop-blur-sm group`}>
+                  <CardContent className="p-8 text-center">
+                    <motion.div 
+                      className={`w-24 h-24 ${problem.iconBg} rounded-3xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300`}
+                      animate={{ 
+                        y: [0, -10, 0],
+                      }}
+                      transition={{ 
+                        duration: 3,
+                        repeat: Infinity,
+                        delay: i * 0.2
+                      }}
+                    >
+                      <span className="text-6xl filter drop-shadow-lg">{problem.icon}</span>
+                    </motion.div>
+                    <h3 className="text-2xl font-bold mb-3 text-white group-hover:text-red-300 transition-colors">
+                      {problem.title}
+                    </h3>
+                    <p className="text-gray-300 text-lg leading-relaxed">
+                      {problem.desc}
+                    </p>
                   </CardContent>
                 </Card>
               </motion.div>
             ))}
           </div>
+
+          {/* Call to Action */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.6 }}
+            className="text-center mt-16"
+          >
+            <p className="text-2xl text-gray-300 mb-8">
+              Chega de sofrer com esses problemas! 🚀
+            </p>
+            <Button 
+              size="lg" 
+              className="bg-[#24C36B] hover:bg-[#1ea557] text-black font-bold px-10 py-7 text-xl rounded-2xl shadow-2xl shadow-[#24C36B]/20 hover:shadow-[#24C36B]/40 transition-all group"
+              asChild
+            >
+              <Link to="/register">
+                Resolver Agora Grátis
+                <ArrowRight className="w-6 h-6 ml-2 group-hover:translate-x-2 transition-transform" />
+              </Link>
+            </Button>
+          </motion.div>
         </div>
       </section>
 
@@ -426,6 +544,23 @@ const HomeNew = () => {
       <section id="beneficios" className="py-20 bg-[#18181B]/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Mockup Image */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="order-first lg:order-last flex justify-center items-center"
+            >
+              <motion.img 
+                src="/MOCKUP-APP.png" 
+                alt="ZapCorte App Mockup" 
+                className="w-full max-w-sm lg:max-w-md h-auto drop-shadow-2xl"
+                animate={{ y: [0, -10, 0] }}
+                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+              />
+            </motion.div>
+
             <motion.div
               initial={{ opacity: 0, x: -30 }}
               whileInView={{ opacity: 1, x: 0 }}
@@ -459,17 +594,7 @@ const HomeNew = () => {
               </div>
             </motion.div>
 
-            <motion.div
-              initial={{ opacity: 0, x: 30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              className="relative"
-            >
-              {/* [PLACEHOLDER: Imagem de barbeiro usando o sistema] */}
-              <div className="aspect-square bg-gradient-to-br from-[#24C36B]/20 to-transparent rounded-3xl flex items-center justify-center border border-[#27272A]">
-                <Scissors className="w-32 h-32 text-[#24C36B]/30" />
-              </div>
-            </motion.div>
+
           </div>
         </div>
       </section>

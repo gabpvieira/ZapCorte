@@ -62,7 +62,6 @@ const Customers = () => {
       if (error) throw error;
       setCustomers(data || []);
     } catch (error) {
-      console.error("Erro ao buscar clientes:", error);
       toast({
         title: "Erro",
         description: "Não foi possível carregar os clientes.",
@@ -155,7 +154,6 @@ const Customers = () => {
       resetForm();
       fetchCustomers();
     } catch (error) {
-      console.error("Erro ao salvar cliente:", error);
       toast({
         title: "Erro",
         description: "Não foi possível salvar o cliente.",
@@ -190,7 +188,6 @@ const Customers = () => {
 
       fetchCustomers();
     } catch (error) {
-      console.error("Erro ao excluir cliente:", error);
       toast({
         title: "Erro",
         description: "Não foi possível excluir o cliente.",

@@ -10,7 +10,6 @@ export async function getBarbershopBySlug(slug: string) {
     .single()
 
   if (error) {
-    console.error('Error fetching barbershop:', error)
     return null
   }
 
@@ -26,7 +25,6 @@ export async function getBarbershopServices(barbershopId: string) {
     .order('name')
 
   if (error) {
-    console.error('Error fetching services:', error)
     return []
   }
 
@@ -46,7 +44,6 @@ export async function createAppointment(appointment: Omit<Appointment, 'id' | 'c
     .single()
 
   if (error) {
-    console.error('Error creating appointment:', error)
     throw error
   }
 
@@ -75,7 +72,6 @@ export async function createAppointment(appointment: Omit<Appointment, 'id' | 'c
       const reminderModule = await import('@/lib/reminderScheduler');
       await reminderModule.ReminderScheduler.createRemindersForAppointment(data.id);
     } catch (notifyError) {
-      console.warn('Erro ao enviar notificações ou criar lembretes:', notifyError);
       // Não falhar a criação do agendamento por causa da notificação
     }
   }
@@ -111,7 +107,6 @@ export async function getBarbershopAppointments(barbershopId: string, date?: str
   const { data, error } = await query
 
   if (error) {
-    console.error('Error fetching appointments:', error)
     return []
   }
 
@@ -128,7 +123,6 @@ export async function getBarbershopAvailability(barbershopId: string) {
     .order('day_of_week')
 
   if (error) {
-    console.error('Error fetching availability:', error)
     return []
   }
 
@@ -145,10 +139,6 @@ export async function getAvailableTimeSlots(
   // IMPORTANTE: Usar timezone brasileiro para calcular o dia da semana corretamente
   const dateWithTimezone = new Date(date + 'T12:00:00-03:00');
   const dayOfWeek = dateWithTimezone.getDay();
-
-  console.log('[getAvailableTimeSlots] Buscando horários:', {
-    barbershopId,
-    serviceId,
     date,
     dateWithTimezone: dateWithTimezone.toISOString(),
     dayOfWeek,
@@ -163,7 +153,6 @@ export async function getAvailableTimeSlots(
     .single();
 
   if (barbershopError || !barbershop) {
-    console.error('[getAvailableTimeSlots] Erro ao buscar barbearia:', barbershopError);
     return [];
   }
 
@@ -200,11 +189,9 @@ export async function getAvailableTimeSlots(
   ]);
 
   if (serviceError || !service) {
-    console.error('[getAvailableTimeSlots] Erro ao buscar serviço:', serviceError);
     return [];
   }
   if (appointmentsError) {
-    console.error('[getAvailableTimeSlots] Erro ao buscar agendamentos:', appointmentsError);
     return [];
   }
 
@@ -213,10 +200,6 @@ export async function getAvailableTimeSlots(
   const breakTime = 5; // 5 minutos de intervalo
   const workStart = new Date(`${date}T${daySchedule.start}-03:00`);
   const workEnd = new Date(`${date}T${daySchedule.end}-03:00`);
-
-  console.log('[getAvailableTimeSlots] Horários de trabalho:', {
-    workStart: workStart.toISOString(),
-    workEnd: workEnd.toISOString(),
     serviceDuration,
     breakTime
   });
@@ -299,7 +282,6 @@ export async function getUserProfile(userId: string) {
     .single()
 
   if (error) {
-    console.error('Error fetching user profile:', error)
     return null
   }
 
@@ -315,7 +297,6 @@ export async function getUserBarbershop(userId: string) {
     .single()
 
   if (error) {
-    console.error('Error fetching user barbershop:', error)
     return null
   }
 
@@ -341,7 +322,6 @@ export async function updateBarbershop(barbershopId: string, updates: Partial<Ba
     .single()
 
   if (error) {
-    console.error('Error updating barbershop:', error)
     throw error
   }
 
@@ -367,7 +347,6 @@ export async function checkSlugAvailability(slug: string, excludeBarbershopId?: 
   }
 
   if (error) {
-    console.error('Error checking slug availability:', error)
     return false
   }
 

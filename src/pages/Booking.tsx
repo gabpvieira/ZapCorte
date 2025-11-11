@@ -30,9 +30,7 @@ async function registrarPushBarbeiro(barbershopId: string) {
       .eq('id', barbershopId);
 
     if (error) {
-      console.error('Erro ao salvar o playerId:', error);
-    } else {
-      console.log('Player ID salvo com sucesso:', playerId);
+      // Erro silenciado em produção
     }
   });
 }
@@ -97,7 +95,6 @@ const Booking = () => {
         setSelectedDate(new Date());
         
       } catch (error) {
-        console.error('Erro ao carregar dados:', error);
         toast({
           title: "Erro",
           description: "Erro ao carregar dados",
@@ -121,7 +118,6 @@ const Booking = () => {
         setTimeSlots(slots);
         setSelectedTime(null); // Reset selected time when date changes
       } catch (error) {
-        console.error('Erro ao carregar horários:', error);
         setTimeSlots([]);
       }
     };
@@ -140,7 +136,7 @@ const Booking = () => {
         const slots = await getAvailableTimeSlots(barbershop.id, service.id, dateString);
         setTimeSlots(slots);
       } catch (error) {
-        console.error('Erro ao atualizar horários (realtime):', error);
+        // Erro silenciado
       }
     };
 
@@ -214,13 +210,8 @@ const Booking = () => {
               phone: cleanPhone,
               notes: `Cliente criado automaticamente via agendamento online em ${new Date().toLocaleDateString('pt-BR')}`
             });
-          
-          console.log('✅ Cliente criado automaticamente:', customerName);
-        } else {
-          console.log('ℹ️ Cliente já existe:', customerName);
         }
       } catch (customerError) {
-        console.warn('⚠️ Erro ao criar cliente automaticamente:', customerError);
         // Não bloqueia o agendamento se falhar
       }
 
@@ -244,7 +235,7 @@ const Booking = () => {
           });
         }
       } catch (notifyErr) {
-        console.warn('Não foi possível enviar notificação OneSignal:', notifyErr);
+        // Notificação falhou silenciosamente
       }
 
       toast({
@@ -258,7 +249,6 @@ const Booking = () => {
       }, 2000);
       
     } catch (error) {
-      console.error('Erro ao criar agendamento:', error);
       toast({
         title: "Erro",
         description: "Erro ao confirmar agendamento. Tente novamente.",
@@ -357,34 +347,36 @@ const Booking = () => {
           </p>
         </motion.div>
 
-        <div className="grid gap-6 sm:gap-8 lg:grid-cols-[1fr_1.2fr]">
+        <div className="grid gap-6 sm:gap-8 lg:grid-cols-[350px_1fr] xl:grid-cols-[380px_1fr] max-w-6xl mx-auto">
           {/* Service Info - Card Premium */}
           <motion.div variants={itemVariants}>
             <Card className="border-0 shadow-2xl shadow-primary/5 overflow-hidden bg-card/50 backdrop-blur-sm lg:sticky lg:top-24">
               <div className="relative">
-                <div
-                  className="h-48 sm:h-56 md:h-64 bg-cover bg-center relative overflow-hidden"
-                  style={{ backgroundImage: `url(${service.image_url})` }}
-                >
+                <div className="aspect-square relative overflow-hidden">
+                  <img
+                    src={service.image_url}
+                    alt={service.name}
+                    className="w-full h-full object-cover"
+                  />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
                   <div className="absolute bottom-3 sm:bottom-4 left-3 sm:left-4 right-3 sm:right-4">
-                    <h3 className="text-xl sm:text-2xl font-bold text-white mb-1">{service.name}</h3>
-                    <p className="text-xs sm:text-sm text-white/90 line-clamp-2">{service.description}</p>
+                    <h3 className="text-xl sm:text-2xl lg:text-lg font-bold text-white mb-1">{service.name}</h3>
+                    <p className="text-xs sm:text-sm lg:text-xs text-white/90 line-clamp-2">{service.description}</p>
                   </div>
                 </div>
               </div>
-              <CardContent className="p-4 sm:p-6">
-                <div className="flex items-center justify-between p-3 sm:p-4 rounded-xl bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20">
+              <CardContent className="p-4 sm:p-6 lg:p-4">
+                <div className="flex items-center justify-between p-3 sm:p-4 lg:p-3 rounded-xl bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20">
                   <div>
                     <p className="text-xs text-muted-foreground mb-1">Investimento</p>
-                    <span className="text-2xl sm:text-3xl font-bold text-primary">
+                    <span className="text-2xl sm:text-3xl lg:text-xl font-bold text-primary">
                       R$ {service.price.toFixed(2)}
                     </span>
                   </div>
                   <div className="text-right">
                     <p className="text-xs text-muted-foreground mb-1">Duração</p>
-                    <span className="flex items-center gap-1.5 sm:gap-2 text-base sm:text-lg font-semibold">
-                      <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                    <span className="flex items-center gap-1.5 sm:gap-2 lg:gap-1.5 text-base sm:text-lg lg:text-base font-semibold">
+                      <Clock className="h-4 w-4 sm:h-5 sm:w-5 lg:h-4 lg:w-4 text-primary" />
                       {service.duration} min
                     </span>
                   </div>
@@ -396,23 +388,23 @@ const Booking = () => {
           {/* Booking Form - Design Premium */}
           <motion.div variants={itemVariants}>
             <Card className="border-0 shadow-2xl shadow-primary/5 bg-card/50 backdrop-blur-sm">
-              <CardHeader className="pb-6 sm:pb-8 px-4 sm:px-6">
-                <CardTitle className="text-xl sm:text-2xl">Complete seu Agendamento</CardTitle>
-                <p className="text-xs sm:text-sm text-muted-foreground mt-2">
+              <CardHeader className="pb-6 sm:pb-8 lg:pb-6 px-4 sm:px-6 lg:px-5">
+                <CardTitle className="text-xl sm:text-2xl lg:text-xl">Complete seu Agendamento</CardTitle>
+                <p className="text-xs sm:text-sm lg:text-xs text-muted-foreground mt-2">
                   Preencha os dados abaixo para confirmar
                 </p>
               </CardHeader>
-              <CardContent className="px-4 sm:px-6">
-                <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
+              <CardContent className="px-4 sm:px-6 lg:px-5">
+                <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8 lg:space-y-5">
                   {/* Date Selector */}
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
                   >
-                    <Label className="mb-3 sm:mb-4 flex items-center gap-2 text-sm sm:text-base font-semibold">
-                      <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10">
-                        <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
+                    <Label className="mb-3 sm:mb-4 lg:mb-3 flex items-center gap-2 text-sm sm:text-base lg:text-sm font-semibold">
+                      <div className="p-1.5 sm:p-2 lg:p-1.5 rounded-lg bg-primary/10">
+                        <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4 lg:h-3.5 lg:w-3.5 text-primary" />
                       </div>
                       Escolha a Data
                     </Label>
@@ -431,9 +423,9 @@ const Booking = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3 }}
                   >
-                    <Label className="mb-3 sm:mb-4 flex items-center gap-2 text-sm sm:text-base font-semibold">
-                      <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10">
-                        <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
+                    <Label className="mb-3 sm:mb-4 lg:mb-3 flex items-center gap-2 text-sm sm:text-base lg:text-sm font-semibold">
+                      <div className="p-1.5 sm:p-2 lg:p-1.5 rounded-lg bg-primary/10">
+                        <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 lg:h-3.5 lg:w-3.5 text-primary" />
                       </div>
                       Selecione o Horário
                     </Label>

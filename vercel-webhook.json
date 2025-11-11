@@ -1,0 +1,24 @@
+{
+  "version": 2,
+  "name": "zapcorte-webhook",
+  "builds": [
+    {
+      "src": "server/index.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "server/index.js"
+    }
+  ],
+  "env": {
+    "SUPABASE_URL": "https://ihwkbflhxvdsewifofdk.supabase.co",
+    "SUPABASE_SERVICE_ROLE_KEY": "@supabase_service_role_key",
+    "CAKTO_WEBHOOK_SECRET": "@cakto_webhook_secret",
+    "CAKTO_PRODUCT_ID_STARTER": "3th8tvh",
+    "CAKTO_PRODUCT_ID_PRO": "9jk3ref",
+    "PORT": "3001"
+  }
+}

@@ -249,7 +249,6 @@ const MyAppointments = () => {
       setAppointments(formattedAppointments);
       setSearchPerformed(true);
     } catch (error) {
-      console.error('Erro ao buscar agendamentos:', error);
       setError('Erro ao buscar agendamentos. Tente novamente.');
     } finally {
       setLoading(false);
@@ -276,7 +275,6 @@ const MyAppointments = () => {
         )
       );
     } catch (error) {
-      console.error('Erro ao cancelar agendamento:', error);
       setError('Erro ao cancelar agendamento. Tente novamente.');
     }
   };
@@ -294,7 +292,6 @@ const MyAppointments = () => {
   };
 
   const fetchAvailableSlots = async (barbershopId: string, serviceId: string, date: string) => {
-    console.warn('fetchAvailableSlots está desabilitado temporariamente');
     return Promise.resolve([]);
   };
 
@@ -358,7 +355,6 @@ const MyAppointments = () => {
       setSelectedTime('');
       setAvailableSlots([]);
     } catch (error) {
-      console.error('Erro ao reagendar:', error);
       setError('Erro ao reagendar. Tente novamente.');
     } finally {
       setRescheduleLoading(false);

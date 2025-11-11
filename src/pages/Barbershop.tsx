@@ -49,7 +49,6 @@ const Barbershop = () => {
         const servicesData = await getBarbershopServices(barbershopData.id);
         setServices(servicesData);
       } catch (err) {
-        console.error('Erro ao carregar dados da barbearia:', err);
         setError('Erro ao carregar dados da barbearia');
       } finally {
         setLoading(false);
@@ -132,7 +131,7 @@ const Barbershop = () => {
     >
       {/* Hero Banner Premium - Full Width */}
       <motion.div 
-        className="relative w-full h-[300px] sm:h-[350px] md:h-[400px] lg:h-[450px] mb-16 sm:mb-20"
+        className="relative w-full h-[300px] sm:h-[350px] md:h-[350px] lg:h-[350px] xl:h-[350px] mb-16 sm:mb-20"
         variants={bannerVariants}
       >
         {/* Banner Image - Full Width */}
@@ -178,7 +177,7 @@ const Barbershop = () => {
 
       {/* Header Info Premium */}
       <motion.section 
-        className="text-center w-[90%] sm:w-full mx-auto px-0 sm:px-4 pt-4 sm:pt-6 pb-6 sm:pb-8"
+        className="text-center w-[90%] sm:w-full mx-auto px-0 sm:px-4 pt-4 sm:pt-6 pb-6 sm:pb-8 max-w-5xl"
         variants={itemVariants}
       >
         <motion.h1 
@@ -287,7 +286,7 @@ const Barbershop = () => {
 
       {/* Container para serviços */}
       <motion.div 
-        className="container mx-auto w-[90%] sm:w-full px-0 sm:px-4 mt-12 sm:mt-16"
+        className="container mx-auto w-[90%] sm:w-full px-0 sm:px-4 mt-12 sm:mt-16 max-w-7xl"
         variants={itemVariants}
       >
 
@@ -318,7 +317,7 @@ const Barbershop = () => {
               <p className="text-muted-foreground text-lg">Nenhum serviço disponível no momento.</p>
             </motion.div>
           ) : (
-            <div className="grid gap-5 sm:gap-6 md:gap-8 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-2 gap-3 sm:gap-6 md:gap-8 lg:grid-cols-5">
               {services.map((service, index) => (
                 <motion.div
                   key={service.id}
@@ -328,37 +327,38 @@ const Barbershop = () => {
                 >
                   <Card className="group overflow-hidden border-0 shadow-xl shadow-primary/5 hover:shadow-2xl hover:shadow-primary/10 transition-all duration-300 h-full flex flex-col bg-card/50 backdrop-blur-sm">
                     {/* Service Image com Overlay */}
-                    <div className="relative h-48 sm:h-52 md:h-56 overflow-hidden">
-                      <div
-                        className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
-                        style={{ backgroundImage: `url(${service.image_url})` }}
+                    <div className="relative aspect-square overflow-hidden">
+                      <img
+                        src={service.image_url}
+                        alt={service.name}
+                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
                       
                       {/* Price Badge Floating */}
-                      <div className="absolute top-3 sm:top-4 right-3 sm:right-4 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl bg-primary text-primary-foreground font-bold text-base sm:text-lg shadow-lg backdrop-blur-sm">
+                      <div className="absolute top-2 sm:top-4 right-2 sm:right-4 px-2 sm:px-4 lg:px-2 py-1 sm:py-2 lg:py-1 rounded-md sm:rounded-xl lg:rounded-md bg-primary text-primary-foreground font-bold text-xs sm:text-lg lg:text-xs shadow-lg backdrop-blur-sm">
                         R$ {service.price.toFixed(2)}
                       </div>
 
                       {/* Duration Badge */}
-                      <div className="absolute bottom-3 sm:bottom-4 left-3 sm:left-4 flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-black/50 backdrop-blur-sm text-white text-xs sm:text-sm">
-                        <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                      <div className="absolute bottom-2 sm:bottom-4 left-2 sm:left-4 flex items-center gap-1 sm:gap-2 lg:gap-1 px-2 sm:px-3 lg:px-2 py-0.5 sm:py-1.5 lg:py-0.5 rounded-md bg-black/50 backdrop-blur-sm text-white text-xs sm:text-sm lg:text-xs">
+                        <Clock className="h-3 w-3 sm:h-4 sm:w-4 lg:h-3 lg:w-3" />
                         {service.duration} min
                       </div>
                     </div>
 
                     {/* Service Content */}
-                    <CardContent className="p-4 sm:p-5 md:p-6 flex-1 flex flex-col">
-                      <h3 className="mb-2 sm:mb-3 text-xl sm:text-2xl font-bold group-hover:text-primary transition-colors">
+                    <CardContent className="p-3 sm:p-5 lg:p-3 flex-1 flex flex-col">
+                      <h3 className="mb-1.5 sm:mb-3 lg:mb-1.5 text-base sm:text-2xl lg:text-sm font-bold group-hover:text-primary transition-colors line-clamp-1 lg:line-clamp-2">
                         {service.name}
                       </h3>
-                      <p className="mb-4 sm:mb-6 text-xs sm:text-sm text-muted-foreground flex-1 line-clamp-2">
+                      <p className="mb-3 sm:mb-6 lg:mb-3 text-xs sm:text-sm lg:text-xs text-muted-foreground flex-1 line-clamp-2">
                         {service.description}
                       </p>
 
                       {/* CTA Button Premium */}
                       <Button
-                        className="w-full h-11 sm:h-12 text-sm sm:text-base font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all hover:scale-[1.02] group"
+                        className="w-full h-9 sm:h-12 lg:h-8 text-xs sm:text-base lg:text-xs font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all hover:scale-[1.02] group"
                         size="lg"
                         onClick={() => handleBooking(service.id)}
                       >
@@ -389,7 +389,7 @@ const Barbershop = () => {
             </p>
           </motion.div>
 
-          <Card className="border-0 shadow-2xl shadow-primary/5 bg-card/50 backdrop-blur-sm overflow-hidden">
+          <Card className="border-0 shadow-2xl shadow-primary/5 bg-card/50 backdrop-blur-sm overflow-hidden max-w-4xl mx-auto">
             <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10 border-b border-border/50 px-4 sm:px-6 py-4 sm:py-6">
               <CardTitle className="flex items-center gap-2 sm:gap-3 text-base sm:text-lg md:text-xl">
                 <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10">
@@ -439,7 +439,7 @@ const Barbershop = () => {
                         setAppointments(mapped);
                         setSearchPerformed(true);
                       } catch (err) {
-                        console.error("Erro ao buscar agendamentos:", err);
+                        // Erro silenciado
                       } finally {
                         setSearchLoading(false);
                       }

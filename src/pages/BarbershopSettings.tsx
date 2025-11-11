@@ -81,7 +81,6 @@ const BarbershopSettings = () => {
       setSlugAvailable(available);
       setSlugError(available ? "" : "Este link já está em uso");
     } catch (error) {
-      console.error('Erro ao verificar slug:', error);
       setSlugError("Erro ao verificar disponibilidade");
       setSlugAvailable(false);
     }
@@ -282,7 +281,6 @@ const BarbershopSettings = () => {
       setBannerPreview(null);
 
     } catch (error) {
-      console.error('Erro ao salvar configurações:', error);
       toast({
         title: "Erro ao salvar",
         description: "Ocorreu um erro ao salvar as configurações. Tente novamente.",
