@@ -119,7 +119,34 @@ export async function unsubscribeFromPush(): Promise<boolean> {
 }
 
 /**
- * Salva a subscription no banco de dados
+ * Detecta informações do dispositivo
+ */
+function getDeviceInfo() {
+  const ua = navigator.userAgent;
+  const isMobile = /Mobile|Android|iPhone|iPad|iPod/i.test(ua);
+  const isTablet = /iPad|Android/i.test(ua) && !/Mobile/i.test(ua);
+  
+  let deviceType = 'desktop';
+  if (isTablet) deviceType = 'tablet';
+  else if (isMobile) deviceType = 'mobile';
+  
+  let browser = 'unknown';
+  if (ua.includes('Chrome')) browser = 'chrome';
+  else if (ua.includes('Firefox')) browser = 'firefox';
+  else if (ua.includes('Safari')) browser = 'safari';
+  else if (ua.includes('Edge')) browser = 'edge';
+  
+  return {
+    type: deviceType,
+    browser,
+    platform: navigator.platform,
+    isMobile,
+    isTablet,
+  };
+}
+
+/**
+ * Salva a subscription no banco de dados (suporta múltiplos dispositivos)
  */
 export async function saveSubscriptionToDatabase(
   barbershopId: string,
@@ -129,24 +156,73 @@ export async function saveSubscriptionToDatabase(
     const { supabase } = await import('@/lib/supabase');
     
     const subscriptionData = subscription.toJSON();
-    console.log('💾 Salvando subscription:', { barbershopId, subscriptionData });
+    const deviceInfo = getDeviceInfo();
+    const endpoint = subscriptionData.endpoint;
     
-    const { data, error } = await supabase
+    console.log('💾 Salvando subscription:', { 
+      barbershopId, 
+      deviceInfo,
+      endpoint: endpoint?.substring(0, 50) + '...'
+    });
+    
+    // Verificar se já existe uma subscription com este endpoint
+    const { data: existing } = await supabase
+      .from('push_subscriptions')
+      .select('id')
+      .eq('barbershop_id', barbershopId)
+      .eq('subscription->>endpoint', endpoint)
+      .single();
+
+    if (existing) {
+      // Atualizar subscription existente
+      const { error: updateError } = await supabase
+        .from('push_subscriptions')
+        .update({
+          subscription: subscriptionData,
+          device_info: deviceInfo,
+          user_agent: navigator.userAgent,
+          is_active: true,
+          last_used_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', existing.id);
+
+      if (updateError) {
+        console.error('❌ Erro ao atualizar subscription:', updateError);
+        return false;
+      }
+      
+      console.log('✅ Subscription atualizada com sucesso');
+    } else {
+      // Criar nova subscription
+      const { error: insertError } = await supabase
+        .from('push_subscriptions')
+        .insert({
+          barbershop_id: barbershopId,
+          subscription: subscriptionData,
+          device_info: deviceInfo,
+          user_agent: navigator.userAgent,
+          is_active: true,
+          last_used_at: new Date().toISOString()
+        });
+
+      if (insertError) {
+        console.error('❌ Erro ao inserir subscription:', insertError);
+        return false;
+      }
+      
+      console.log('✅ Nova subscription criada com sucesso');
+    }
+
+    // Atualizar flag na tabela barbershops
+    await supabase
       .from('barbershops')
       .update({
-        push_subscription: subscriptionData,
         push_enabled: true,
         push_last_updated: new Date().toISOString()
       })
-      .eq('id', barbershopId)
-      .select();
+      .eq('id', barbershopId);
 
-    if (error) {
-      console.error('❌ Erro ao salvar subscription:', error);
-      return false;
-    }
-
-    console.log('✅ Subscription salva com sucesso:', data);
     return true;
   } catch (error) {
     console.error('❌ Erro ao salvar subscription:', error);

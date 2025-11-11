@@ -58,51 +58,105 @@ app.post('/api/send-notification', async (req, res) => {
       return res.status(400).json({ error: 'barbershopId é obrigatório' });
     }
 
-    // Buscar subscription da barbearia
-    const { data: barbershop, error } = await supabase
-      .from('barbershops')
-      .select('push_subscription, push_enabled')
-      .eq('id', barbershopId)
-      .single();
+    // Buscar todas as subscriptions ativas da barbearia
+    const { data: subscriptions, error } = await supabase
+      .from('push_subscriptions')
+      .select('*')
+      .eq('barbershop_id', barbershopId)
+      .eq('is_active', true);
 
-    if (error || !barbershop) {
-      console.error('Erro ao buscar barbearia:', error);
-      return res.status(404).json({ error: 'Barbearia não encontrada' });
+    if (error) {
+      console.error('Erro ao buscar subscriptions:', error);
+      return res.status(500).json({ error: 'Erro ao buscar subscriptions' });
     }
 
-    if (!barbershop.push_enabled || !barbershop.push_subscription) {
-      return res.status(400).json({ error: 'Notificações não estão habilitadas' });
+    if (!subscriptions || subscriptions.length === 0) {
+      return res.status(400).json({ error: 'Nenhuma subscription ativa encontrada' });
     }
 
-    // Enviar notificação
-    let result;
-    if (customerName && scheduledAt && serviceName) {
-      // Notificação de agendamento
-      result = await pushService.sendNewAppointmentNotification(
-        barbershop.push_subscription,
-        { customerName, scheduledAt, serviceName }
-      );
-    } else {
-      // Notificação de teste
-      result = await pushService.sendTestNotification(barbershop.push_subscription);
+    console.log(`📱 Enviando para ${subscriptions.length} dispositivo(s)`);
+
+    // Enviar notificação para todos os dispositivos
+    const results = [];
+    let successCount = 0;
+    let failCount = 0;
+
+    for (const sub of subscriptions) {
+      try {
+        let result;
+        if (customerName && scheduledAt && serviceName) {
+          // Notificação de agendamento
+          result = await pushService.sendNewAppointmentNotification(
+            sub.subscription,
+            { customerName, scheduledAt, serviceName }
+          );
+        } else {
+          // Notificação de teste
+          result = await pushService.sendTestNotification(sub.subscription);
+        }
+
+        if (result.success) {
+          successCount++;
+          // Atualizar last_used_at
+          await supabase
+            .from('push_subscriptions')
+            .update({ last_used_at: new Date().toISOString() })
+            .eq('id', sub.id);
+        } else {
+          failCount++;
+          // Se falhou, marcar como inativa se for erro 410 (Gone)
+          if (result.error && result.error.includes('410')) {
+            await supabase
+              .from('push_subscriptions')
+              .update({ is_active: false })
+              .eq('id', sub.id);
+          }
+        }
+
+        results.push({
+          device: sub.device_info?.type || 'unknown',
+          success: result.success,
+          error: result.error
+        });
+      } catch (error) {
+        failCount++;
+        console.error('Erro ao enviar para dispositivo:', error);
+        results.push({
+          device: sub.device_info?.type || 'unknown',
+          success: false,
+          error: error.message
+        });
+      }
     }
 
-    if (result.success) {
-      // Registrar no histórico
-      await supabase.from('push_notifications').insert({
-        barbershop_id: barbershopId,
-        title: customerName ? '🎉 Novo Agendamento!' : '✅ Notificação de Teste',
-        body: customerName 
-          ? `${customerName} agendou ${serviceName}` 
-          : 'Suas notificações estão funcionando!',
-        status: 'sent',
-        sent_at: new Date().toISOString(),
-      });
+    // Registrar no histórico
+    await supabase.from('push_notifications').insert({
+      barbershop_id: barbershopId,
+      title: customerName ? '🎉 Novo Agendamento!' : '✅ Notificação de Teste',
+      body: customerName 
+        ? `${customerName} agendou ${serviceName}` 
+        : 'Suas notificações estão funcionando!',
+      status: successCount > 0 ? 'sent' : 'failed',
+      sent_at: successCount > 0 ? new Date().toISOString() : null,
+      data: { 
+        devices: results,
+        successCount,
+        failCount
+      }
+    });
 
-      return res.json({ success: true, message: 'Notificação enviada com sucesso' });
-    } else {
-      return res.status(500).json({ error: 'Falha ao enviar notificação', details: result.error });
-    }
+    console.log(`✅ Enviado: ${successCount} | ❌ Falhou: ${failCount}`);
+
+    return res.json({ 
+      success: successCount > 0,
+      message: `Notificação enviada para ${successCount} de ${subscriptions.length} dispositivo(s)`,
+      details: {
+        total: subscriptions.length,
+        success: successCount,
+        failed: failCount,
+        results
+      }
+    });
   } catch (error) {
     console.error('Erro ao enviar notificação:', error);
     return res.status(500).json({ error: 'Erro interno do servidor', message: error.message });
