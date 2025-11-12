@@ -223,17 +223,24 @@ const Booking = () => {
         // Não bloqueia o agendamento se falhar
       }
 
-      // Enviar notificação push para o barbeiro
+      // Enviar notificação e webhook n8n
       try {
-        await notificarNovoAgendamento({
+        console.log('📤 Enviando notificação de novo agendamento...');
+        const notificacaoEnviada = await notificarNovoAgendamento({
           barbershopId: barbershop.id,
           customerName,
           scheduledAt,
           customerPhone,
           serviceName: service.name,
         });
+        
+        if (notificacaoEnviada) {
+          console.log('✅ Notificação e webhook enviados com sucesso');
+        } else {
+          console.warn('⚠️ Notificação/webhook não foram enviados');
+        }
       } catch (notifyErr) {
-        // Notificação falhou silenciosamente
+        console.error('❌ Erro ao enviar notificação:', notifyErr);
       }
 
       toast({

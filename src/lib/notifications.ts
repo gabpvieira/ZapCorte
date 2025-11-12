@@ -16,18 +16,28 @@ export async function notificarNovoAgendamento({
   customerPhone?: string;
   serviceName?: string;
 }) {
+  console.log('🚀 [WEBHOOK] Iniciando notificação de novo agendamento...');
+  
   try {
     // Buscar dados da barbearia para pegar o número do barbeiro
-    const { data: barbershop } = await supabase
+    console.log('🔍 [WEBHOOK] Buscando dados da barbearia:', barbershopId);
+    const { data: barbershop, error: barbershopError } = await supabase
       .from('barbershops')
       .select('whatsapp_number, name, user_id')
       .eq('id', barbershopId)
       .single();
 
-    if (!barbershop) {
-      console.error('❌ Barbearia não encontrada');
+    if (barbershopError) {
+      console.error('❌ [WEBHOOK] Erro ao buscar barbearia:', barbershopError);
       return false;
     }
+
+    if (!barbershop) {
+      console.error('❌ [WEBHOOK] Barbearia não encontrada');
+      return false;
+    }
+
+    console.log('✅ [WEBHOOK] Barbearia encontrada:', barbershop.name);
 
     // Formatar data e hora
     const date = new Date(scheduledAt);
@@ -55,37 +65,48 @@ export async function notificarNovoAgendamento({
       timestamp: new Date().toISOString(),
     };
 
-    console.log('📨 Enviando para webhook n8n:', webhookData);
-
-    const response = await fetch('https://n8nwebhook.chatifyz.com/webhook/zapcorte-lembrentes', {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(webhookData),
+    console.log('📨 [WEBHOOK] Enviando para n8n:', {
+      url: 'https://n8nwebhook.chatifyz.com/webhook/zapcorte-lembrentes',
+      data: webhookData
     });
 
-    if (response.ok) {
-      console.log('✅ Webhook n8n enviado com sucesso');
-    } else {
-      console.error('❌ Erro ao enviar webhook n8n:', await response.text());
+    try {
+      const response = await fetch('https://n8nwebhook.chatifyz.com/webhook/zapcorte-lembrentes', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(webhookData),
+        mode: 'no-cors', // Adiciona modo no-cors para evitar problemas de CORS
+      });
+
+      // Com mode: 'no-cors', response.ok sempre será false e não podemos ler o body
+      // Mas a requisição será enviada
+      console.log('✅ [WEBHOOK] Requisição enviada para n8n (no-cors mode)');
+      console.log('ℹ️ [WEBHOOK] Status:', response.type, '- A requisição foi enviada mas não podemos verificar a resposta devido ao CORS');
+      
+    } catch (fetchError) {
+      console.error('❌ [WEBHOOK] Erro ao fazer fetch para n8n:', fetchError);
+      // Mesmo com erro, continua o fluxo
     }
 
-    // Enviar lembrete WhatsApp se os dados estiverem disponíveis (sistema antigo)
+    // Enviar mensagem de "agendamento recebido" se os dados estiverem disponíveis
     if (customerPhone) {
+      console.log('📱 [WEBHOOK] Enviando mensagem WhatsApp para cliente...');
       await enviarLembreteWhatsApp({
         barbershopId,
         customerName,
         customerPhone,
         scheduledAt,
         serviceName: serviceName || 'Serviço',
-        tipo: 'confirmacao',
+        tipo: 'recebido', // Mudado de 'confirmacao' para 'recebido'
       });
     }
 
+    console.log('✅ [WEBHOOK] Processo de notificação concluído');
     return true;
   } catch (error) {
-    console.error('❌ Erro ao notificar novo agendamento:', error);
+    console.error('❌ [WEBHOOK] Erro geral ao notificar novo agendamento:', error);
     return false;
   }
 }
@@ -96,14 +117,14 @@ export async function enviarLembreteWhatsApp({
   customerPhone,
   scheduledAt,
   serviceName,
-  tipo = 'confirmacao'
+  tipo = 'recebido'
 }: {
   barbershopId: string;
   customerName: string;
   customerPhone: string;
   scheduledAt: string;
   serviceName: string;
-  tipo?: 'confirmacao' | 'lembrete' | 'cancelamento' | 'reagendamento';
+  tipo?: 'recebido' | 'confirmacao' | 'lembrete' | 'cancelamento' | 'reagendamento';
 }) {
   try {
     // Buscar dados da barbearia e verificar se WhatsApp está conectado
@@ -149,11 +170,27 @@ export async function enviarLembreteWhatsApp({
 
     // Mensagens padrão caso não haja personalização
     const mensagensPadrao = {
-      confirmacao: `🎉 *Agendamento Confirmado!*
+      recebido: `📋 *Agendamento Recebido!*
 
 Olá *${primeiroNome}*! 
 
-Seu agendamento foi confirmado com sucesso:
+Recebemos seu pedido de agendamento:
+
+📅 *Data:* ${diaSemana}, ${dataFormatada}
+🕐 *Horário:* ${horaFormatada}
+✂️ *Serviço:* ${serviceName}
+🏪 *Local:* ${barbershop.name}
+
+⏳ *Aguarde a confirmação do barbeiro!*
+
+Seu horário está sendo analisado e em breve você receberá a confirmação. Isso garante que possamos atendê-lo com a melhor qualidade possível.
+
+_Mensagem enviada automaticamente pelo ZapCorte_`,
+      confirmacao: `✅ *Agendamento Confirmado!*
+
+Olá *${primeiroNome}*! 
+
+Seu agendamento foi *confirmado* pelo barbeiro:
 
 📅 *Data:* ${diaSemana}, ${dataFormatada}
 🕐 *Horário:* ${horaFormatada}
@@ -161,7 +198,7 @@ Seu agendamento foi confirmado com sucesso:
 👨‍💼 *Profissional:* ${barbeiroNome}
 🏪 *Local:* ${barbershop.name}
 
-Estamos ansiosos para atendê-lo!
+🎉 Está tudo certo! Nos vemos em breve!
 
 _Mensagem enviada automaticamente pelo ZapCorte_`,
       lembrete: `⏰ *Lembrete de Agendamento*
@@ -213,6 +250,11 @@ _Mensagem enviada automaticamente pelo ZapCorte_`
     let mensagem = '';
     
     switch (tipo) {
+      case 'recebido':
+        // Sempre usa mensagem padrão para "recebido" (não personalizável)
+        mensagem = mensagensPadrao.recebido;
+        break;
+
       case 'confirmacao':
         mensagem = barbershop.confirmation_message 
           ? substituirVariaveis(barbershop.confirmation_message)

@@ -296,13 +296,25 @@ const Appointments = () => {
   };
 
   const handleDelete = async (appointmentId: string) => {
+    if (!appointmentId) {
+      toast({
+        title: "Erro",
+        description: "ID do agendamento não encontrado.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from("appointments")
         .delete()
         .eq("id", appointmentId);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Erro ao excluir agendamento:", error);
+        throw error;
+      }
 
       toast({
         title: "Sucesso",
@@ -310,10 +322,11 @@ const Appointments = () => {
       });
 
       fetchAppointments();
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Erro ao excluir:", error);
       toast({
         title: "Erro",
-        description: "Não foi possível excluir o agendamento.",
+        description: error?.message || "Não foi possível excluir o agendamento.",
         variant: "destructive",
       });
     }
@@ -519,14 +532,26 @@ const Appointments = () => {
     }
   };
 
-  const deleteAppointment = async (appointmentId: string) => {
+  const deleteAppointment = async (appointmentId?: string) => {
+    if (!appointmentId) {
+      toast({
+        title: "Erro",
+        description: "ID do agendamento não encontrado.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from("appointments")
         .delete()
         .eq("id", appointmentId);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Erro ao excluir agendamento:", error);
+        throw error;
+      }
 
       toast({
         title: "Sucesso",
@@ -535,10 +560,11 @@ const Appointments = () => {
 
       fetchAppointments();
       closeViewModal();
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Erro ao excluir:", error);
       toast({
         title: "Erro",
-        description: "Não foi possível excluir o agendamento.",
+        description: error?.message || "Não foi possível excluir o agendamento.",
         variant: "destructive",
       });
     }
