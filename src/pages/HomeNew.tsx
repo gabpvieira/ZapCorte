@@ -9,8 +9,12 @@ import { Link } from "react-router-dom";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useState, useEffect, useRef } from "react";
 import logotipo from "@/assets/zapcorte-icon.png";
+import { useSEO, SEO_CONFIGS } from "@/hooks/useSEO";
 
 const HomeNew = () => {
+  // SEO
+  useSEO(SEO_CONFIGS.home);
+  
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [currentTestimonial, setCurrentTestimonial] = useState(0);

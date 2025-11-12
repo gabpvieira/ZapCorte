@@ -384,11 +384,14 @@ const Appointments = () => {
   };
 
   const canCancel = (appointment: Appointment) => {
+    // Pode cancelar se não estiver cancelado e não for passado
     return appointment.status !== 'cancelled' && !isPastAppointment(appointment.scheduled_at);
   };
 
   const canReschedule = (appointment: Appointment) => {
-    return appointment.status !== 'cancelled' && !isPastAppointment(appointment.scheduled_at);
+    // Pode reagendar qualquer agendamento que não esteja cancelado
+    // Mesmo que seja passado, permite reagendar para uma nova data futura
+    return appointment.status !== 'cancelled';
   };
 
   // Funções para modal de visualização
@@ -913,157 +916,450 @@ const Appointments = () => {
                 exit="hidden"
                 layout
               >
-                <Card className="overflow-hidden border-l-4 hover:shadow-md transition-all" style={{
-                  borderLeftColor: appointment.status === 'confirmed' ? '#22c55e' : appointment.status === 'cancelled' ? '#ef4444' : '#eab308'
-                }}>
-                  <CardContent className="p-3 sm:p-4">
-                    {/* Header com Nome e Status */}
-                    <div className="flex items-start justify-between gap-2 mb-3">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-bold text-base truncate">{appointment.customer_name}</h3>
-                        <a href={`tel:${appointment.customer_phone}`} className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1 mt-0.5">
-                          <Phone className="h-3 w-3" />
-                          {appointment.customer_phone}
-                        </a>
+                <Card className="group relative overflow-hidden border hover:border-primary/50 hover:shadow-lg transition-all duration-200 bg-card/50 backdrop-blur-sm">
+                  <CardContent className="p-0">
+                    {/* MOBILE: Layout Vertical Otimizado */}
+                    <div className="p-3 md:hidden">
+                      {/* Header Row - Ultra Compacto */}
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          {/* Avatar Circle - Menor */}
+                          <div className={cn(
+                            "flex items-center justify-center h-8 w-8 rounded-full text-xs font-semibold shrink-0",
+                            appointment.status === 'confirmed' && "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+                            appointment.status === 'cancelled' && "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+                            appointment.status === 'pending' && "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
+                          )}>
+                            {appointment.customer_name.charAt(0).toUpperCase()}
+                          </div>
+                          
+                          {/* Name & Phone - Compacto */}
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-sm truncate leading-tight">{appointment.customer_name}</h3>
+                            <a 
+                              href={`tel:${appointment.customer_phone}`} 
+                              className="text-[11px] text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 mt-0.5"
+                            >
+                              <Phone className="h-2.5 w-2.5" />
+                              {appointment.customer_phone}
+                            </a>
+                          </div>
+                        </div>
+
+                        {/* Status Badge - Menor */}
+                        <Badge 
+                          variant={getStatusInfo(appointment.status).variant}
+                          className="text-[9px] px-1.5 py-0.5 font-medium shrink-0"
+                        >
+                          {getStatusInfo(appointment.status).label}
+                        </Badge>
                       </div>
+
+                      {/* Info Row - Inline Compacto */}
+                      <div className="flex items-center gap-3 mb-2 text-[11px] text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          <span>{formatDate(appointment.scheduled_at)}</span>
+                        </div>
+                        <div className="flex items-center gap-1 font-semibold text-foreground">
+                          <Clock className="h-3 w-3" />
+                          <span>{formatTime(appointment.scheduled_at)}</span>
+                        </div>
+                      </div>
+
+                      {/* Service Info - Compacto */}
+                      {appointment.service && (
+                        <div className="flex items-center justify-between text-[11px] bg-muted/30 rounded px-2 py-1.5 mb-2">
+                          <span className="font-medium text-foreground truncate">{appointment.service.name}</span>
+                          <span className="font-semibold text-primary whitespace-nowrap ml-2">R$ {appointment.service.price.toFixed(2)}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* DESKTOP: Layout Horizontal Ultra-Compacto */}
+                    <div className="hidden md:flex items-center gap-3 px-4 py-2.5">
+                      {/* Avatar */}
+                      <div className={cn(
+                        "flex items-center justify-center h-8 w-8 rounded-full text-xs font-semibold shrink-0",
+                        appointment.status === 'confirmed' && "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+                        appointment.status === 'cancelled' && "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+                        appointment.status === 'pending' && "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
+                      )}>
+                        {appointment.customer_name.charAt(0).toUpperCase()}
+                      </div>
+
+                      {/* Nome */}
+                      <div className="min-w-[140px]">
+                        <h3 className="font-semibold text-sm truncate">{appointment.customer_name}</h3>
+                      </div>
+
+                      {/* Telefone */}
+                      <a 
+                        href={`tel:${appointment.customer_phone}`} 
+                        className="text-xs text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 min-w-[110px]"
+                      >
+                        <Phone className="h-3 w-3" />
+                        {appointment.customer_phone}
+                      </a>
+
+                      {/* Data */}
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-[90px]">
+                        <Calendar className="h-3 w-3" />
+                        <span>{formatDate(appointment.scheduled_at)}</span>
+                      </div>
+
+                      {/* Horário */}
+                      <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground min-w-[50px]">
+                        <Clock className="h-3 w-3" />
+                        <span>{formatTime(appointment.scheduled_at)}</span>
+                      </div>
+
+                      {/* Serviço */}
+                      {appointment.service && (
+                        <div className="flex items-center gap-2 text-xs bg-muted/30 rounded px-2 py-1 min-w-[140px]">
+                          <span className="font-medium truncate">{appointment.service.name}</span>
+                          <span className="font-semibold text-primary whitespace-nowrap">R$ {appointment.service.price.toFixed(2)}</span>
+                        </div>
+                      )}
+
+                      {/* Status Badge */}
                       <Badge 
-                        variant={getStatusInfo(appointment.status).variant} 
-                        className="text-xs shrink-0"
+                        variant={getStatusInfo(appointment.status).variant}
+                        className="text-[10px] px-2 py-0.5 font-medium shrink-0"
                       >
                         {getStatusInfo(appointment.status).label}
                       </Badge>
-                    </div>
 
-                    {/* Info Grid */}
-                    <div className="grid grid-cols-2 gap-2 mb-3 text-xs">
-                      <div className="flex items-center gap-1.5 text-muted-foreground">
-                        <Calendar className="h-3.5 w-3.5 shrink-0" />
-                        <span className="truncate">{formatDate(appointment.scheduled_at)}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5 text-muted-foreground">
-                        <Clock className="h-3.5 w-3.5 shrink-0" />
-                        <span className="font-semibold text-foreground">{formatTime(appointment.scheduled_at)}</span>
-                      </div>
-                    </div>
+                      <div className="flex-1" />
 
-                    {/* Serviço */}
-                    {appointment.service && (
-                      <div className="text-xs bg-muted/50 rounded-md px-2 py-1.5 mb-3">
-                        <span className="font-medium">{appointment.service.name}</span>
-                        <span className="text-muted-foreground"> • </span>
-                        <span className="text-primary font-semibold">R$ {appointment.service.price.toFixed(2)}</span>
-                      </div>
-                    )}
+                      {/* DESKTOP: Actions - Inline e Compactos */}
+                      <div className="flex items-center gap-1">
+                        {/* Botões principais para agendamentos pendentes */}
+                        {appointment.status === 'pending' && (
+                          <>
+                            <Button
+                              variant="default"
+                              size="sm"
+                              onClick={() => handleAcceptAppointment(appointment)}
+                              disabled={acceptingAppointments.has(appointment.id)}
+                              className="bg-green-600 hover:bg-green-700 h-6 px-2 text-xs"
+                            >
+                              {acceptingAppointments.has(appointment.id) ? (
+                                <>
+                                  <div className="h-3 w-3 mr-1 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                  Confirmando
+                                </>
+                              ) : (
+                                <>
+                                  <CheckCircle className="h-3 w-3 mr-1" />
+                                  Aceitar
+                                </>
+                              )}
+                            </Button>
+                            
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => openRescheduleDialog(appointment)}
+                              className="h-6 px-2 text-xs"
+                            >
+                              <RefreshCw className="h-3 w-3 mr-1" />
+                              Reagendar
+                            </Button>
+                          </>
+                        )}
 
-                    {/* Actions */}
-                    <div className="flex flex-wrap gap-1.5">
-                      {/* Botão de Aceitar - apenas para status pendente */}
-                      {appointment.status === 'pending' && (
-                        <Button
-                          variant="default"
-                          size="sm"
-                          onClick={() => handleAcceptAppointment(appointment)}
-                          disabled={acceptingAppointments.has(appointment.id)}
-                          className="bg-green-600 hover:bg-green-700 disabled:opacity-50 h-8 px-3 text-xs flex-1 sm:flex-none"
-                        >
-                          {acceptingAppointments.has(appointment.id) ? (
-                            <>
-                              <div className="h-3 w-3 mr-1.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                              Confirmando
-                            </>
-                          ) : (
-                            <>
-                              <CheckCircle className="h-3.5 w-3.5 mr-1.5" />
-                              Aceitar
-                            </>
-                          )}
-                        </Button>
-                      )}
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => openViewModal(appointment)}
+                                className="h-6 w-6 p-0"
+                              >
+                                <Eye className="h-3 w-3" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Ver</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
 
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => openViewModal(appointment)}
-                        className="h-8 px-3 text-xs"
-                      >
-                        <Eye className="h-3.5 w-3.5 sm:mr-1.5" />
-                        <span className="hidden sm:inline">Ver</span>
-                      </Button>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEdit(appointment)}
+                                className="h-6 w-6 p-0"
+                              >
+                                <Edit className="h-3 w-3" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Editar</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
 
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEdit(appointment)}
-                        className="h-8 px-3 text-xs"
-                      >
-                        <Edit className="h-3.5 w-3.5 sm:mr-1.5" />
-                        <span className="hidden sm:inline">Editar</span>
-                      </Button>
+                        {appointment.status === 'confirmed' && canReschedule(appointment) && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => openRescheduleDialog(appointment)}
+                                  className="h-6 w-6 p-0"
+                                >
+                                  <RefreshCw className="h-3 w-3" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Reagendar</TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
 
-                      {canReschedule(appointment) && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => openRescheduleDialog(appointment)}
-                          className="h-8 px-3 text-xs"
-                        >
-                          <RefreshCw className="h-3.5 w-3.5 sm:mr-1.5" />
-                          <span className="hidden sm:inline">Reagendar</span>
-                        </Button>
-                      )}
+                        {canCancel(appointment) && (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm" 
+                                      className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>Cancelar</TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent className="max-w-[90vw] sm:max-w-md">
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Cancelar Agendamento</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Tem certeza que deseja cancelar o agendamento de "{appointment.customer_name}"?
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Voltar</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleStatusChange(appointment.id, 'cancelled')}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  Cancelar
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
 
-                      {canCancel(appointment) && (
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="sm" className="h-8 px-3 text-xs text-destructive hover:text-destructive hover:bg-destructive/10">
-                              <X className="h-3.5 w-3.5 sm:mr-1.5" />
-                              <span className="hidden sm:inline">Cancelar</span>
-                            </Button>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Excluir</TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
                           </AlertDialogTrigger>
                           <AlertDialogContent className="max-w-[90vw] sm:max-w-md">
                             <AlertDialogHeader>
-                              <AlertDialogTitle>Cancelar Agendamento</AlertDialogTitle>
+                              <AlertDialogTitle>Excluir Agendamento</AlertDialogTitle>
                               <AlertDialogDescription>
-                                Tem certeza que deseja cancelar o agendamento de "{appointment.customer_name}"?
+                                Tem certeza que deseja excluir o agendamento de "{appointment.customer_name}"? Esta ação não pode ser desfeita.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                               <AlertDialogCancel>Voltar</AlertDialogCancel>
                               <AlertDialogAction
-                                onClick={() => handleStatusChange(appointment.id, 'cancelled')}
+                                onClick={() => handleDelete(appointment.id)}
                                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                               >
-                                Cancelar
+                                Excluir
                               </AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>
                         </AlertDialog>
-                      )}
+                      </div>
+                    </div>
 
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="sm" className="h-8 px-3 text-xs text-destructive hover:text-destructive hover:bg-destructive/10 ml-auto">
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent className="max-w-[90vw] sm:max-w-md">
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Excluir Agendamento</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Tem certeza que deseja excluir o agendamento de "{appointment.customer_name}"? Esta ação não pode ser desfeita.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Voltar</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => handleDelete(appointment.id)}
-                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    {/* MOBILE: Actions Row - Compacto */}
+                    <div className="px-3 pb-3 md:hidden">
+                      <div className="flex items-center gap-1 pt-2 border-t">
+                        {/* Botões principais para agendamentos pendentes */}
+                        {appointment.status === 'pending' && (
+                          <>
+                            <Button
+                              variant="default"
+                              size="sm"
+                              onClick={() => handleAcceptAppointment(appointment)}
+                              disabled={acceptingAppointments.has(appointment.id)}
+                              className="bg-green-600 hover:bg-green-700 h-6 px-2 text-[11px] font-medium"
                             >
-                              Excluir
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                              {acceptingAppointments.has(appointment.id) ? (
+                                <>
+                                  <div className="h-2.5 w-2.5 mr-1 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                  <span className="hidden sm:inline">Confirmando</span>
+                                </>
+                              ) : (
+                                <>
+                                  <CheckCircle className="h-3 w-3 sm:mr-1" />
+                                  <span className="hidden sm:inline">Aceitar</span>
+                                </>
+                              )}
+                            </Button>
+                            
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => openRescheduleDialog(appointment)}
+                              className="h-6 px-2 text-[11px] font-medium"
+                            >
+                              <RefreshCw className="h-3 w-3 sm:mr-1" />
+                              <span className="hidden sm:inline">Reagendar</span>
+                            </Button>
+                          </>
+                        )}
+
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => openViewModal(appointment)}
+                                className="h-6 w-6 p-0"
+                              >
+                                <Eye className="h-3 w-3" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Ver detalhes</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEdit(appointment)}
+                                className="h-6 w-6 p-0"
+                              >
+                                <Edit className="h-3 w-3" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Editar</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+
+                        {/* Reagendar para agendamentos confirmados */}
+                        {appointment.status === 'confirmed' && canReschedule(appointment) && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => openRescheduleDialog(appointment)}
+                                  className="h-6 w-6 p-0"
+                                >
+                                  <RefreshCw className="h-3 w-3" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Reagendar</TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+
+                        <div className="flex-1" />
+
+                        {canCancel(appointment) && (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm" 
+                                      className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>Cancelar agendamento</TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent className="max-w-[90vw] sm:max-w-md">
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Cancelar Agendamento</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Tem certeza que deseja cancelar o agendamento de "{appointment.customer_name}"?
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Voltar</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleStatusChange(appointment.id, 'cancelled')}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  Cancelar
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
+
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Excluir</TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent className="max-w-[90vw] sm:max-w-md">
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Excluir Agendamento</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Tem certeza que deseja excluir o agendamento de "{appointment.customer_name}"? Esta ação não pode ser desfeita.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Voltar</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleDelete(appointment.id)}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                Excluir
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>

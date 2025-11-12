@@ -17,34 +17,61 @@ export async function notificarNovoAgendamento({
   serviceName?: string;
 }) {
   try {
-    // Detectar ambiente e usar URL correta
-    const isProduction = window.location.hostname !== 'localhost';
-    const apiUrl = isProduction 
-      ? window.location.origin 
-      : 'http://localhost:3001';
+    // Buscar dados da barbearia para pegar o número do barbeiro
+    const { data: barbershop } = await supabase
+      .from('barbershops')
+      .select('whatsapp_number, name, user_id')
+      .eq('id', barbershopId)
+      .single();
 
-    console.log('📨 Enviando notificação push para:', apiUrl);
+    if (!barbershop) {
+      console.error('❌ Barbearia não encontrada');
+      return false;
+    }
 
-    // Enviar notificação push via API
-    const response = await fetch(`${apiUrl}/api/send-notification`, {
+    // Formatar data e hora
+    const date = new Date(scheduledAt);
+    const dataFormatada = format(date, "dd/MM/yyyy", { locale: ptBR });
+    const horaFormatada = format(date, "HH:mm");
+
+    // Enviar para webhook n8n
+    const webhookData = {
+      // Dados do cliente
+      customerName,
+      customerPhone: customerPhone || '',
+      
+      // Dados do agendamento
+      serviceName: serviceName || 'Serviço',
+      scheduledDate: dataFormatada,
+      scheduledTime: horaFormatada,
+      scheduledDateTime: scheduledAt,
+      
+      // Dados da barbearia
+      barbershopId,
+      barbershopName: barbershop.name,
+      barbershopPhone: barbershop.whatsapp_number || '',
+      
+      // Timestamp
+      timestamp: new Date().toISOString(),
+    };
+
+    console.log('📨 Enviando para webhook n8n:', webhookData);
+
+    const response = await fetch('https://n8nwebhook.chatifyz.com/webhook/zapcorte-lembrentes', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        barbershopId,
-        customerName,
-        scheduledAt,
-        serviceName,
-      }),
+      headers: { 
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(webhookData),
     });
 
     if (response.ok) {
-      const result = await response.json();
-      console.log('✅ Notificação push enviada:', result);
+      console.log('✅ Webhook n8n enviado com sucesso');
     } else {
-      console.error('❌ Erro ao enviar notificação push:', await response.text());
+      console.error('❌ Erro ao enviar webhook n8n:', await response.text());
     }
 
-    // Enviar lembrete WhatsApp se os dados estiverem disponíveis
+    // Enviar lembrete WhatsApp se os dados estiverem disponíveis (sistema antigo)
     if (customerPhone) {
       await enviarLembreteWhatsApp({
         barbershopId,

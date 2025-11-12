@@ -9,8 +9,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { Eye, EyeOff, ArrowLeft } from "lucide-react";
+import { useSEO, SEO_CONFIGS } from "@/hooks/useSEO";
 
 const Register = () => {
+  // SEO
+  useSEO(SEO_CONFIGS.register);
+  
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");

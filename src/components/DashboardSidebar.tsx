@@ -12,8 +12,7 @@ import {
   X,
   User,
   MessageCircle,
-  Users,
-  Bell
+  Users
 } from "lucide-react";
 import logotipo from "@/assets/zapcorte-icon.png";
 import { Button } from "@/components/ui/button";
@@ -65,12 +64,6 @@ const sidebarItems: SidebarItem[] = [
     icon: MessageCircle,
     href: "/dashboard/whatsapp",
     badge: "Novo"
-  },
-  {
-    id: "notifications",
-    label: "Notificações",
-    icon: Bell,
-    href: "/dashboard/notifications"
   },
   {
     id: "plan",

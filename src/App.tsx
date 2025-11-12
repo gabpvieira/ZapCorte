@@ -19,7 +19,7 @@ import BarbershopSettings from "./pages/BarbershopSettings";
 import Plan from "./pages/Plan";
 import MyAppointments from "./pages/MyAppointments";
 import WhatsAppSettings from "./pages/WhatsAppSettings";
-import NotificationSettings from "./pages/NotificationSettings";
+
 import { useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useReminderScheduler } from "@/hooks/useReminderScheduler";
@@ -137,14 +137,7 @@ const AppContent = () => {
             </ProtectedRoute>
           } 
         />
-        <Route 
-          path="/dashboard/notifications" 
-          element={
-            <ProtectedRoute>
-              <NotificationSettings />
-            </ProtectedRoute>
-          } 
-        />
+
 
         {/* Legacy paths - protegidas */}
         <Route 
