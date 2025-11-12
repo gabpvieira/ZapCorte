@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { getUserProfile, getUserBarbershop, getUserBarbershopServices } from '@/lib/supabase-queries';
+import { supabase } from '@/lib/supabase';
 import type { Barbershop, Service } from '@/lib/supabase';
 
 interface UserProfile {
@@ -35,7 +36,7 @@ export const useUserData = (): UseUserDataReturn => {
   const [error, setError] = useState<string | null>(null);
 
   const fetchUserData = useCallback(async () => {
-    const withTimeout = async <T,>(promise: Promise<T>, ms = 7000): Promise<T> => {
+    const withTimeout = async <T,>(promise: Promise<T>, ms = 10000): Promise<T> => {
       return Promise.race([
         promise,
         new Promise<T>((_, reject) => setTimeout(() => reject(new Error('timeout')), ms))
@@ -59,8 +60,41 @@ export const useUserData = (): UseUserDataReturn => {
       console.log('👤 Buscando profile...');
       console.log('🔄 Buscando dados do usuário:', user.id);
 
-      // Buscar perfil do usuário
-      const userProfile = await withTimeout(getUserProfile(user.id));
+      // Buscar perfil do usuário com retry
+      let userProfile = await withTimeout(getUserProfile(user.id));
+      
+      // Se o perfil não existir, tentar criar
+      if (!userProfile) {
+        console.log('⚠️ Perfil não encontrado, tentando criar...');
+        try {
+          const { data: newProfile, error: createError } = await supabase
+            .from('profiles')
+            .insert({
+              user_id: user.id,
+              email: user.email,
+              plan_type: 'freemium',
+              subscription_status: 'inactive'
+            })
+            .select()
+            .single();
+
+          if (createError) {
+            console.error('❌ Erro ao criar perfil:', createError);
+            throw new Error('Não foi possível criar o perfil do usuário');
+          }
+
+          userProfile = newProfile;
+          console.log('✅ Perfil criado com sucesso:', userProfile);
+        } catch (createErr) {
+          console.error('💥 Erro ao criar perfil:', createErr);
+          // Tentar buscar novamente (pode ter sido criado por outro processo)
+          userProfile = await withTimeout(getUserProfile(user.id));
+          if (!userProfile) {
+            throw new Error('Perfil não encontrado e não foi possível criar');
+          }
+        }
+      }
+      
       console.log('✅ Profile encontrado:', userProfile?.email);
       console.log('👤 Perfil encontrado:', userProfile);
       setProfile(userProfile);
@@ -88,7 +122,10 @@ export const useUserData = (): UseUserDataReturn => {
       console.error('💥 Error fetching user data:', err);
       console.error('❌ Erro ao buscar dados do usuário:', err);
       const isTimeout = (err as Error).message === 'timeout';
-      setError(isTimeout ? 'Tempo esgotado ao carregar dados do usuário' : 'Erro ao carregar dados do usuário');
+      const errorMessage = isTimeout 
+        ? 'Tempo esgotado ao carregar dados do usuário' 
+        : (err as Error).message || 'Erro ao carregar dados do usuário';
+      setError(errorMessage);
     } finally {
       console.log('🏁 fetchUserData: Finalizando (loading = false)');
       setLoading(false);
@@ -121,7 +158,7 @@ export const useUserData = (): UseUserDataReturn => {
       console.warn('⏱️ Timeout ao carregar dados do usuário. Encerrando loading.');
       setError((prev) => prev ?? 'Tempo esgotado ao carregar dados do usuário');
       setLoading(false);
-    }, 8000);
+    }, 12000); // Aumentado para 12 segundos
 
     return () => clearTimeout(timeout);
   }, [authLoading, loading]);

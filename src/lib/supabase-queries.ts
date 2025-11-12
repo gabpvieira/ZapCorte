@@ -274,6 +274,11 @@ export async function getUserProfile(userId: string) {
     .single()
 
   if (error) {
+    console.error('Erro ao buscar perfil:', error);
+    // Se o erro for PGRST116, significa que não encontrou nenhum registro
+    if (error.code === 'PGRST116') {
+      console.log('Perfil não encontrado para o usuário:', userId);
+    }
     return null
   }
 

@@ -1183,41 +1183,6 @@ const Appointments = () => {
                           </AlertDialog>
                         )}
 
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button 
-                                    variant="ghost" 
-                                    size="sm" 
-                                    className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                                  >
-                                    <Trash2 className="h-3 w-3" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>Excluir</TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent className="max-w-[90vw] sm:max-w-md">
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Excluir Agendamento</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Tem certeza que deseja excluir o agendamento de "{appointment.customer_name}"? Esta ação não pode ser desfeita.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Voltar</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleDelete(appointment.id)}
-                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                              >
-                                Excluir
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
                       </div>
                     </div>
 
@@ -1309,82 +1274,6 @@ const Appointments = () => {
                             </Tooltip>
                           </TooltipProvider>
                         )}
-
-                        <div className="flex-1" />
-
-                        {canCancel(appointment) && (
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button 
-                                      variant="ghost" 
-                                      size="sm" 
-                                      className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                                    >
-                                      <X className="h-3 w-3" />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>Cancelar agendamento</TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent className="max-w-[90vw] sm:max-w-md">
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Cancelar Agendamento</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Tem certeza que deseja cancelar o agendamento de "{appointment.customer_name}"?
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Voltar</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => handleStatusChange(appointment.id, 'cancelled')}
-                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                >
-                                  Cancelar
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        )}
-
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button 
-                                    variant="ghost" 
-                                    size="sm" 
-                                    className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                                  >
-                                    <Trash2 className="h-3 w-3" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>Excluir</TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent className="max-w-[90vw] sm:max-w-md">
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Excluir Agendamento</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Tem certeza que deseja excluir o agendamento de "{appointment.customer_name}"? Esta ação não pode ser desfeita.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Voltar</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleDelete(appointment.id)}
-                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                              >
-                                Excluir
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
                       </div>
                     </div>
                   </CardContent>

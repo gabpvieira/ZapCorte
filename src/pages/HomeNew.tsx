@@ -3,7 +3,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { 
   Calendar, Users, ArrowRight, Play, CheckCircle, MessageSquare, 
   Globe, Menu, X, LogIn, UserPlus, Clock, TrendingUp, Zap,
-  Smartphone, BarChart3, Shield, Star, ChevronRight, Scissors
+  Smartphone, BarChart3, Shield, Star, ChevronRight, Scissors,
+  Phone, UserX, TrendingDown, Frown, AlertCircle
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion, useScroll, useTransform } from "framer-motion";
@@ -249,35 +250,36 @@ const HomeNew = () => {
               transition={{ duration: 0.8, delay: 0.4 }}
               className="relative"
             >
+              {/* Imagem do mockup */}
               <motion.div
-                className="bg-gradient-to-br from-[#18181B] to-[#27272A] rounded-3xl p-8 shadow-2xl border border-[#27272A]"
+                className="relative"
                 animate={{ y: [0, -10, 0] }}
                 transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
               >
-                {/* [PLACEHOLDER: Screenshot do Dashboard] */}
-                <div className="aspect-video bg-[#0C0C0C] rounded-xl flex items-center justify-center border border-[#27272A]">
-                  <div className="text-center space-y-2">
-                    <Calendar className="w-16 h-16 text-[#24C36B] mx-auto" />
-                    <p className="text-gray-400">Dashboard Preview</p>
-                  </div>
+                <div className="rounded-3xl overflow-hidden shadow-2xl">
+                  <img 
+                    src="/mockup-mozeli.webp" 
+                    alt="Dashboard ZapCorte - Sistema de Agendamento" 
+                    className="w-full h-auto"
+                  />
                 </div>
+              </motion.div>
 
-                {/* Floating Stats */}
-                <motion.div
-                  className="absolute -top-4 -right-4 bg-[#24C36B] text-black px-4 py-2 rounded-xl shadow-lg"
-                  animate={{ y: [0, -5, 0] }}
-                  transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
-                >
-                  <div className="text-sm font-semibold">+40% agendamentos</div>
-                </motion.div>
+              {/* Floating Stats */}
+              <motion.div
+                className="absolute -top-4 -right-4 bg-[#24C36B] text-black px-4 py-2 rounded-xl shadow-lg z-50"
+                animate={{ y: [0, -5, 0] }}
+                transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
+              >
+                <div className="text-sm font-semibold">+40% agendamentos</div>
+              </motion.div>
 
-                <motion.div
-                  className="absolute -bottom-4 -left-4 bg-white text-black px-4 py-2 rounded-xl shadow-lg"
-                  animate={{ y: [0, 5, 0] }}
-                  transition={{ duration: 2, repeat: Infinity, delay: 1 }}
-                >
-                  <div className="text-sm font-semibold">-80% ligações</div>
-                </motion.div>
+              <motion.div
+                className="absolute -bottom-4 -left-4 bg-white text-black px-4 py-2 rounded-xl shadow-lg z-50"
+                animate={{ y: [0, 5, 0] }}
+                transition={{ duration: 2, repeat: Infinity, delay: 1 }}
+              >
+                <div className="text-sm font-semibold">-80% ligações</div>
               </motion.div>
             </motion.div>
           </div>
@@ -310,21 +312,21 @@ const HomeNew = () => {
       </section>
 
       {/* Problems Section */}
-      <section className="py-32 bg-gradient-to-b from-[#18181B]/50 via-[#0C0C0C] to-[#18181B]/50 relative overflow-hidden">
+      <section className="py-32 bg-gradient-to-b from-[#0C0C0C] via-[#18181B] to-[#0C0C0C] relative overflow-hidden">
         {/* Animated Background Elements */}
         <div className="absolute inset-0 pointer-events-none">
           <motion.div
-            className="absolute top-20 left-10 w-64 h-64 bg-red-500/5 rounded-full blur-3xl"
+            className="absolute top-20 left-10 w-96 h-96 bg-[#24C36B]/5 rounded-full blur-3xl"
             animate={{
-              scale: [1, 1.3, 1],
+              scale: [1, 1.2, 1],
               opacity: [0.3, 0.5, 0.3],
             }}
             transition={{ duration: 8, repeat: Infinity }}
           />
           <motion.div
-            className="absolute bottom-20 right-10 w-80 h-80 bg-red-500/5 rounded-full blur-3xl"
+            className="absolute bottom-20 right-10 w-96 h-96 bg-[#24C36B]/5 rounded-full blur-3xl"
             animate={{
-              scale: [1.3, 1, 1.3],
+              scale: [1.2, 1, 1.2],
               opacity: [0.5, 0.3, 0.5],
             }}
             transition={{ duration: 10, repeat: Infinity }}
@@ -343,67 +345,74 @@ const HomeNew = () => {
               whileInView={{ scale: 1, opacity: 1 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5 }}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-red-500/10 border border-red-500/20 rounded-full mb-6"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-[#24C36B]/10 border border-[#24C36B]/20 rounded-full mb-6"
             >
-              <span className="text-red-400 text-sm font-semibold">⚠️ Problemas Comuns</span>
+              <AlertCircle className="w-5 h-5 text-[#24C36B]" />
+              <span className="text-[#24C36B] text-sm font-semibold">Problemas Comuns</span>
             </motion.div>
-            <h2 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-white via-gray-200 to-gray-400 bg-clip-text text-transparent">
+            <h2 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-white via-gray-100 to-white bg-clip-text text-transparent">
               Cansado desses problemas?
             </h2>
             <p className="text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto">
-              Você não está sozinho. Veja o que outros barbeiros enfrentam:
+              Você não está sozinho. Veja o que outros barbeiros enfrentam diariamente:
             </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
             {[
               { 
-                icon: "🔴", 
+                Icon: Phone, 
                 title: "Ligações constantes", 
                 desc: "Interrompem seus atendimentos o dia todo",
-                gradient: "from-red-500/10 to-red-600/5",
-                borderColor: "border-red-500/30",
-                iconBg: "bg-red-500/10"
+                color: "text-red-400",
+                bgColor: "bg-red-500/10",
+                borderColor: "border-red-500/20",
+                hoverBorder: "hover:border-red-400/50"
               },
               { 
-                icon: "📋", 
+                Icon: Calendar, 
                 title: "Agenda desorganizada", 
                 desc: "Caderno cheio de rasuras e confusão",
-                gradient: "from-orange-500/10 to-orange-600/5",
-                borderColor: "border-orange-500/30",
-                iconBg: "bg-orange-500/10"
+                color: "text-orange-400",
+                bgColor: "bg-orange-500/10",
+                borderColor: "border-orange-500/20",
+                hoverBorder: "hover:border-orange-400/50"
               },
               { 
-                icon: "❌", 
+                Icon: UserX, 
                 title: "Clientes faltando", 
                 desc: "Horários vazios por esquecimento",
-                gradient: "from-pink-500/10 to-pink-600/5",
-                borderColor: "border-pink-500/30",
-                iconBg: "bg-pink-500/10"
+                color: "text-pink-400",
+                bgColor: "bg-pink-500/10",
+                borderColor: "border-pink-500/20",
+                hoverBorder: "hover:border-pink-400/50"
               },
               { 
-                icon: "⏰", 
+                Icon: Clock, 
                 title: "Perda de tempo", 
                 desc: "Horas confirmando agendamentos manualmente",
-                gradient: "from-purple-500/10 to-purple-600/5",
-                borderColor: "border-purple-500/30",
-                iconBg: "bg-purple-500/10"
+                color: "text-purple-400",
+                bgColor: "bg-purple-500/10",
+                borderColor: "border-purple-500/20",
+                hoverBorder: "hover:border-purple-400/50"
               },
               { 
-                icon: "💸", 
+                Icon: TrendingDown, 
                 title: "Dinheiro na mesa", 
                 desc: "Perde clientes que não conseguem agendar",
-                gradient: "from-yellow-500/10 to-yellow-600/5",
-                borderColor: "border-yellow-500/30",
-                iconBg: "bg-yellow-500/10"
+                color: "text-yellow-400",
+                bgColor: "bg-yellow-500/10",
+                borderColor: "border-yellow-500/20",
+                hoverBorder: "hover:border-yellow-400/50"
               },
               { 
-                icon: "😰", 
+                Icon: Frown, 
                 title: "Estresse desnecessário", 
                 desc: "Gestão manual é cansativa e ineficiente",
-                gradient: "from-blue-500/10 to-blue-600/5",
-                borderColor: "border-blue-500/30",
-                iconBg: "bg-blue-500/10"
+                color: "text-blue-400",
+                bgColor: "bg-blue-500/10",
+                borderColor: "border-blue-500/20",
+                hoverBorder: "hover:border-blue-400/50"
               }
             ].map((problem, i) => (
               <motion.div
@@ -413,31 +422,27 @@ const HomeNew = () => {
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1, duration: 0.5 }}
                 whileHover={{ 
-                  scale: 1.05,
+                  scale: 1.03,
                   transition: { duration: 0.2 }
                 }}
               >
-                <Card className={`bg-gradient-to-br ${problem.gradient} border-2 ${problem.borderColor} hover:border-red-400/50 transition-all duration-300 h-full backdrop-blur-sm group`}>
-                  <CardContent className="p-8 text-center">
-                    <motion.div 
-                      className={`w-24 h-24 ${problem.iconBg} rounded-3xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300`}
-                      animate={{ 
-                        y: [0, -10, 0],
-                      }}
-                      transition={{ 
-                        duration: 3,
-                        repeat: Infinity,
-                        delay: i * 0.2
-                      }}
-                    >
-                      <span className="text-6xl filter drop-shadow-lg">{problem.icon}</span>
-                    </motion.div>
-                    <h3 className="text-2xl font-bold mb-3 text-white group-hover:text-red-300 transition-colors">
-                      {problem.title}
-                    </h3>
-                    <p className="text-gray-300 text-lg leading-relaxed">
-                      {problem.desc}
-                    </p>
+                <Card className={`bg-[#18181B]/80 backdrop-blur-sm border-2 ${problem.borderColor} ${problem.hoverBorder} transition-all duration-300 h-full group`}>
+                  <CardContent className="p-8">
+                    <div className="flex flex-col items-center text-center">
+                      <motion.div 
+                        className={`w-20 h-20 ${problem.bgColor} rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300`}
+                        whileHover={{ rotate: [0, -10, 10, -10, 0] }}
+                        transition={{ duration: 0.5 }}
+                      >
+                        <problem.Icon className={`w-10 h-10 ${problem.color}`} strokeWidth={2} />
+                      </motion.div>
+                      <h3 className="text-xl font-bold mb-3 text-white">
+                        {problem.title}
+                      </h3>
+                      <p className="text-gray-400 text-base leading-relaxed">
+                        {problem.desc}
+                      </p>
+                    </div>
                   </CardContent>
                 </Card>
               </motion.div>
@@ -470,135 +475,343 @@ const HomeNew = () => {
       </section>
 
       {/* Solution Section */}
-      <section id="funcionalidades" className="py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section id="funcionalidades" className="py-32 bg-gradient-to-b from-[#0C0C0C] via-[#18181B] to-[#0C0C0C] relative overflow-hidden">
+        {/* Animated Background Elements */}
+        <div className="absolute inset-0 pointer-events-none">
+          <motion.div
+            className="absolute top-40 right-20 w-96 h-96 bg-[#24C36B]/5 rounded-full blur-3xl"
+            animate={{
+              scale: [1, 1.3, 1],
+              opacity: [0.3, 0.5, 0.3],
+            }}
+            transition={{ duration: 8, repeat: Infinity }}
+          />
+          <motion.div
+            className="absolute bottom-40 left-20 w-96 h-96 bg-[#24C36B]/5 rounded-full blur-3xl"
+            animate={{
+              scale: [1.3, 1, 1.3],
+              opacity: [0.5, 0.3, 0.5],
+            }}
+            transition={{ duration: 10, repeat: Infinity }}
+          />
+        </div>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center mb-16"
+            className="text-center mb-20"
           >
-            <h2 className="text-4xl font-bold mb-4">A solução completa para sua barbearia</h2>
-            <p className="text-xl text-gray-300">Tudo que você precisa em um só lugar</p>
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              whileInView={{ scale: 1, opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+              className="inline-flex items-center gap-2 px-6 py-3 bg-[#24C36B]/10 border border-[#24C36B]/20 rounded-full mb-6"
+            >
+              <CheckCircle className="w-5 h-5 text-[#24C36B]" />
+              <span className="text-[#24C36B] text-sm font-semibold">Funcionalidades</span>
+            </motion.div>
+            <h2 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-white via-gray-100 to-white bg-clip-text text-transparent">
+              A solução completa para sua barbearia
+            </h2>
+            <p className="text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto">
+              Tudo que você precisa em um só lugar, simples e profissional
+            </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
             {[
               {
-                icon: Globe,
+                Icon: Globe,
                 title: "Página Personalizada",
                 desc: "Seu link único com logo e cores da sua marca",
-                color: "text-blue-400"
+                gradient: "from-[#24C36B]/20 to-[#1ea557]/10"
               },
               {
-                icon: Calendar,
+                Icon: Calendar,
                 title: "Agenda Inteligente",
                 desc: "Horários disponíveis em tempo real, sem conflitos",
-                color: "text-green-400"
+                gradient: "from-[#24C36B]/20 to-[#1ea557]/10"
               },
               {
-                icon: MessageSquare,
+                Icon: MessageSquare,
                 title: "WhatsApp Automático",
                 desc: "Confirmações e lembretes enviados automaticamente",
-                color: "text-purple-400"
+                gradient: "from-[#24C36B]/20 to-[#1ea557]/10"
               },
               {
-                icon: Users,
+                Icon: Users,
                 title: "Gestão de Clientes",
                 desc: "Carteira organizada com histórico completo",
-                color: "text-yellow-400"
+                gradient: "from-[#24C36B]/20 to-[#1ea557]/10"
               },
               {
-                icon: BarChart3,
+                Icon: BarChart3,
                 title: "Dashboard Completo",
                 desc: "Métricas e estatísticas do seu negócio",
-                color: "text-red-400"
+                gradient: "from-[#24C36B]/20 to-[#1ea557]/10"
               },
               {
-                icon: Smartphone,
+                Icon: Smartphone,
                 title: "100% Mobile",
                 desc: "Funciona perfeitamente em qualquer dispositivo",
-                color: "text-cyan-400"
+                gradient: "from-[#24C36B]/20 to-[#1ea557]/10"
               }
             ].map((feature, i) => (
               <motion.div
                 key={i}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                whileHover={{ scale: 1.05 }}
+                transition={{ delay: i * 0.1, duration: 0.5 }}
+                whileHover={{ 
+                  scale: 1.03,
+                  transition: { duration: 0.2 }
+                }}
               >
-                <Card className="bg-gradient-to-br from-[#18181B] to-[#0C0C0C] border-[#27272A] hover:border-[#24C36B]/50 transition-all h-full">
-                  <CardContent className="p-8 text-center">
-                    <div className={`w-16 h-16 ${feature.color} bg-opacity-10 rounded-2xl flex items-center justify-center mx-auto mb-6`}>
-                      <feature.icon className={`w-8 h-8 ${feature.color}`} />
+                <Card className={`bg-gradient-to-br ${feature.gradient} backdrop-blur-sm border-2 border-[#24C36B]/20 hover:border-[#24C36B]/50 transition-all duration-300 h-full group`}>
+                  <CardContent className="p-8">
+                    <div className="flex flex-col items-center text-center">
+                      <motion.div 
+                        className="w-20 h-20 bg-[#24C36B]/10 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300"
+                        whileHover={{ rotate: [0, -10, 10, -10, 0] }}
+                        transition={{ duration: 0.5 }}
+                      >
+                        <feature.Icon className="w-10 h-10 text-[#24C36B]" strokeWidth={2} />
+                      </motion.div>
+                      <h3 className="text-xl font-bold mb-3 text-white">
+                        {feature.title}
+                      </h3>
+                      <p className="text-gray-400 text-base leading-relaxed">
+                        {feature.desc}
+                      </p>
                     </div>
-                    <h3 className="text-xl font-semibold mb-3">{feature.title}</h3>
-                    <p className="text-gray-400">{feature.desc}</p>
                   </CardContent>
                 </Card>
               </motion.div>
             ))}
           </div>
+
+          {/* Call to Action */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.6 }}
+            className="text-center mt-16"
+          >
+            <Button 
+              size="lg" 
+              className="bg-[#24C36B] hover:bg-[#1ea557] text-black font-bold px-10 py-7 text-xl rounded-2xl shadow-2xl shadow-[#24C36B]/20 hover:shadow-[#24C36B]/40 transition-all group"
+              asChild
+            >
+              <Link to="/register">
+                Começar Agora Grátis
+                <ArrowRight className="w-6 h-6 ml-2 group-hover:translate-x-2 transition-transform" />
+              </Link>
+            </Button>
+          </motion.div>
         </div>
       </section>
 
       {/* Benefits Section */}
-      <section id="beneficios" className="py-20 bg-[#18181B]/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            {/* Mockup Image */}
+      <section id="beneficios" className="py-32 bg-gradient-to-b from-[#0C0C0C] via-[#18181B] to-[#0C0C0C] relative overflow-hidden">
+        {/* Animated Background Elements */}
+        <div className="absolute inset-0 pointer-events-none">
+          <motion.div
+            className="absolute top-20 left-20 w-96 h-96 bg-[#24C36B]/5 rounded-full blur-3xl"
+            animate={{
+              scale: [1, 1.2, 1],
+              opacity: [0.3, 0.5, 0.3],
+            }}
+            transition={{ duration: 8, repeat: Infinity }}
+          />
+          <motion.div
+            className="absolute bottom-20 right-20 w-96 h-96 bg-[#24C36B]/5 rounded-full blur-3xl"
+            animate={{
+              scale: [1.2, 1, 1.2],
+              opacity: [0.5, 0.3, 0.5],
+            }}
+            transition={{ duration: 10, repeat: Infinity }}
+          />
+        </div>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          {/* Header */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-20"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              whileInView={{ scale: 1, opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+              className="inline-flex items-center gap-2 px-6 py-3 bg-[#24C36B]/10 border border-[#24C36B]/20 rounded-full mb-6"
+            >
+              <Star className="w-5 h-5 text-[#24C36B]" />
+              <span className="text-[#24C36B] text-sm font-semibold">Por Que Escolher</span>
+            </motion.div>
+            <h2 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-white via-gray-100 to-white bg-clip-text text-transparent">
+              Por que barbeiros escolhem o ZapCorte?
+            </h2>
+            <p className="text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto">
+              Resultados comprovados que transformam seu negócio
+            </p>
+          </motion.div>
+
+          {/* Content with Mockup Centered */}
+          <div className="relative max-w-7xl mx-auto min-h-[600px] flex items-center justify-center">
+            {/* Mockup Central - Desktop */}
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
-              className="order-first lg:order-last flex justify-center items-center"
+              className="hidden lg:flex justify-center items-center relative"
             >
               <motion.img 
                 src="/MOCKUP-APP.png" 
                 alt="ZapCorte App Mockup" 
-                className="w-full max-w-sm lg:max-w-md h-auto drop-shadow-2xl"
+                className="w-full max-w-2xl h-auto drop-shadow-2xl relative z-10"
                 animate={{ y: [0, -10, 0] }}
                 transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
               />
+
+              {/* Floating Badges - Desktop */}
+              <motion.div
+                className="absolute top-0 -left-32 xl:-left-40 bg-gradient-to-br from-[#24C36B] to-[#1ea557] text-black px-6 py-4 rounded-2xl shadow-2xl max-w-xs z-20"
+                initial={{ opacity: 0, x: -50 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.3, duration: 0.6 }}
+                animate={{ y: [0, -10, 0] }}
+                whileHover={{ scale: 1.05 }}
+              >
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-12 h-12 bg-black/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <TrendingUp className="w-6 h-6" strokeWidth={2.5} />
+                  </div>
+                  <div>
+                    <div className="text-3xl font-bold">+40%</div>
+                    <div className="text-sm font-semibold">mais agendamentos</div>
+                  </div>
+                </div>
+                <p className="text-sm text-black/70 font-medium">Clientes agendam 24/7</p>
+              </motion.div>
+
+              <motion.div
+                className="absolute top-32 -right-32 xl:-right-40 bg-white text-black px-6 py-4 rounded-2xl shadow-2xl max-w-xs z-20"
+                initial={{ opacity: 0, x: 50 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.5, duration: 0.6 }}
+                animate={{ y: [0, 10, 0] }}
+                whileHover={{ scale: 1.05 }}
+              >
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-12 h-12 bg-[#24C36B]/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <Clock className="w-6 h-6 text-[#24C36B]" strokeWidth={2.5} />
+                  </div>
+                  <div>
+                    <div className="text-3xl font-bold">-80%</div>
+                    <div className="text-sm font-semibold">menos ligações</div>
+                  </div>
+                </div>
+                <p className="text-sm text-black/60 font-medium">Sem interrupções</p>
+              </motion.div>
+
+              <motion.div
+                className="absolute bottom-32 -left-28 xl:-left-36 bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] text-white px-6 py-4 rounded-2xl shadow-2xl border-2 border-[#24C36B]/40 max-w-xs z-20"
+                initial={{ opacity: 0, x: -50 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.7, duration: 0.6 }}
+                animate={{ y: [0, -8, 0] }}
+                whileHover={{ scale: 1.05 }}
+              >
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-12 h-12 bg-[#24C36B]/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <Zap className="w-6 h-6 text-[#24C36B]" strokeWidth={2.5} />
+                  </div>
+                  <div>
+                    <div className="text-3xl font-bold text-[#24C36B]">5 min</div>
+                    <div className="text-sm font-semibold">para configurar</div>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-300 font-medium">Rápido e fácil</p>
+              </motion.div>
+
+              <motion.div
+                className="absolute bottom-0 -right-28 xl:-right-36 bg-gradient-to-br from-[#1a3a2a] to-[#0f2419] text-white px-6 py-4 rounded-2xl shadow-2xl border-2 border-[#24C36B]/40 max-w-xs z-20"
+                initial={{ opacity: 0, x: 50 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.9, duration: 0.6 }}
+                animate={{ y: [0, 8, 0] }}
+                whileHover={{ scale: 1.05 }}
+              >
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-12 h-12 bg-[#24C36B]/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <Shield className="w-6 h-6 text-[#24C36B]" strokeWidth={2.5} />
+                  </div>
+                  <div>
+                    <div className="text-3xl font-bold text-[#24C36B]">100%</div>
+                    <div className="text-sm font-semibold">seguro</div>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-300 font-medium">Dados protegidos</p>
+              </motion.div>
             </motion.div>
 
-            <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-            >
-              <h2 className="text-4xl font-bold mb-6">Por que barbeiros escolhem o ZapCorte?</h2>
-              <div className="space-y-6">
+            {/* Mobile Version - Stacked */}
+            <div className="lg:hidden space-y-6 w-full">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                className="flex justify-center mb-8"
+              >
+                <img 
+                  src="/MOCKUP-APP.png" 
+                  alt="ZapCorte App Mockup" 
+                  className="w-full max-w-xs h-auto drop-shadow-2xl"
+                />
+              </motion.div>
+
+              <div className="grid gap-4 px-2">
                 {[
-                  { icon: TrendingUp, title: "+40% mais agendamentos", desc: "Clientes agendam 24/7, mesmo quando você está ocupado" },
-                  { icon: Clock, title: "-80% menos ligações", desc: "Pare de ser interrompido durante os atendimentos" },
-                  { icon: Zap, title: "5 minutos para configurar", desc: "Comece a receber agendamentos hoje mesmo" },
-                  { icon: Shield, title: "100% seguro e confiável", desc: "Seus dados e dos seus clientes protegidos" }
-                ].map((benefit, i) => (
+                  { Icon: TrendingUp, value: "+40%", label: "mais agendamentos", desc: "Clientes agendam 24/7", bg: "bg-gradient-to-br from-[#24C36B] to-[#1ea557]", textColor: "text-black" },
+                  { Icon: Clock, value: "-80%", label: "menos ligações", desc: "Sem interrupções", bg: "bg-white", textColor: "text-black" },
+                  { Icon: Zap, value: "5 min", label: "para configurar", desc: "Rápido e fácil", bg: "bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a]", textColor: "text-white", border: true },
+                  { Icon: Shield, value: "100%", label: "seguro", desc: "Dados protegidos", bg: "bg-gradient-to-br from-[#1a3a2a] to-[#0f2419]", textColor: "text-white", border: true }
+                ].map((item, i) => (
                   <motion.div
                     key={i}
-                    initial={{ opacity: 0, x: -20 }}
-                    whileInView={{ opacity: 1, x: 0 }}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ delay: i * 0.1 }}
-                    className="flex gap-4"
+                    className={`${item.bg} ${item.textColor} px-6 py-5 rounded-2xl shadow-xl ${item.border ? 'border-2 border-[#24C36B]/40' : ''}`}
                   >
-                    <div className="w-12 h-12 bg-[#24C36B]/10 rounded-xl flex items-center justify-center flex-shrink-0">
-                      <benefit.icon className="w-6 h-6 text-[#24C36B]" />
+                    <div className="flex items-center gap-4 mb-2">
+                      <div className={`w-12 h-12 ${item.textColor === 'text-black' ? 'bg-black/10' : 'bg-[#24C36B]/20'} rounded-xl flex items-center justify-center flex-shrink-0`}>
+                        <item.Icon className={`w-6 h-6 ${item.textColor === 'text-black' ? 'text-black' : 'text-[#24C36B]'}`} strokeWidth={2.5} />
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold">{item.value}</div>
+                        <div className="text-sm font-semibold">{item.label}</div>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="text-xl font-semibold mb-2">{benefit.title}</h3>
-                      <p className="text-gray-400">{benefit.desc}</p>
-                    </div>
+                    <p className={`text-sm font-medium ${item.textColor === 'text-black' ? 'text-black/60' : 'text-gray-300'}`}>{item.desc}</p>
                   </motion.div>
                 ))}
               </div>
-            </motion.div>
-
-
+            </div>
           </div>
         </div>
       </section>
