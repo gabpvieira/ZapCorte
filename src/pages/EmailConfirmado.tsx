@@ -39,106 +39,13 @@ export default function EmailConfirmado() {
       }
 
       console.log('✅ Usuário autenticado:', user.email);
+      console.log('ℹ️ A barbearia foi criada automaticamente pelo trigger do banco de dados');
 
-      // Recuperar dados pendentes do localStorage
-      const pendingData = localStorage.getItem('pendingUserData');
-      if (!pendingData) {
-        console.log('⚠️ Nenhum dado pendente encontrado');
-        setIsCreatingProfile(false);
-        return;
-      }
-
-      const userData = JSON.parse(pendingData);
-      console.log('📋 Dados do usuário:', userData);
-
-      // Sistema de retry (3 tentativas)
-      let retryCount = 0;
-      const maxRetries = 3;
-      let success = false;
-
-      while (retryCount < maxRetries && !success) {
-        try {
-          console.log(`🔄 Tentativa ${retryCount + 1} de ${maxRetries}`);
-
-          // Verificar se barbershop já existe
-          const { data: existingBarbershop } = await supabase
-            .from('barbershops')
-            .select('*')
-            .eq('user_id', user.id)
-            .single();
-
-          if (existingBarbershop) {
-            console.log('✅ Barbearia já existe no banco de dados');
-            localStorage.removeItem('pendingUserData');
-            success = true;
-            break;
-          }
-
-          // Criar slug a partir do nome
-          const slug = userData.nome
-            .toLowerCase()
-            .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '')
-            .replace(/[^a-z0-9]+/g, '-')
-            .replace(/^-+|-+$/g, '')
-            + '-' + Math.random().toString(36).substring(2, 7);
-
-          // Criar barbershop
-          const { data: newBarbershop, error: barbershopError } = await supabase
-            .from('barbershops')
-            .insert({
-              user_id: user.id,
-              name: userData.nome || user.user_metadata?.nome || user.email?.split('@')[0],
-              slug: slug,
-              plan_type: 'freemium',
-              is_active: true,
-              whatsapp_number: userData.telefone || user.user_metadata?.telefone || null
-            })
-            .select()
-            .single();
-
-          if (barbershopError) {
-            // Verificar se é erro de duplicata
-            if (barbershopError.code === '23505' || barbershopError.message?.includes('duplicate')) {
-              console.log('✅ Barbearia já existe (erro de duplicata ignorado)');
-              localStorage.removeItem('pendingUserData');
-              success = true;
-              break;
-            }
-
-            throw barbershopError;
-          }
-
-          console.log('✅ Barbearia criada com sucesso:', newBarbershop);
-          localStorage.removeItem('pendingUserData');
-          success = true;
-
-        } catch (error: any) {
-          console.error(`❌ Erro na tentativa ${retryCount + 1}:`, error);
-          
-          // Verificar se é erro de duplicata
-          if (error.code === '23505' || error.message?.includes('duplicate') || error.message?.includes('unique')) {
-            console.log('✅ Barbearia já existe (erro de duplicata ignorado)');
-            localStorage.removeItem('pendingUserData');
-            success = true;
-            break;
-          }
-
-          retryCount++;
-          
-          if (retryCount < maxRetries) {
-            console.log(`⏳ Aguardando 2s antes da próxima tentativa...`);
-            await new Promise(resolve => setTimeout(resolve, 2000));
-          }
-        }
-      }
-
-      if (!success) {
-        console.error('❌ Falha ao criar barbearia após todas as tentativas');
-      }
+      // Limpar dados pendentes
+      localStorage.removeItem('pendingUserData');
 
     } catch (error) {
-      console.error('💥 Erro geral ao criar barbearia:', error);
+      console.error('💥 Erro geral:', error);
     } finally {
       setIsCreatingProfile(false);
     }
