@@ -3,8 +3,15 @@
  * Sistema de confirmação de email ZapCorte
  */
 
+// Configuração: Forçar URLs de produção mesmo em desenvolvimento
+// Mude para 'true' se quiser testar com URLs de produção no localhost
+const FORCE_PRODUCTION_URLS = false;
+
 // Detectar se está em produção ou desenvolvimento
-const isProduction = window.location.hostname === 'zapcorte.com.br' || window.location.hostname === 'www.zapcorte.com.br';
+const isProduction = window.location.hostname === 'zapcorte.com.br' || 
+                     window.location.hostname === 'www.zapcorte.com.br' ||
+                     FORCE_PRODUCTION_URLS;
+
 const baseUrl = isProduction ? 'https://zapcorte.com.br' : window.location.origin;
 
 export const AUTH_CONFIG = {
@@ -42,7 +49,9 @@ export const AUTH_CONFIG = {
  * Retorna a URL de redirecionamento apropriada baseada no tipo
  */
 export function getRedirectUrl(type: 'callback' | 'verify' | 'confirm' | 'dashboard' | 'email-confirmado'): string {
-  const isProduction = window.location.hostname === 'zapcorte.com.br' || window.location.hostname === 'www.zapcorte.com.br';
+  const isProduction = window.location.hostname === 'zapcorte.com.br' || 
+                       window.location.hostname === 'www.zapcorte.com.br' ||
+                       FORCE_PRODUCTION_URLS;
   const baseUrl = isProduction ? 'https://zapcorte.com.br' : window.location.origin;
   
   if (type === 'dashboard') {
@@ -60,8 +69,19 @@ export function getRedirectUrl(type: 'callback' | 'verify' | 'confirm' | 'dashbo
  * Retorna a URL base (produção ou desenvolvimento)
  */
 export function getBaseUrl(): string {
-  const isProduction = window.location.hostname === 'zapcorte.com.br' || window.location.hostname === 'www.zapcorte.com.br';
+  const isProduction = window.location.hostname === 'zapcorte.com.br' || 
+                       window.location.hostname === 'www.zapcorte.com.br' ||
+                       FORCE_PRODUCTION_URLS;
   return isProduction ? 'https://zapcorte.com.br' : window.location.origin;
+}
+
+/**
+ * Retorna se está em modo de produção
+ */
+export function isProductionMode(): boolean {
+  return window.location.hostname === 'zapcorte.com.br' || 
+         window.location.hostname === 'www.zapcorte.com.br' ||
+         FORCE_PRODUCTION_URLS;
 }
 
 /**
