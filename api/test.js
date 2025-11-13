@@ -1,0 +1,7 @@
+module.exports = async function handler(req, res) {
+  return res.status(200).json({ 
+    message: 'API funcionando!',
+    method: req.method,
+    timestamp: new Date().toISOString()
+  });
+}
