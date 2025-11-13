@@ -1,5 +1,5 @@
 // Vercel Serverless Function para Webhook do Cakto
-const { createClient } = require('@supabase/supabase-js');
+import { createClient } from '@supabase/supabase-js';
 
 // Configuração do Supabase
 const supabase = createClient(
@@ -197,7 +197,7 @@ async function processBoletoGenerated(webhookData) {
 }
 
 // Handler principal
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   // Permitir apenas POST
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
