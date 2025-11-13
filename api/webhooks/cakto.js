@@ -126,6 +126,16 @@ export default async function handler(req, res) {
         result = await processPaymentApproved(webhookData);
         break;
       
+      case 'pix_gerado':
+        // PIX gerado - apenas registrar, não fazer nada
+        // O pagamento será processado quando o evento 'purchase_approved' chegar
+        result = { 
+          success: true, 
+          message: 'PIX gerado registrado',
+          action: 'waiting_payment'
+        };
+        break;
+      
       case 'subscription_cancelled':
       case 'refund':
         // Cancelar assinatura
@@ -144,7 +154,13 @@ export default async function handler(req, res) {
         break;
 
       default:
-        throw new Error(`Evento não suportado: ${webhookData.event}`);
+        // Eventos não suportados são registrados mas não causam erro
+        result = { 
+          success: true, 
+          message: `Evento ${webhookData.event} registrado mas não processado`,
+          action: 'ignored'
+        };
+        break;
     }
 
     // Log de sucesso
