@@ -90,16 +90,16 @@ export async function notificarNovoAgendamento({
       // Mesmo com erro, continua o fluxo
     }
 
-    // Enviar mensagem de "agendamento recebido" se os dados estiverem disponíveis
+    // Enviar mensagem de "Agendamento Recebido" para o cliente
     if (customerPhone) {
-      console.log('📱 [WEBHOOK] Enviando mensagem WhatsApp para cliente...');
-      await enviarLembreteWhatsApp({
+      console.log('📱 [WEBHOOK] Enviando mensagem de agendamento recebido para cliente...');
+      await enviarMensagemAgendamentoRecebido({
         barbershopId,
+        barbershopName: barbershop.name,
         customerName,
         customerPhone,
         scheduledAt,
         serviceName: serviceName || 'Serviço',
-        tipo: 'recebido', // Mudado de 'confirmacao' para 'recebido'
       });
     }
 
@@ -117,14 +117,14 @@ export async function enviarLembreteWhatsApp({
   customerPhone,
   scheduledAt,
   serviceName,
-  tipo = 'recebido'
+  tipo = 'confirmacao'
 }: {
   barbershopId: string;
   customerName: string;
   customerPhone: string;
   scheduledAt: string;
   serviceName: string;
-  tipo?: 'recebido' | 'confirmacao' | 'lembrete' | 'cancelamento' | 'reagendamento';
+  tipo?: 'confirmacao' | 'lembrete' | 'cancelamento' | 'reagendamento';
 }) {
   try {
     // Buscar dados da barbearia e verificar se WhatsApp está conectado
@@ -170,22 +170,6 @@ export async function enviarLembreteWhatsApp({
 
     // Mensagens padrão caso não haja personalização
     const mensagensPadrao = {
-      recebido: `📋 *Agendamento Recebido!*
-
-Olá *${primeiroNome}*! 
-
-Recebemos seu pedido de agendamento:
-
-📅 *Data:* ${diaSemana}, ${dataFormatada}
-🕐 *Horário:* ${horaFormatada}
-✂️ *Serviço:* ${serviceName}
-🏪 *Local:* ${barbershop.name}
-
-⏳ *Aguarde a confirmação do barbeiro!*
-
-Seu horário está sendo analisado e em breve você receberá a confirmação. Isso garante que possamos atendê-lo com a melhor qualidade possível.
-
-_Mensagem enviada automaticamente pelo ZapCorte_`,
       confirmacao: `✅ *Agendamento Confirmado!*
 
 Olá *${primeiroNome}*! 
@@ -250,11 +234,6 @@ _Mensagem enviada automaticamente pelo ZapCorte_`
     let mensagem = '';
     
     switch (tipo) {
-      case 'recebido':
-        // Sempre usa mensagem padrão para "recebido" (não personalizável)
-        mensagem = mensagensPadrao.recebido;
-        break;
-
       case 'confirmacao':
         mensagem = barbershop.confirmation_message 
           ? substituirVariaveis(barbershop.confirmation_message)
@@ -340,5 +319,92 @@ export async function enviarLembreteProximo(agendamentoId: string) {
 
   } catch (error) {
     console.error('[WhatsApp] Erro ao enviar lembrete próximo:', error);
+  }
+}
+
+
+// Função para enviar mensagem de "Agendamento Recebido" ao cliente
+export async function enviarMensagemAgendamentoRecebido({
+  barbershopId,
+  barbershopName,
+  customerName,
+  customerPhone,
+  scheduledAt,
+  serviceName,
+}: {
+  barbershopId: string;
+  barbershopName: string;
+  customerName: string;
+  customerPhone: string;
+  scheduledAt: string;
+  serviceName: string;
+}) {
+  try {
+    // Buscar dados da barbearia para verificar se WhatsApp está conectado
+    const { data: barbershop, error: barbershopError } = await supabase
+      .from('barbershops')
+      .select('whatsapp_session_id, whatsapp_connected')
+      .eq('id', barbershopId)
+      .single();
+
+    if (barbershopError || !barbershop) {
+      console.error('[WhatsApp] Erro ao buscar barbearia:', barbershopError);
+      return false;
+    }
+
+    if (!barbershop.whatsapp_connected || !barbershop.whatsapp_session_id) {
+      console.log('[WhatsApp] WhatsApp não conectado para esta barbearia');
+      return false;
+    }
+
+    // Formatar data e hora
+    const date = new Date(scheduledAt);
+    const dataFormatada = format(date, "dd/MM/yyyy", { locale: ptBR });
+    const diaSemana = format(date, "EEEE", { locale: ptBR });
+    const diaSemanaCapitalizado = diaSemana.charAt(0).toUpperCase() + diaSemana.slice(1);
+    const horaFormatada = format(date, "HH:mm");
+
+    // Extrair primeiro nome
+    const primeiroNome = customerName.split(' ')[0];
+
+    // Mensagem padrão de agendamento recebido (não personalizável)
+    const mensagem = `✂️ *AGENDAMENTO RECEBIDO!*
+
+Opa, *${primeiroNome}!* 👋
+Seu agendamento foi feito com sucesso:
+
+📆 *Data:* ${diaSemanaCapitalizado}, ${dataFormatada}
+⏰ *Horário:* ${horaFormatada}
+💈 *Serviço:* ${serviceName}
+
+⏳ *Aguardando confirmação do barbeiro.*
+
+Você receberá a confirmação em breve! ✅
+
+_Mensagem automática – ZapCorte_`;
+
+    console.log('[WhatsApp] Enviando mensagem de agendamento recebido:', {
+      sessionId: barbershop.whatsapp_session_id,
+      customerPhone,
+      customerName,
+    });
+
+    // Enviar mensagem via Evolution API
+    const sucesso = await evolutionApi.sendMessage(barbershop.whatsapp_session_id, {
+      phone: customerPhone,
+      message: mensagem,
+    });
+
+    if (sucesso) {
+      console.log(`[WhatsApp] ✅ Mensagem de agendamento recebido enviada para ${customerName} (${customerPhone})`);
+      return true;
+    } else {
+      console.error(`[WhatsApp] ❌ Falha ao enviar mensagem de agendamento recebido para ${customerPhone}`);
+      return false;
+    }
+
+  } catch (error) {
+    console.error('[WhatsApp] ❌ Erro ao enviar mensagem de agendamento recebido:', error);
+    return false;
   }
 }

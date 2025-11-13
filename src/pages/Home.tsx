@@ -183,7 +183,7 @@ const Home = () => {
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.3, ease: "easeInOut" }}
-                className="md:hidden border-t border-[#27272A] py-4 space-y-4"
+                className="md:hidden border-t border-[#27272A] py-4 space-y-4 bg-[#0C0C0C]"
               >
                 {/* Mobile Navigation Links */}
                 <div className="space-y-2">

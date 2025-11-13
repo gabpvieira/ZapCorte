@@ -118,39 +118,122 @@ const HomeNew = () => {
               </Button>
             </div>
 
-            <button className="md:hidden p-2" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+            <button 
+              className="md:hidden p-2 rounded-lg hover:bg-[#27272A] transition-colors relative z-[60]" 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
           </div>
-
-          {mobileMenuOpen && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              className="md:hidden border-t border-[#27272A] py-4 space-y-4"
-            >
-              <button onClick={() => scrollToSection('funcionalidades')} className="block w-full text-left px-4 py-2 hover:bg-[#27272A] rounded-lg">
-                Funcionalidades
-              </button>
-              <button onClick={() => scrollToSection('beneficios')} className="block w-full text-left px-4 py-2 hover:bg-[#27272A] rounded-lg">
-                Benefícios
-              </button>
-              <button onClick={() => scrollToSection('planos')} className="block w-full text-left px-4 py-2 hover:bg-[#27272A] rounded-lg">
-                Planos
-              </button>
-              <div className="space-y-3 pt-4 border-t border-[#27272A]">
-                <Button variant="outline" className="w-full" asChild>
-                  <Link to="/login">Entrar</Link>
-                </Button>
-                <Button className="w-full bg-[#24C36B] hover:bg-[#1ea557] text-black" asChild>
-                  <Link to="/register">Começar Grátis</Link>
-                </Button>
-              </div>
-            </motion.div>
-          )}
         </div>
       </motion.header>
+
+      {/* Mobile Menu Overlay - Full Screen */}
+      {mobileMenuOpen && (
+        <>
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+          
+          {/* Menu Panel */}
+          <motion.div
+            initial={{ x: "100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "100%" }}
+            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+            className="fixed top-0 right-0 bottom-0 w-[85%] max-w-sm bg-[#0C0C0C] z-50 md:hidden shadow-2xl"
+          >
+            <div className="flex flex-col h-full">
+              {/* Header do Menu */}
+              <div className="flex items-center justify-between p-6 border-b border-[#27272A]">
+                <div className="flex items-center gap-2">
+                  <img src={logotipo} alt="ZapCorte" className="h-8 w-8 rounded-lg" />
+                  <span className="text-xl font-bold">ZapCorte</span>
+                </div>
+                <button 
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="p-2 rounded-lg hover:bg-[#27272A] transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              {/* Navigation Links */}
+              <nav className="flex-1 overflow-y-auto p-6">
+                <div className="space-y-2">
+                  <button 
+                    onClick={() => scrollToSection('funcionalidades')} 
+                    className="flex items-center w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-[#27272A] rounded-xl transition-all group"
+                  >
+                    <Globe className="w-5 h-5 mr-3 text-[#24C36B]" />
+                    <span className="font-medium">Funcionalidades</span>
+                    <ChevronRight className="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </button>
+                  
+                  <button 
+                    onClick={() => scrollToSection('beneficios')} 
+                    className="flex items-center w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-[#27272A] rounded-xl transition-all group"
+                  >
+                    <Star className="w-5 h-5 mr-3 text-[#24C36B]" />
+                    <span className="font-medium">Benefícios</span>
+                    <ChevronRight className="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </button>
+                  
+                  <button 
+                    onClick={() => scrollToSection('planos')} 
+                    className="flex items-center w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-[#27272A] rounded-xl transition-all group"
+                  >
+                    <TrendingUp className="w-5 h-5 mr-3 text-[#24C36B]" />
+                    <span className="font-medium">Planos</span>
+                    <ChevronRight className="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </button>
+                  
+                  <button 
+                    onClick={() => scrollToSection('depoimentos')} 
+                    className="flex items-center w-full text-left px-4 py-3 text-gray-300 hover:text-white hover:bg-[#27272A] rounded-xl transition-all group"
+                  >
+                    <Users className="w-5 h-5 mr-3 text-[#24C36B]" />
+                    <span className="font-medium">Depoimentos</span>
+                    <ChevronRight className="w-4 h-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </button>
+                </div>
+              </nav>
+
+              {/* Footer com Botões de Ação */}
+              <div className="p-6 border-t border-[#27272A] space-y-3">
+                <Button 
+                  variant="outline" 
+                  className="w-full border-[#24C36B] text-[#24C36B] hover:bg-[#24C36B] hover:text-black py-6 rounded-xl font-semibold" 
+                  asChild
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <Link to="/login" className="flex items-center justify-center gap-2">
+                    <LogIn className="w-5 h-5" />
+                    Entrar
+                  </Link>
+                </Button>
+                
+                <Button 
+                  className="w-full bg-[#24C36B] hover:bg-[#1ea557] text-black py-6 rounded-xl font-semibold shadow-lg shadow-[#24C36B]/20" 
+                  asChild
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <Link to="/register" className="flex items-center justify-center gap-2">
+                    <UserPlus className="w-5 h-5" />
+                    Começar Grátis
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </motion.div>
+        </>
+      )}
 
       {/* Hero Section */}
       <section ref={heroRef} className="relative min-h-screen flex items-center pt-20 overflow-hidden">
@@ -208,7 +291,7 @@ const HomeNew = () => {
               </h1>
 
               <p className="text-xl text-gray-300 leading-relaxed">
-                Pare de perder tempo com ligações e mensagens. Deixe seus clientes agendarem online 24/7 enquanto você foca no que faz de melhor: cortar cabelo.
+                Pare de perder tempo com ligações e mensagens. Deixe seus clientes agendarem online 24/7 enquanto você foca no que faz de melhor: Atende seus clientes.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4">
@@ -1056,20 +1139,27 @@ const HomeNew = () => {
       </section>
 
       {/* Footer */}
-      <footer className="py-12 border-t border-[#27272A]">
+      <footer className="py-8 border-t border-[#27272A] bg-[#0C0C0C]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-            <div className="flex items-center gap-2">
-              <img src={logotipo} alt="ZapCorte" className="h-8 w-8 rounded-lg" />
-              <span className="text-xl font-bold">ZapCorte</span>
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-sm">
+            {/* Logo e Copyright */}
+            <div className="flex items-center gap-3">
+              <img src={logotipo} alt="ZapCorte" className="h-6 w-6 rounded-lg" />
+              <span className="text-gray-400">© 2025 ZapCorte. Todos os direitos reservados.</span>
             </div>
-            <div className="flex gap-6 text-gray-400">
-              <Link to="/login" className="hover:text-white transition-colors">Entrar</Link>
-              <Link to="/register" className="hover:text-white transition-colors">Cadastrar</Link>
-              <a href="#funcionalidades" className="hover:text-white transition-colors">Funcionalidades</a>
-              <a href="#planos" className="hover:text-white transition-colors">Planos</a>
+            
+            {/* Links Rápidos */}
+            <div className="flex items-center gap-6 text-gray-400">
+              <button onClick={() => scrollToSection('funcionalidades')} className="hover:text-[#24C36B] transition-colors">
+                Funcionalidades
+              </button>
+              <button onClick={() => scrollToSection('planos')} className="hover:text-[#24C36B] transition-colors">
+                Planos
+              </button>
+              <Link to="/login" className="hover:text-[#24C36B] transition-colors">
+                Entrar
+              </Link>
             </div>
-            <p className="text-gray-400 text-sm">© 2025 ZapCorte. Todos os direitos reservados.</p>
           </div>
         </div>
       </footer>

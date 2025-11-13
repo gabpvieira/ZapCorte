@@ -19,6 +19,11 @@ import BarbershopSettings from "./pages/BarbershopSettings";
 import Plan from "./pages/Plan";
 import MyAppointments from "./pages/MyAppointments";
 import WhatsAppSettings from "./pages/WhatsAppSettings";
+import ConfirmarEmail from "./pages/ConfirmarEmail";
+import EmailConfirmado from "./pages/EmailConfirmado";
+import AuthConfirm from "./pages/AuthConfirm";
+import AuthCallback from "./pages/AuthCallback";
+import AuthVerify from "./pages/AuthVerify";
 
 import { useEffect } from "react";
 import { supabase } from "@/lib/supabase";
@@ -79,6 +84,13 @@ const AppContent = () => {
         <Route path="/my-appointments" element={<MyAppointments />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        
+        {/* Rotas de confirmação de email */}
+        <Route path="/confirmar-email" element={<ConfirmarEmail />} />
+        <Route path="/email-confirmado" element={<EmailConfirmado />} />
+        <Route path="/auth/confirm" element={<AuthConfirm />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
+        <Route path="/auth/verify" element={<AuthVerify />} />
         
         {/* Rotas protegidas - precisam de autenticação */}
         <Route 

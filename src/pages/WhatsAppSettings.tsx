@@ -3,12 +3,13 @@ import { DashboardLayout } from '@/components/DashboardLayout';
 import WhatsAppConnection from '@/components/WhatsAppConnection';
 import MessageCustomizer from '@/components/MessageCustomizer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { MessageCircle, Zap, CheckCircle, Clock, Users } from 'lucide-react';
+import { MessageCircle, Zap, CheckCircle, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 
 const WhatsAppSettings: React.FC = () => {
   const { user } = useAuth();
+  const barbershopId = (user as any)?.barbershop_id;
   
   return (
     <DashboardLayout
@@ -27,13 +28,13 @@ const WhatsAppSettings: React.FC = () => {
         </motion.div>
 
         {/* NOVA SEÇÃO: Personalização de Mensagens */}
-        {user?.barbershop_id && (
+        {barbershopId && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.3 }}
           >
-            <MessageCustomizer barbershopId={user.barbershop_id} />
+            <MessageCustomizer barbershopId={barbershopId} />
           </motion.div>
         )}
 
@@ -65,7 +66,7 @@ const WhatsAppSettings: React.FC = () => {
                         Confirmação de Agendamento
                       </p>
                       <p className="text-xs text-green-700 dark:text-green-300 mt-0.5">
-                        Enviada automaticamente quando você aceita um novo agendamento
+                        Enviada automaticamente quando você aceita/confirma um agendamento
                       </p>
                     </div>
                   </div>

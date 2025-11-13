@@ -43,6 +43,7 @@ const BarbershopSettings = () => {
   const [loading, setLoading] = useState(false);
   const [slugError, setSlugError] = useState("");
   const [slugAvailable, setSlugAvailable] = useState(true);
+  const [checkingSlug, setCheckingSlug] = useState(false);
 
   // Atualizar formulário quando os dados da barbearia carregarem
   useEffect(() => {
@@ -61,11 +62,12 @@ const BarbershopSettings = () => {
     }
   }, [barbershop]);
 
-  // Verificar disponibilidade do slug
+  // Verificar disponibilidade do slug com debounce
   const checkSlug = async (slug: string) => {
     if (!slug || slug === barbershop?.slug) {
       setSlugError("");
       setSlugAvailable(true);
+      setCheckingSlug(false);
       return;
     }
 
@@ -73,16 +75,21 @@ const BarbershopSettings = () => {
     if (!/^[a-z0-9-]+$/.test(slug)) {
       setSlugError("Use apenas letras minúsculas, números e hífens");
       setSlugAvailable(false);
+      setCheckingSlug(false);
       return;
     }
 
+    setCheckingSlug(true);
+    
     try {
       const available = await checkSlugAvailability(slug, barbershop?.id);
       setSlugAvailable(available);
-      setSlugError(available ? "" : "Este link já está em uso");
+      setSlugError(available ? "" : "Este link já está em uso. Escolha outro.");
     } catch (error) {
       setSlugError("Erro ao verificar disponibilidade");
       setSlugAvailable(false);
+    } finally {
+      setCheckingSlug(false);
     }
   };
 
@@ -315,16 +322,48 @@ const BarbershopSettings = () => {
             
             <div className="space-y-2">
               <Label htmlFor="slug">Link do Site *</Label>
-              <Input 
-                id="slug" 
-                value={formData.slug}
-                onChange={(e) => handleInputChange('slug', e.target.value)}
-                placeholder="exemplo-barbearia" 
-                className={slugError ? "border-red-500" : slugAvailable && formData.slug ? "border-green-500" : ""}
-              />
-              <p className={`text-xs ${slugError ? "text-red-500" : "text-muted-foreground"}`}>
-                {slugError || `Seu site ficará disponível em /barbershop/${formData.slug || 'seu-link'}`}
-              </p>
+              <div className="relative">
+                <Input 
+                  id="slug" 
+                  value={formData.slug}
+                  onChange={(e) => handleInputChange('slug', e.target.value)}
+                  placeholder="exemplo-barbearia" 
+                  className={cn(
+                    "pr-10",
+                    slugError && "border-red-500 focus-visible:ring-red-500",
+                    !slugError && slugAvailable && formData.slug && formData.slug !== barbershop?.slug && "border-green-500 focus-visible:ring-green-500"
+                  )}
+                />
+                {checkingSlug && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  </div>
+                )}
+                {!checkingSlug && formData.slug && formData.slug !== barbershop?.slug && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    {slugAvailable ? (
+                      <span className="text-green-500 text-xl">✓</span>
+                    ) : (
+                      <span className="text-red-500 text-xl">✗</span>
+                    )}
+                  </div>
+                )}
+              </div>
+              {slugError ? (
+                <p className="text-xs text-red-500 flex items-center gap-1">
+                  <span className="text-red-500">⚠️</span>
+                  {slugError}
+                </p>
+              ) : slugAvailable && formData.slug && formData.slug !== barbershop?.slug ? (
+                <p className="text-xs text-green-600 flex items-center gap-1">
+                  <span className="text-green-500">✓</span>
+                  Link disponível! Seu site ficará em /barbershop/{formData.slug}
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  Seu site ficará disponível em /barbershop/{formData.slug || 'seu-link'}
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">

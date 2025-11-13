@@ -137,7 +137,7 @@ class ReminderScheduler {
    */
   private async sendReminder(reminder: any) {
     try {
-      // VERIFICAÇÃO CRÍTICA: Verificar se o lembrete já foi enviado
+      // VERIFICAÇÃO CRÍTICA 1: Verificar se o lembrete já foi enviado
       const { data: existingReminder } = await supabase
         .from('reminder_jobs')
         .select('status')
@@ -149,12 +149,23 @@ class ReminderScheduler {
         return;
       }
 
-      // Marcar como "processing" imediatamente para evitar duplicação
-      await supabase
+      // VERIFICAÇÃO CRÍTICA 2: Marcar como "processing" com UPDATE condicional
+      // Isso garante que apenas UMA instância conseguirá processar
+      const { data: updateResult, error: updateError } = await supabase
         .from('reminder_jobs')
-        .update({ status: 'processing' })
+        .update({ 
+          status: 'processing',
+          processing_started_at: new Date().toISOString()
+        })
         .eq('id', reminder.id)
-        .eq('status', 'pending'); // Só atualiza se ainda estiver pending
+        .eq('status', 'pending') // Só atualiza se ainda estiver pending
+        .select();
+
+      // Se não conseguiu atualizar, significa que outro processo já pegou
+      if (!updateResult || updateResult.length === 0) {
+        console.log(`⏭️ Lembrete ${reminder.id} já está sendo processado por outra instância`);
+        return;
+      }
 
       const appointment = reminder.appointments;
       const barbershop = reminder.barbershops;
@@ -225,15 +236,16 @@ class ReminderScheduler {
    */
   static async createRemindersForAppointment(appointmentId: string) {
     try {
-      // VERIFICAÇÃO: Verificar se já existe lembrete pendente para este agendamento
+      // VERIFICAÇÃO CRÍTICA: Verificar se já existe lembrete para este agendamento
+      // Incluindo todos os status exceto 'failed' e 'cancelled'
       const { data: existingReminders } = await supabase
         .from('reminder_jobs')
-        .select('id, status')
+        .select('id, status, scheduled_for')
         .eq('appointment_id', appointmentId)
-        .in('status', ['pending', 'processing']);
+        .in('status', ['pending', 'processing', 'sent']);
 
       if (existingReminders && existingReminders.length > 0) {
-        console.log(`⏭️ Lembrete já existe para agendamento ${appointmentId}`);
+        console.log(`⏭️ Lembrete já existe para agendamento ${appointmentId}:`, existingReminders.map(r => `${r.id} (${r.status})`).join(', '));
         return;
       }
 

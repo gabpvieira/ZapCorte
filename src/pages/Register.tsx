@@ -10,11 +10,14 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { useSEO, SEO_CONFIGS } from "@/hooks/useSEO";
+import { getRedirectUrl } from "@/lib/auth-config";
 
 const Register = () => {
   // SEO
   useSEO(SEO_CONFIGS.register);
   
+  const [nome, setNome] = useState("");
+  const [telefone, setTelefone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -27,6 +30,15 @@ const Register = () => {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!nome.trim()) {
+      toast({
+        title: "Nome obrigatório",
+        description: "Por favor, informe seu nome.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (password !== confirmPassword) {
       toast({
         title: "Erro na confirmação",
@@ -48,12 +60,31 @@ const Register = () => {
     setIsLoading(true);
 
     try {
+      // 1. Salvar dados no localStorage para uso posterior
+      localStorage.setItem('pendingUserData', JSON.stringify({
+        nome: nome.trim(),
+        email: email.trim(),
+        telefone: telefone.trim(),
+      }));
+
+      console.log('📝 Dados salvos no localStorage');
+
+      // 2. Criar usuário no Supabase Auth
       const { data, error } = await supabase.auth.signUp({
-        email,
+        email: email.trim(),
         password,
+        options: {
+          emailRedirectTo: getRedirectUrl('confirm'),
+          data: {
+            nome: nome.trim(),
+            telefone: telefone.trim(),
+            full_name: nome.trim()
+          }
+        }
       });
 
       if (error) {
+        console.error('❌ Erro no cadastro:', error);
         toast({
           title: "Erro no cadastro",
           description: error.message,
@@ -63,16 +94,21 @@ const Register = () => {
       }
 
       if (data.user) {
+        console.log('✅ Usuário criado:', data.user.email);
+        
         toast({
-          title: "Cadastro realizado com sucesso!",
+          title: "Cadastro realizado!",
           description: "Verifique seu email para confirmar a conta.",
         });
-        navigate("/login");
+
+        // 3. Redirecionar para página de confirmação
+        navigate("/confirmar-email");
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error('💥 Erro inesperado:', error);
       toast({
         title: "Erro inesperado",
-        description: "Ocorreu um erro durante o cadastro. Tente novamente.",
+        description: error.message || "Ocorreu um erro durante o cadastro. Tente novamente.",
         variant: "destructive",
       });
     } finally {
@@ -141,6 +177,27 @@ const Register = () => {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleRegister} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="nome">Nome Completo</Label>
+                <Input
+                  id="nome"
+                  type="text"
+                  placeholder="Seu nome"
+                  value={nome}
+                  onChange={(e) => setNome(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="telefone">Telefone (opcional)</Label>
+                <Input
+                  id="telefone"
+                  type="tel"
+                  placeholder="(00) 00000-0000"
+                  value={telefone}
+                  onChange={(e) => setTelefone(e.target.value)}
+                />
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
