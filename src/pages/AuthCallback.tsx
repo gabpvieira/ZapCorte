@@ -84,7 +84,7 @@ export default function AuthCallback() {
 
   const createBarbeiroFromAuth = async (user: any) => {
     try {
-      console.log('[AuthCallback] Criando barbeiro para:', user.email);
+      console.log('[AuthCallback] Criando barbearia para:', user.email);
 
       // Recuperar dados pendentes
       const pendingData = localStorage.getItem('pendingUserData');
@@ -92,37 +92,46 @@ export default function AuthCallback() {
 
       // Verificar se já existe
       const { data: existing } = await supabase
-        .from('barbeiros')
+        .from('barbershops')
         .select('*')
-        .eq('auth_id', user.id)
+        .eq('user_id', user.id)
         .single();
 
       if (existing) {
-        console.log('[AuthCallback] Barbeiro já existe');
+        console.log('[AuthCallback] Barbearia já existe');
         localStorage.removeItem('pendingUserData');
         return;
       }
 
-      // Criar barbeiro
+      // Criar slug a partir do nome
+      const slug = (userData.nome || user.user_metadata?.nome || user.email?.split('@')[0])
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        + '-' + Math.random().toString(36).substring(2, 7);
+
+      // Criar barbershop
       const { error } = await supabase
-        .from('barbeiros')
+        .from('barbershops')
         .insert({
-          auth_id: user.id,
-          nome: userData.nome || user.user_metadata?.nome || user.email?.split('@')[0],
-          email: user.email,
-          telefone: userData.telefone || user.user_metadata?.telefone || '',
-          status: 'ativo',
-          plano: 'freemium'
+          user_id: user.id,
+          name: userData.nome || user.user_metadata?.nome || user.email?.split('@')[0],
+          slug: slug,
+          plan_type: 'freemium',
+          is_active: true,
+          whatsapp_number: userData.telefone || user.user_metadata?.telefone || null
         });
 
       if (error && !error.message?.includes('duplicate')) {
-        console.error('[AuthCallback] Erro ao criar barbeiro:', error);
+        console.error('[AuthCallback] Erro ao criar barbearia:', error);
       } else {
-        console.log('[AuthCallback] ✅ Barbeiro criado com sucesso');
+        console.log('[AuthCallback] ✅ Barbearia criada com sucesso');
         localStorage.removeItem('pendingUserData');
       }
     } catch (error) {
-      console.error('[AuthCallback] Erro ao criar barbeiro:', error);
+      console.error('[AuthCallback] Erro ao criar barbearia:', error);
     }
   };
 

@@ -60,47 +60,56 @@ export default function EmailConfirmado() {
         try {
           console.log(`🔄 Tentativa ${retryCount + 1} de ${maxRetries}`);
 
-          // Verificar se barbeiro já existe
-          const { data: existingBarbeiro } = await supabase
-            .from('barbeiros')
+          // Verificar se barbershop já existe
+          const { data: existingBarbershop } = await supabase
+            .from('barbershops')
             .select('*')
-            .eq('auth_id', user.id)
+            .eq('user_id', user.id)
             .single();
 
-          if (existingBarbeiro) {
-            console.log('✅ Barbeiro já existe no banco de dados');
+          if (existingBarbershop) {
+            console.log('✅ Barbearia já existe no banco de dados');
             localStorage.removeItem('pendingUserData');
             success = true;
             break;
           }
 
-          // Criar barbeiro
-          const { data: newBarbeiro, error: barbeiroError } = await supabase
-            .from('barbeiros')
+          // Criar slug a partir do nome
+          const slug = userData.nome
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '')
+            + '-' + Math.random().toString(36).substring(2, 7);
+
+          // Criar barbershop
+          const { data: newBarbershop, error: barbershopError } = await supabase
+            .from('barbershops')
             .insert({
-              auth_id: user.id,
-              nome: userData.nome || user.user_metadata?.nome || user.email?.split('@')[0],
-              email: user.email,
-              telefone: userData.telefone || user.user_metadata?.telefone || '',
-              status: 'ativo',
-              plano: 'freemium'
+              user_id: user.id,
+              name: userData.nome || user.user_metadata?.nome || user.email?.split('@')[0],
+              slug: slug,
+              plan_type: 'freemium',
+              is_active: true,
+              whatsapp_number: userData.telefone || user.user_metadata?.telefone || null
             })
             .select()
             .single();
 
-          if (barbeiroError) {
+          if (barbershopError) {
             // Verificar se é erro de duplicata
-            if (barbeiroError.code === '23505' || barbeiroError.message?.includes('duplicate')) {
-              console.log('✅ Barbeiro já existe (erro de duplicata ignorado)');
+            if (barbershopError.code === '23505' || barbershopError.message?.includes('duplicate')) {
+              console.log('✅ Barbearia já existe (erro de duplicata ignorado)');
               localStorage.removeItem('pendingUserData');
               success = true;
               break;
             }
 
-            throw barbeiroError;
+            throw barbershopError;
           }
 
-          console.log('✅ Barbeiro criado com sucesso:', newBarbeiro);
+          console.log('✅ Barbearia criada com sucesso:', newBarbershop);
           localStorage.removeItem('pendingUserData');
           success = true;
 
@@ -109,7 +118,7 @@ export default function EmailConfirmado() {
           
           // Verificar se é erro de duplicata
           if (error.code === '23505' || error.message?.includes('duplicate') || error.message?.includes('unique')) {
-            console.log('✅ Barbeiro já existe (erro de duplicata ignorado)');
+            console.log('✅ Barbearia já existe (erro de duplicata ignorado)');
             localStorage.removeItem('pendingUserData');
             success = true;
             break;
@@ -125,11 +134,11 @@ export default function EmailConfirmado() {
       }
 
       if (!success) {
-        console.error('❌ Falha ao criar barbeiro após todas as tentativas');
+        console.error('❌ Falha ao criar barbearia após todas as tentativas');
       }
 
     } catch (error) {
-      console.error('💥 Erro geral ao criar barbeiro:', error);
+      console.error('💥 Erro geral ao criar barbearia:', error);
     } finally {
       setIsCreatingProfile(false);
     }
