@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { CheckCircle, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
+import { AUTH_CONFIG } from '@/lib/auth-config';
 
 export default function EmailConfirmado() {
   const navigate = useNavigate();
@@ -17,7 +18,8 @@ export default function EmailConfirmado() {
       setCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
-          navigate('/login');
+          // Redirecionar para o dashboard em produção
+          window.location.href = AUTH_CONFIG.redirectUrls.afterEmailConfirmed;
           return 0;
         }
         return prev - 1;
@@ -101,10 +103,10 @@ export default function EmailConfirmado() {
 
         {/* Botão manual */}
         <button
-          onClick={() => navigate('/login')}
+          onClick={() => window.location.href = AUTH_CONFIG.redirectUrls.afterEmailConfirmed}
           className="w-full bg-[#22c55e] text-white py-3 px-4 rounded-lg font-semibold hover:bg-[#16a34a] transition-all active:scale-95"
         >
-          Ir para Login agora
+          Ir para Dashboard agora
         </button>
       </div>
     </div>

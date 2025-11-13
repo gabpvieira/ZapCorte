@@ -3,12 +3,17 @@
  * Sistema de confirmação de email ZapCorte
  */
 
+// Detectar se está em produção ou desenvolvimento
+const isProduction = window.location.hostname === 'zapcorte.com.br' || window.location.hostname === 'www.zapcorte.com.br';
+const baseUrl = isProduction ? 'https://zapcorte.com.br' : window.location.origin;
+
 export const AUTH_CONFIG = {
   redirectUrls: {
-    emailConfirmation: `${window.location.origin}/auth/confirm`,
-    passwordReset: `${window.location.origin}/auth/callback`,
-    signIn: `${window.location.origin}/dashboard`,
-    signOut: `${window.location.origin}/login`
+    emailConfirmation: `${baseUrl}/auth/confirm`,
+    passwordReset: `${baseUrl}/auth/callback`,
+    signIn: `${baseUrl}/dashboard`,
+    signOut: `${baseUrl}/login`,
+    afterEmailConfirmed: `${baseUrl}/dashboard` // URL após confirmar email
   },
   
   allowedRedirectUrls: [
@@ -37,17 +42,26 @@ export const AUTH_CONFIG = {
  * Retorna a URL de redirecionamento apropriada baseada no tipo
  */
 export function getRedirectUrl(type: 'callback' | 'verify' | 'confirm' | 'dashboard' | 'email-confirmado'): string {
-  const origin = window.location.origin;
+  const isProduction = window.location.hostname === 'zapcorte.com.br' || window.location.hostname === 'www.zapcorte.com.br';
+  const baseUrl = isProduction ? 'https://zapcorte.com.br' : window.location.origin;
   
   if (type === 'dashboard') {
-    return `${origin}/dashboard`;
+    return `${baseUrl}/dashboard`;
   }
   
   if (type === 'email-confirmado') {
-    return `${origin}/email-confirmado`;
+    return `${baseUrl}/email-confirmado`;
   }
   
-  return `${origin}/auth/${type}`;
+  return `${baseUrl}/auth/${type}`;
+}
+
+/**
+ * Retorna a URL base (produção ou desenvolvimento)
+ */
+export function getBaseUrl(): string {
+  const isProduction = window.location.hostname === 'zapcorte.com.br' || window.location.hostname === 'www.zapcorte.com.br';
+  return isProduction ? 'https://zapcorte.com.br' : window.location.origin;
 }
 
 /**
