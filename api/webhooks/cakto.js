@@ -32,19 +32,40 @@ async function findUserByEmail(email) {
   return null;
 }
 
-// Função para determinar tipo de plano
+// Função para determinar tipo de plano baseado no offer_id
 function determinePlanType(offerId) {
+  // Verificar contra as variáveis de ambiente
+  if (offerId === process.env.CAKTO_PRODUCT_ID_STARTER) return 'starter';
+  if (offerId === process.env.CAKTO_PRODUCT_ID_PRO) return 'pro';
+  
+  // Fallback para IDs hardcoded
   if (offerId === '3th8tvh') return 'starter';
   if (offerId === '9jk3ref') return 'pro';
+  
   return 'starter';
+}
+
+// Função para mapear método de pagamento
+function mapPaymentMethod(method) {
+  const methodMap = {
+    'credit_card': 'Cartão de Crédito',
+    'pix': 'PIX',
+    'boleto': 'Boleto',
+    'pix_automatic': 'PIX Automático',
+    'debit_card': 'Cartão de Débito'
+  };
+  return methodMap[method] || method || 'Não especificado';
 }
 
 // Processar pagamento aprovado
 async function processPaymentApproved(webhookData) {
   const customer = webhookData.data.customer;
   const transaction = webhookData.data;
+  
+  // Cakto envia offer.id (short_id do produto)
   const offerId = transaction.offer?.id;
   const planType = determinePlanType(offerId);
+  const paymentMethod = mapPaymentMethod(transaction.paymentMethod);
 
   // Buscar usuário
   const user = await findUserByEmail(customer.email);
@@ -63,7 +84,8 @@ async function processPaymentApproved(webhookData) {
       plan_type: planType,
       subscription_status: 'active',
       last_payment_date: new Date().toISOString(),
-      expires_at: expirationDate.toISOString()
+      expires_at: expirationDate.toISOString(),
+      payment_method: paymentMethod
     })
     .eq('id', user.profileId);
 
@@ -75,7 +97,7 @@ async function processPaymentApproved(webhookData) {
       .eq('user_id', user.userId);
   }
 
-  // Salvar histórico
+  // Salvar histórico de pagamento
   await supabase
     .from('payment_history')
     .insert({
@@ -83,12 +105,95 @@ async function processPaymentApproved(webhookData) {
       transaction_id: transaction.id,
       amount: transaction.amount,
       status: 'completed',
-      payment_method: transaction.paymentMethod,
+      payment_method: paymentMethod,
       plan_type: planType,
       cakto_data: webhookData.data
     });
 
-  return { success: true, planType, email: customer.email };
+  return { 
+    success: true, 
+    planType, 
+    email: customer.email,
+    paymentMethod,
+    transactionId: transaction.id
+  };
+}
+
+// Processar PIX gerado (aguardando pagamento)
+async function processPixGenerated(webhookData) {
+  const customer = webhookData.data.customer;
+  const transaction = webhookData.data;
+  const offerId = transaction.offer?.id;
+  const planType = determinePlanType(offerId);
+
+  // Buscar usuário
+  const user = await findUserByEmail(customer.email);
+  if (!user) {
+    // Se usuário não existe, apenas registrar no log
+    return { 
+      success: true, 
+      message: 'PIX gerado registrado (usuário não encontrado)',
+      email: customer.email
+    };
+  }
+
+  // Salvar no histórico como pendente
+  await supabase
+    .from('payment_history')
+    .insert({
+      user_id: user.profileId,
+      transaction_id: transaction.id,
+      amount: transaction.amount,
+      status: 'pending',
+      payment_method: 'PIX',
+      plan_type: planType,
+      cakto_data: webhookData.data
+    });
+
+  return { 
+    success: true, 
+    message: 'PIX gerado registrado',
+    email: customer.email,
+    transactionId: transaction.id
+  };
+}
+
+// Processar boleto gerado (aguardando pagamento)
+async function processBoletoGenerated(webhookData) {
+  const customer = webhookData.data.customer;
+  const transaction = webhookData.data;
+  const offerId = transaction.offer?.id;
+  const planType = determinePlanType(offerId);
+
+  // Buscar usuário
+  const user = await findUserByEmail(customer.email);
+  if (!user) {
+    return { 
+      success: true, 
+      message: 'Boleto gerado registrado (usuário não encontrado)',
+      email: customer.email
+    };
+  }
+
+  // Salvar no histórico como pendente
+  await supabase
+    .from('payment_history')
+    .insert({
+      user_id: user.profileId,
+      transaction_id: transaction.id,
+      amount: transaction.amount,
+      status: 'pending',
+      payment_method: 'Boleto',
+      plan_type: planType,
+      cakto_data: webhookData.data
+    });
+
+  return { 
+    success: true, 
+    message: 'Boleto gerado registrado',
+    email: customer.email,
+    transactionId: transaction.id
+  };
 }
 
 // Handler principal
@@ -98,91 +203,180 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  const startTime = Date.now();
+  let webhookLogId = null;
+
   try {
     const webhookData = req.body;
+    const eventType = webhookData.event || 'unknown';
 
-    // Log do webhook
-    await supabase.from('webhook_logs').insert({
-      event_type: webhookData.event || 'unknown',
-      payload: webhookData,
-      status: 'pending'
-    });
+    // Log inicial do webhook
+    const { data: logData } = await supabase
+      .from('webhook_logs')
+      .insert({
+        event_type: eventType,
+        payload: webhookData,
+        status: 'pending'
+      })
+      .select()
+      .single();
+    
+    webhookLogId = logData?.id;
 
     // Validar secret
     if (!validateWebhook(webhookData)) {
-      await supabase.from('webhook_logs').insert({
-        event_type: webhookData.event,
-        payload: webhookData,
-        status: 'failed',
-        error_message: 'Assinatura inválida'
-      });
+      await supabase
+        .from('webhook_logs')
+        .update({
+          status: 'failed',
+          error_message: 'Assinatura inválida'
+        })
+        .eq('id', webhookLogId);
+      
       return res.status(401).json({ error: 'Assinatura inválida' });
     }
 
     // Processar evento
     let result;
-    switch (webhookData.event) {
+    
+    switch (eventType) {
       case 'purchase_approved':
+        // Pagamento aprovado - atualizar usuário para premium
         result = await processPaymentApproved(webhookData);
         break;
       
       case 'pix_gerado':
-        // PIX gerado - apenas registrar, não fazer nada
-        // O pagamento será processado quando o evento 'purchase_approved' chegar
-        result = { 
-          success: true, 
-          message: 'PIX gerado registrado',
-          action: 'waiting_payment'
-        };
+      case 'pix_generated':
+        // PIX gerado - registrar como pendente
+        result = await processPixGenerated(webhookData);
+        break;
+      
+      case 'boleto_gerado':
+      case 'boleto_generated':
+        // Boleto gerado - registrar como pendente
+        result = await processBoletoGenerated(webhookData);
         break;
       
       case 'subscription_cancelled':
       case 'refund':
-        // Cancelar assinatura
+        // Cancelar assinatura ou reembolso
         const user = await findUserByEmail(webhookData.data.customer.email);
         if (user) {
+          // Atualizar profile
           await supabase
             .from('profiles')
             .update({
               plan_type: 'free',
-              subscription_status: 'cancelled',
+              subscription_status: eventType === 'refund' ? 'cancelled' : 'cancelled',
               expires_at: null
             })
             .eq('id', user.profileId);
+
+          // Atualizar barbershop
+          if (user.userId) {
+            await supabase
+              .from('barbershops')
+              .update({ plan_type: 'freemium' })
+              .eq('user_id', user.userId);
+          }
+
+          // Registrar no histórico
+          await supabase
+            .from('payment_history')
+            .insert({
+              user_id: user.profileId,
+              transaction_id: `${eventType}_${webhookData.data.id}`,
+              amount: webhookData.data.amount || 0,
+              status: eventType === 'refund' ? 'refunded' : 'cancelled',
+              payment_method: mapPaymentMethod(webhookData.data.paymentMethod),
+              plan_type: user.plan,
+              cakto_data: webhookData.data
+            });
         }
-        result = { success: true };
+        
+        result = { 
+          success: true, 
+          message: `${eventType} processado`,
+          email: webhookData.data.customer.email
+        };
+        break;
+
+      case 'payment_failed':
+        // Pagamento falhou - registrar no histórico
+        const failedUser = await findUserByEmail(webhookData.data.customer.email);
+        if (failedUser) {
+          const offerId = webhookData.data.offer?.id;
+          await supabase
+            .from('payment_history')
+            .insert({
+              user_id: failedUser.profileId,
+              transaction_id: webhookData.data.id,
+              amount: webhookData.data.amount,
+              status: 'failed',
+              payment_method: mapPaymentMethod(webhookData.data.paymentMethod),
+              plan_type: determinePlanType(offerId),
+              cakto_data: webhookData.data
+            });
+        }
+        
+        result = { 
+          success: true, 
+          message: 'Pagamento falho registrado',
+          email: webhookData.data.customer.email
+        };
         break;
 
       default:
         // Eventos não suportados são registrados mas não causam erro
         result = { 
           success: true, 
-          message: `Evento ${webhookData.event} registrado mas não processado`,
+          message: `Evento ${eventType} registrado mas não processado`,
           action: 'ignored'
         };
         break;
     }
 
     // Log de sucesso
-    await supabase.from('webhook_logs').insert({
-      event_type: webhookData.event,
-      payload: webhookData,
-      status: 'success'
-    });
+    await supabase
+      .from('webhook_logs')
+      .update({
+        status: 'success'
+      })
+      .eq('id', webhookLogId);
 
-    return res.status(200).json(result);
+    const processingTime = Date.now() - startTime;
+    
+    return res.status(200).json({
+      ...result,
+      processingTime: `${processingTime}ms`
+    });
 
   } catch (error) {
     console.error('Erro no webhook:', error);
 
     // Log de erro
-    await supabase.from('webhook_logs').insert({
-      event_type: req.body?.event || 'error',
-      payload: req.body,
-      status: 'failed',
-      error_message: error.message
-    });
+    if (webhookLogId) {
+      await supabase
+        .from('webhook_logs')
+        .update({
+          status: 'failed',
+          error_message: error.message
+        })
+        .eq('id', webhookLogId);
+    } else {
+      await supabase
+        .from('webhook_logs')
+        .insert({
+          event_type: req.body?.event || 'error',
+          payload: req.body,
+          status: 'failed',
+          error_message: error.message
+        });
+    }
 
-    return res.status(500).json({ error: error.message });
+    return res.status(500).json({ 
+      error: error.message,
+      success: false
+    });
   }
 }
