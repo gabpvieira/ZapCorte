@@ -12,7 +12,9 @@ const Plan = () => {
   const { stats, loading: dashboardLoading } = useDashboardData(barbershop?.id);
 
   // Priorizar o plano do profile (fonte da verdade) sobre o da barbershop
-  const currentPlan = profile?.plan_type || barbershop?.plan_type || 'freemium';
+  // Normalizar o nome do plano (free -> freemium, starter -> starter, pro -> pro)
+  const rawPlan = profile?.plan_type || barbershop?.plan_type || 'freemium';
+  const currentPlan = rawPlan === 'free' ? 'freemium' : rawPlan;
   
   const planLimits = {
     freemium: {
@@ -73,13 +75,34 @@ const Plan = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Plano</p>
-                  <p className="text-lg font-bold capitalize">{currentPlan}</p>
+                  <p className="text-lg font-bold capitalize">
+                    {planLimits[currentPlan as keyof typeof planLimits]?.name || currentPlan}
+                  </p>
                 </div>
                 <div className="text-right">
                   <p className="text-sm text-muted-foreground">Preço</p>
                   <p className="text-lg font-bold">{planLimits[currentPlan as keyof typeof planLimits]?.price}</p>
                 </div>
               </div>
+              
+              {/* Indicador de Status da Assinatura */}
+              {profile?.subscription_status && (
+                <div className="flex items-center gap-2 pt-2">
+                  {profile.subscription_status === 'active' ? (
+                    <>
+                      <CheckCircle className="w-4 h-4 text-green-500" />
+                      <span className="text-sm text-green-600 font-medium">Assinatura Ativa</span>
+                    </>
+                  ) : (
+                    <>
+                      <AlertCircle className="w-4 h-4 text-yellow-500" />
+                      <span className="text-sm text-yellow-600 font-medium">
+                        {profile.subscription_status === 'cancelled' ? 'Assinatura Cancelada' : 'Sem Assinatura'}
+                      </span>
+                    </>
+                  )}
+                </div>
+              )}
               
               {currentPlan === 'freemium' && stats.planLimits && (
                 <div className="space-y-3 pt-4 border-t">
@@ -146,12 +169,19 @@ const Plan = () => {
               {Object.entries(planLimits).map(([planKey, plan]) => (
                 <div 
                   key={planKey}
-                  className={`plan-card p-4 md:p-6 rounded-lg border-2 mobile-full-width w-full max-w-full overflow-hidden ${
+                  className={`plan-card p-4 md:p-6 rounded-lg border-2 mobile-full-width w-full max-w-full overflow-hidden relative ${
                     currentPlan === planKey 
-                      ? 'border-primary bg-primary/5' 
+                      ? 'border-primary bg-primary/5 ring-2 ring-primary/20' 
                       : 'border-border'
                   }`}
                 >
+                  {/* Badge de Plano Atual */}
+                  {currentPlan === planKey && (
+                    <div className="absolute top-2 right-2 bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-full shadow-md">
+                      ✓ Atual
+                    </div>
+                  )}
+                  
                   <div className="plan-card-header text-center mb-4">
                     <h3 className="plan-card-title text-lg md:text-xl font-bold">{plan.name}</h3>
                     <p className="plan-card-price text-xl md:text-2xl font-bold text-primary mt-2">{plan.price}</p>
