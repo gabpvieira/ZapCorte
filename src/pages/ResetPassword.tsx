@@ -24,55 +24,34 @@ export default function ResetPassword() {
   const [isCheckingToken, setIsCheckingToken] = useState(true);
 
   useEffect(() => {
-    verifyToken();
+    verifySession();
   }, []);
 
-  const verifyToken = async () => {
+  const verifySession = async () => {
     try {
-      const token = searchParams.get('token');
-      
-      if (!token) {
-        toast({
-          title: 'Token inválido',
-          description: 'Link de redefinição de senha inválido ou expirado.',
-          variant: 'destructive',
-        });
-        setTimeout(() => navigate('/login'), 2000);
-        return;
-      }
-
-      // Verificar se há uma sessão válida (token válido)
+      // Verificar se há uma sessão válida (usuário autenticado via token de recovery)
       const { data: { session }, error } = await supabase.auth.getSession();
       
       if (session?.user) {
+        console.log('Sessão válida encontrada para redefinição de senha');
         setIsValidToken(true);
       } else {
-        // Tentar trocar o token por uma sessão
-        try {
-          const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(token);
-          
-          if (data?.session) {
-            setIsValidToken(true);
-          } else {
-            throw new Error(exchangeError?.message || 'Token inválido');
-          }
-        } catch (e: any) {
-          toast({
-            title: 'Token inválido',
-            description: 'Link de redefinição de senha inválido ou expirado.',
-            variant: 'destructive',
-          });
-          setTimeout(() => navigate('/login'), 2000);
-        }
+        console.error('Nenhuma sessão encontrada:', error);
+        toast({
+          title: 'Sessão inválida',
+          description: 'Link de redefinição de senha inválido ou expirado. Solicite um novo link.',
+          variant: 'destructive',
+        });
+        setTimeout(() => navigate('/forgot-password'), 2000);
       }
     } catch (error: any) {
-      console.error('Erro ao verificar token:', error);
+      console.error('Erro ao verificar sessão:', error);
       toast({
         title: 'Erro',
-        description: 'Não foi possível verificar o token.',
+        description: 'Não foi possível verificar a sessão.',
         variant: 'destructive',
       });
-      setTimeout(() => navigate('/login'), 2000);
+      setTimeout(() => navigate('/forgot-password'), 2000);
     } finally {
       setIsCheckingToken(false);
     }

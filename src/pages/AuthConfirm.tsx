@@ -45,15 +45,35 @@ export default function AuthConfirm() {
         throw new Error(error_description || error);
       }
 
-      // Se type=recovery, redirecionar para página de redefinir senha
+      // Se type=recovery, verificar o token e criar sessão para redefinir senha
       if (type === 'recovery') {
-        addLog('Tipo: recovery - redirecionando para redefinir senha');
+        addLog('Tipo: recovery - processando token de recuperação');
         const tokenParam = token_hash || token || code;
-        if (tokenParam) {
-          navigate(`/auth/reset-password?token=${tokenParam}`);
-          return;
-        } else {
+        
+        if (!tokenParam) {
           throw new Error('Token de recuperação não encontrado');
+        }
+
+        // Tentar verificar o token de recovery com verifyOtp
+        addLog('Tentando verifyOtp com tipo recovery');
+        try {
+          const { data, error } = await supabase.auth.verifyOtp({
+            token_hash: tokenParam,
+            type: 'recovery',
+          });
+
+          if (!error && data.session) {
+            addLog('✅ Token de recovery validado com sucesso');
+            // Redirecionar para página de redefinir senha com sessão ativa
+            navigate('/auth/reset-password');
+            return;
+          }
+          
+          addLog(`❌ Erro ao verificar token: ${error?.message}`);
+          throw new Error(error?.message || 'Token de recuperação inválido ou expirado');
+        } catch (e: any) {
+          addLog(`❌ Exceção: ${e.message}`);
+          throw new Error('Token de recuperação inválido ou expirado');
         }
       }
 
