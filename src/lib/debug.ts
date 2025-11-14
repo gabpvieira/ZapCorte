@@ -52,23 +52,26 @@ export function showErrorOverlay(title: string, detail: unknown) {
 
 export function installGlobalDebug() {
   if (typeof window === "undefined") return;
-  const inProd = import.meta.env.PROD;
+  const isDev = import.meta.env.DEV;
+
+  // Apenas mostrar overlay em desenvolvimento
+  if (!isDev) return;
 
   const originalError = console.error.bind(console);
   console.error = (...args: unknown[]) => {
     originalError(...args);
-    if (inProd) showErrorOverlay("console.error", args.map(stringify).join(" "));
+    showErrorOverlay("console.error", args.map(stringify).join(" "));
   };
 
   window.addEventListener("error", (evt) => {
     const err = (evt as ErrorEvent).error || (evt as ErrorEvent).message;
     originalError("[GlobalError]", err, evt);
-    if (inProd) showErrorOverlay("GlobalError", err);
+    showErrorOverlay("GlobalError", err);
   });
 
   window.addEventListener("unhandledrejection", (evt) => {
     const reason = (evt as PromiseRejectionEvent).reason;
     originalError("[UnhandledRejection]", reason);
-    if (inProd) showErrorOverlay("UnhandledRejection", reason);
+    showErrorOverlay("UnhandledRejection", reason);
   });
 }

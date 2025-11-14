@@ -79,14 +79,18 @@ export const useUserData = (): UseUserDataReturn => {
             .single();
 
           if (createError) {
-            console.error('❌ Erro ao criar perfil:', createError);
+            if (import.meta.env.DEV) {
+              console.error('❌ Erro ao criar perfil:', createError);
+            }
             throw new Error('Não foi possível criar o perfil do usuário');
           }
 
           userProfile = newProfile;
           console.log('✅ Perfil criado com sucesso:', userProfile);
         } catch (createErr) {
-          console.error('💥 Erro ao criar perfil:', createErr);
+          if (import.meta.env.DEV) {
+            console.error('💥 Erro ao criar perfil:', createErr);
+          }
           // Tentar buscar novamente (pode ter sido criado por outro processo)
           userProfile = await withTimeout(getUserProfile(user.id));
           if (!userProfile) {
@@ -119,8 +123,10 @@ export const useUserData = (): UseUserDataReturn => {
       
       console.log('🎉 fetchUserData: Concluído com sucesso');
     } catch (err) {
-      console.error('💥 Error fetching user data:', err);
-      console.error('❌ Erro ao buscar dados do usuário:', err);
+      if (import.meta.env.DEV) {
+        console.error('💥 Error fetching user data:', err);
+        console.error('❌ Erro ao buscar dados do usuário:', err);
+      }
       const isTimeout = (err as Error).message === 'timeout';
       const errorMessage = isTimeout 
         ? 'Tempo esgotado ao carregar dados do usuário' 
