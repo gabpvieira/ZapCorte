@@ -79,13 +79,34 @@ const AppContent = () => {
       <ScrollToTop />
       <PWAInstallPrompt />
       <Routes>
+        {/* Rota inicial - redireciona para dashboard se logado, senão para login */}
+        <Route 
+          path="/" 
+          element={
+            loading ? (
+              <div className="flex items-center justify-center min-h-screen bg-background">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                  <p className="text-muted-foreground">Carregando...</p>
+                </div>
+              </div>
+            ) : user ? (
+              <Navigate to="/dashboard" replace />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          } 
+        />
+        
+        {/* Landing page acessível via /home */}
+        <Route path="/home" element={<Home />} />
+        
         {/* Rotas públicas - não precisam de autenticação */}
-        <Route path="/" element={<Home />} />
         <Route path="/barbershop/:slug" element={<Barbershop />} />
         <Route path="/booking/:slug/:serviceId" element={<Booking />} />
         <Route path="/my-appointments" element={<MyAppointments />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        <Route path="/login" element={user ? <Navigate to="/dashboard" replace /> : <Login />} />
+        <Route path="/register" element={user ? <Navigate to="/dashboard" replace /> : <Register />} />
         
         {/* Rotas de confirmação de email */}
         <Route path="/confirmar-email" element={<ConfirmarEmail />} />

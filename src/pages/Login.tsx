@@ -133,6 +133,7 @@ const Login = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
+                  style={{ fontSize: '16px' }}
                 />
               </div>
               <div className="space-y-2">

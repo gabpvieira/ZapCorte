@@ -124,7 +124,7 @@ const Barbershop = () => {
 
   return (
     <motion.div 
-      className="min-h-screen bg-gradient-to-br from-background via-background to-muted/10"
+      className="min-h-screen bg-gradient-to-br from-background via-background to-muted/10 overflow-x-hidden"
       variants={containerVariants}
       initial="initial"
       animate="animate"
@@ -177,7 +177,7 @@ const Barbershop = () => {
 
       {/* Header Info Premium */}
       <motion.section 
-        className="text-center w-[90%] sm:w-full mx-auto px-0 sm:px-4 pt-4 sm:pt-6 pb-6 sm:pb-8 max-w-5xl"
+        className="text-center w-full mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-6 sm:pb-8 max-w-5xl"
         variants={itemVariants}
       >
         <motion.h1 
@@ -221,7 +221,7 @@ const Barbershop = () => {
 
         {/* Social Links Premium */}
         <motion.div 
-          className="flex justify-center gap-2.5 sm:gap-3 mb-5 sm:mb-6"
+          className="flex flex-wrap justify-center gap-2.5 sm:gap-3 mb-5 sm:mb-6"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7 }}
@@ -272,13 +272,13 @@ const Barbershop = () => {
 
         {/* Horário de funcionamento Premium */}
         <motion.div
-          className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl bg-card/50 backdrop-blur-sm border border-border/50"
+          className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl bg-card/50 backdrop-blur-sm border border-border/50 max-w-full"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.8 }}
         >
           <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary flex-shrink-0" />
-          <p className="text-xs sm:text-sm text-muted-foreground">
+          <p className="text-xs sm:text-sm text-muted-foreground break-words">
             {formatOpeningHours(barbershop.opening_hours)}
           </p>
         </motion.div>
@@ -286,7 +286,7 @@ const Barbershop = () => {
 
       {/* Container para serviços */}
       <motion.div 
-        className="container mx-auto w-[90%] sm:w-full px-0 sm:px-4 mt-12 sm:mt-16 max-w-7xl"
+        className="w-full mx-auto px-4 sm:px-6 lg:px-8 mt-12 sm:mt-16 max-w-7xl"
         variants={itemVariants}
       >
 
@@ -317,7 +317,7 @@ const Barbershop = () => {
               <p className="text-muted-foreground text-lg">Nenhum serviço disponível no momento.</p>
             </motion.div>
           ) : (
-            <div className="grid grid-cols-2 gap-3 sm:gap-6 md:gap-8 lg:grid-cols-5">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 md:gap-6 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
               {services.map((service, index) => (
                 <motion.div
                   key={service.id}
@@ -389,16 +389,16 @@ const Barbershop = () => {
             </p>
           </motion.div>
 
-          <Card className="border-0 shadow-2xl shadow-primary/5 bg-card/50 backdrop-blur-sm overflow-hidden max-w-4xl mx-auto">
+          <Card className="border-0 shadow-2xl shadow-primary/5 bg-card/50 backdrop-blur-sm overflow-hidden max-w-4xl mx-auto w-full">
             <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10 border-b border-border/50 px-4 sm:px-6 py-4 sm:py-6">
-              <CardTitle className="flex items-center gap-2 sm:gap-3 text-base sm:text-lg md:text-xl">
-                <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10">
+              <CardTitle className="flex items-center gap-2 sm:gap-3 text-base sm:text-lg md:text-xl break-words">
+                <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10 flex-shrink-0">
                   <Search className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                 </div>
-                Buscar por Telefone
+                <span className="break-words">Buscar por Telefone</span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-4 sm:p-6">
+            <CardContent className="p-4 sm:p-6 w-full overflow-hidden">
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6 sm:mb-8">
                 <div className="flex-1 space-y-2">
                   <Label htmlFor="phone" className="text-xs sm:text-sm font-medium">
@@ -406,10 +406,12 @@ const Barbershop = () => {
                   </Label>
                   <Input
                     id="phone"
+                    type="tel"
                     placeholder="Ex: 11987654321"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    className="h-11 sm:h-12 text-sm sm:text-base border-border/50 focus:border-primary transition-all"
+                    className="h-11 sm:h-12 text-base border-border/50 focus:border-primary transition-all"
+                    style={{ fontSize: '16px' }}
                   />
                   <p className="text-xs text-muted-foreground">
                     Digite o número usado no agendamento
@@ -483,23 +485,23 @@ const Barbershop = () => {
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: index * 0.1 }}
                     >
-                      <Card className="border-0 shadow-lg hover:shadow-xl transition-all bg-gradient-to-r from-card to-card/50 overflow-hidden group">
-                        <CardContent className="p-5">
-                          <div className="flex items-start justify-between gap-4">
+                      <Card className="border-0 shadow-lg hover:shadow-xl transition-all bg-gradient-to-r from-card to-card/50 overflow-hidden group w-full">
+                        <CardContent className="p-4 sm:p-5 w-full overflow-hidden">
+                          <div className="flex flex-col sm:flex-row items-start justify-between gap-4 w-full">
                             {/* Info Principal */}
-                            <div className="flex-1 space-y-3">
+                            <div className="flex-1 space-y-3 w-full min-w-0">
                               <div className="flex items-start gap-3">
-                                <div className="p-2 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                                <div className="p-2 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors flex-shrink-0">
                                   <Calendar className="h-5 w-5 text-primary" />
                                 </div>
-                                <div>
-                                  <h4 className="font-semibold text-lg mb-1">{apt.customer_name}</h4>
-                                  <p className="text-sm text-muted-foreground">{apt.customer_phone}</p>
+                                <div className="min-w-0 flex-1">
+                                  <h4 className="font-semibold text-base sm:text-lg mb-1 truncate">{apt.customer_name}</h4>
+                                  <p className="text-sm text-muted-foreground break-all">{apt.customer_phone}</p>
                                 </div>
                               </div>
 
                               {/* Data e Hora */}
-                              <div className="flex flex-wrap items-center gap-4 text-sm">
+                              <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm">
                                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/50">
                                   <Calendar className="h-4 w-4 text-primary" />
                                   <span className="font-medium">
@@ -523,17 +525,17 @@ const Barbershop = () => {
 
                               {/* Serviço */}
                               {apt.service && (
-                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                  <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                                  <span>{apt.service.name}</span>
-                                  <span>•</span>
-                                  <span>{apt.service.duration} minutos</span>
+                                <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm text-muted-foreground">
+                                  <div className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
+                                  <span className="break-words">{apt.service.name}</span>
+                                  <span className="flex-shrink-0">•</span>
+                                  <span className="flex-shrink-0">{apt.service.duration} minutos</span>
                                 </div>
                               )}
                             </div>
 
                             {/* Status Badge */}
-                            <div>
+                            <div className="flex-shrink-0 w-full sm:w-auto">
                               <span className={`
                                 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold
                                 ${apt.status === 'confirmed' ? 'bg-green-500/10 text-green-600 border border-green-500/20' : ''}
@@ -567,11 +569,11 @@ const Barbershop = () => {
 
       {/* Footer Premium */}
       <motion.footer 
-        className="relative border-t border-border/50 py-12 mt-20 overflow-hidden"
+        className="relative border-t border-border/50 py-12 mt-20 overflow-hidden w-full"
         variants={itemVariants}
       >
         <div className="absolute inset-0 bg-gradient-to-t from-primary/5 to-transparent" />
-        <div className="container mx-auto px-4 text-center relative z-10">
+        <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10 max-w-7xl">
           <div className="mb-4">
             <p className="text-sm font-medium text-foreground mb-2">
               Powered by ZapCorte

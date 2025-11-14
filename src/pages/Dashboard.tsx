@@ -943,7 +943,8 @@ const Dashboard = () => {
                       type="date"
                       value={editDate}
                       onChange={(e) => setEditDate(e.target.value)}
-                      className="mt-1 h-9 text-sm"
+                      className="mt-1 h-11 text-base"
+                      style={{ fontSize: '16px' }}
                     />
                   </div>
                   <div className="bg-muted/50 rounded-lg p-3">
@@ -952,7 +953,8 @@ const Dashboard = () => {
                       type="time"
                       value={editTime}
                       onChange={(e) => setEditTime(e.target.value)}
-                      className="mt-1 h-9 text-sm"
+                      className="mt-1 h-11 text-base"
+                      style={{ fontSize: '16px' }}
                     />
                   </div>
                 </div>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Edit, Trash2, Calendar, Clock, Phone, User, Filter, Eye, RefreshCw, X, CheckCircle } from "lucide-react";
+import { Plus, Edit, Trash2, Calendar, Clock, Phone, User, Filter, Eye, RefreshCw, X, CheckCircle, List, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { useUserData } from "@/hooks/useUserData";
@@ -19,6 +20,7 @@ import { format, parseISO, parse, isPast, isToday, addDays, startOfDay, endOfDay
 import { ptBR } from "date-fns/locale";
 import { enviarLembreteWhatsApp } from "@/lib/notifications";
 import { DatePicker } from "@/components/DatePicker";
+import { WeeklyCalendar } from "@/components/WeeklyCalendar";
 import { cn } from "@/lib/utils";
 
 interface Service {
@@ -83,6 +85,7 @@ const Appointments = () => {
   });
   const [dateFilter, setDateFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
   
   // Estados para modal de visualização e ações
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
@@ -860,44 +863,62 @@ const Appointments = () => {
         </Dialog>
       }
     >
-      {/* Filtros Compactos */}
-      <Card className="mb-4">
-        <CardContent className="p-3 sm:p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <Filter className="h-4 w-4 text-primary" />
-            <h3 className="font-semibold text-sm">Filtros</h3>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <Label htmlFor="date-filter" className="text-xs text-muted-foreground">Data</Label>
-              <Input
-                id="date-filter"
-                type="date"
-                lang="pt-BR"
-                value={dateFilter}
-                onChange={(e) => setDateFilter(e.target.value)}
-                className="mt-1 h-9 text-sm"
-              />
-            </div>
-            <div>
-              <Label htmlFor="status-filter" className="text-xs text-muted-foreground">Status</Label>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="mt-1 h-9 text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="pending">Pendente</SelectItem>
-                  <SelectItem value="confirmed">Confirmado</SelectItem>
-                  <SelectItem value="cancelled">Cancelado</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Toggle de Visualização */}
+      <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as "list" | "calendar")} className="w-full">
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+          <TabsList className="grid w-full max-w-[400px] grid-cols-2">
+            <TabsTrigger value="list" className="flex items-center gap-2">
+              <List className="h-4 w-4" />
+              <span className="hidden sm:inline">Lista</span>
+            </TabsTrigger>
+            <TabsTrigger value="calendar" className="flex items-center gap-2">
+              <CalendarDays className="h-4 w-4" />
+              <span className="hidden sm:inline">Calendário</span>
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
-      {filteredAppointments.length === 0 ? (
+        {/* Visualização em Lista */}
+        <TabsContent value="list" className="mt-0 space-y-4">
+          {/* Filtros Compactos */}
+          <Card>
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Filter className="h-4 w-4 text-primary" />
+                <h3 className="font-semibold text-sm">Filtros</h3>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="date-filter" className="text-xs text-muted-foreground">Data</Label>
+                  <Input
+                    id="date-filter"
+                    type="date"
+                    lang="pt-BR"
+                    value={dateFilter}
+                    onChange={(e) => setDateFilter(e.target.value)}
+                    className="mt-1 h-11 text-base"
+                    style={{ fontSize: '16px' }}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="status-filter" className="text-xs text-muted-foreground">Status</Label>
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="mt-1 h-9 text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      <SelectItem value="pending">Pendente</SelectItem>
+                      <SelectItem value="confirmed">Confirmado</SelectItem>
+                      <SelectItem value="cancelled">Cancelado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {filteredAppointments.length === 0 ? (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -1283,6 +1304,29 @@ const Appointments = () => {
           </AnimatePresence>
         </motion.div>
       )}
+        </TabsContent>
+
+        {/* Visualização em Calendário */}
+        <TabsContent value="calendar" className="mt-0">
+          <div className="h-[calc(100vh-250px)] min-h-[600px]">
+            <WeeklyCalendar
+              appointments={filteredAppointments}
+              onAppointmentClick={(appointment) => openViewModal(appointment)}
+              onTimeSlotClick={(date, time) => {
+                // Preencher formulário com data e hora selecionadas
+                const dateString = format(date, 'yyyy-MM-dd');
+                setFormData({
+                  ...formData,
+                  scheduled_date: dateString,
+                  scheduled_time: time,
+                });
+                setIsDialogOpen(true);
+              }}
+            />
+          </div>
+        </TabsContent>
+      </Tabs>
+
       {/* Modal de Visualização Otimizado */}
       <Dialog open={viewModalOpen} onOpenChange={setViewModalOpen}>
         <DialogContent className="max-w-[95vw] sm:max-w-md max-h-[90vh] overflow-y-auto">

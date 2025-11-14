@@ -533,7 +533,8 @@ const BarbershopSettings = () => {
                     value={groupStart} 
                     onChange={e=>setGroupStart(e.target.value)} 
                     step={900} 
-                    className="h-9 text-sm mt-1"
+                    className="h-11 text-base mt-1"
+                    style={{ fontSize: '16px' }}
                   />
                 </div>
                 <div>
@@ -543,7 +544,8 @@ const BarbershopSettings = () => {
                     value={groupEnd} 
                     onChange={e=>setGroupEnd(e.target.value)} 
                     step={900} 
-                    className="h-9 text-sm mt-1"
+                    className="h-11 text-base mt-1"
+                    style={{ fontSize: '16px' }}
                   />
                 </div>
                 <Button 
@@ -612,7 +614,8 @@ const BarbershopSettings = () => {
                             value={daySchedule?.start || ''}
                             onChange={(e) => handleOpeningHoursChange(day, 'start', e.target.value)}
                             step={900}
-                            className="h-9 text-sm mt-1"
+                            className="h-11 text-base mt-1"
+                            style={{ fontSize: '16px' }}
                           />
                         </div>
                         <div>
@@ -622,7 +625,8 @@ const BarbershopSettings = () => {
                             value={daySchedule?.end || ''}
                             onChange={(e) => handleOpeningHoursChange(day, 'end', e.target.value)}
                             step={900}
-                            className="h-9 text-sm mt-1"
+                            className="h-11 text-base mt-1"
+                            style={{ fontSize: '16px' }}
                           />
                         </div>
                       </div>

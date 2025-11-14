@@ -519,7 +519,8 @@ const Booking = () => {
                         value={customerPhone}
                         onChange={(e) => setCustomerPhone(e.target.value)}
                         required
-                        className="h-11 sm:h-12 text-sm sm:text-base border-border/50 focus:border-primary transition-all"
+                        className="h-11 sm:h-12 text-base border-border/50 focus:border-primary transition-all"
+                        style={{ fontSize: '16px' }}
                       />
                       <p className="text-xs text-muted-foreground">
                         Você receberá confirmação e lembretes por WhatsApp

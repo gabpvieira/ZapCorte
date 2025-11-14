@@ -196,6 +196,7 @@ const Register = () => {
                   placeholder="(00) 00000-0000"
                   value={telefone}
                   onChange={(e) => setTelefone(e.target.value)}
+                  style={{ fontSize: '16px' }}
                 />
               </div>
               <div className="space-y-2">
@@ -207,6 +208,7 @@ const Register = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
+                  style={{ fontSize: '16px' }}
                 />
               </div>
               <div className="space-y-2">
