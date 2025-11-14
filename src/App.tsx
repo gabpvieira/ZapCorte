@@ -81,7 +81,7 @@ const AppContent = () => {
       <ScrollToTop />
       <PWAInstallPrompt />
       <Routes>
-        {/* Rota inicial - redireciona para dashboard se logado, senão para login */}
+        {/* Rota inicial - Landing page para web, redireciona apenas no PWA */}
         <Route 
           path="/" 
           element={
@@ -92,15 +92,23 @@ const AppContent = () => {
                   <p className="text-muted-foreground">Carregando...</p>
                 </div>
               </div>
-            ) : user ? (
-              <Navigate to="/dashboard" replace />
-            ) : (
-              <Navigate to="/login" replace />
-            )
+            ) : (() => {
+              // Detectar se está rodando como PWA
+              const isPWA = window.matchMedia('(display-mode: standalone)').matches || 
+                           (window.navigator as any).standalone === true;
+              
+              // Se for PWA, redirecionar para dashboard/login
+              if (isPWA) {
+                return user ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />;
+              }
+              
+              // Se for web normal, mostrar landing page
+              return <Home />;
+            })()
           } 
         />
         
-        {/* Landing page acessível via /home */}
+        {/* Landing page também acessível via /home */}
         <Route path="/home" element={<Home />} />
         
         {/* Rotas públicas - não precisam de autenticação */}
