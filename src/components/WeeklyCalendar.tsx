@@ -55,14 +55,15 @@ const statusColors = {
 export function WeeklyCalendar({ appointments, onAppointmentClick, onTimeSlotClick }: WeeklyCalendarProps) {
   const [currentWeekStart, setCurrentWeekStart] = useState(() => startOfWeek(new Date(), { weekStartsOn: 0 }));
   const [viewMode, setViewMode] = useState<"week" | "day">("day"); // Iniciar no modo dia
+  const [selectedDayDate, setSelectedDayDate] = useState(new Date()); // Data selecionada no modo dia
   const [scrollContainerRef, setScrollContainerRef] = useState<HTMLDivElement | null>(null);
 
   const weekDays = useMemo(() => {
     if (viewMode === "day") {
-      return [new Date()]; // Apenas hoje
+      return [selectedDayDate]; // Data selecionada
     }
     return Array.from({ length: DAYS_OF_WEEK }, (_, i) => addDays(currentWeekStart, i));
-  }, [currentWeekStart, viewMode]);
+  }, [currentWeekStart, viewMode, selectedDayDate]);
 
   // Scroll automático para hora atual quando montar ou mudar para modo dia
   useMemo(() => {
@@ -86,9 +87,19 @@ export function WeeklyCalendar({ appointments, onAppointmentClick, onTimeSlotCli
     setCurrentWeekStart(prev => addWeeks(prev, 1));
   };
 
+  const goToPreviousDay = () => {
+    setSelectedDayDate(prev => addDays(prev, -1));
+  };
+
+  const goToNextDay = () => {
+    setSelectedDayDate(prev => addDays(prev, 1));
+  };
+
   const goToToday = () => {
-    setCurrentWeekStart(startOfWeek(new Date(), { weekStartsOn: 0 }));
-    setViewMode("day"); // Voltar para modo dia
+    const today = new Date();
+    setSelectedDayDate(today);
+    setCurrentWeekStart(startOfWeek(today, { weekStartsOn: 0 }));
+    setViewMode("day");
   };
 
   // Obter todos os agendamentos de um dia específico
@@ -222,9 +233,32 @@ export function WeeklyCalendar({ appointments, onAppointmentClick, onTimeSlotCli
             </>
           )}
           {viewMode === "day" && (
-            <h3 className="text-lg font-bold text-foreground">
-              Hoje - {format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-            </h3>
+            <>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={goToPreviousDay}
+                className="h-8 w-8 p-0 hover:bg-primary/10 text-primary"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </Button>
+              <div className="flex flex-col items-center">
+                <h3 className="text-base font-bold text-foreground">
+                  {isTodayFn(selectedDayDate) ? 'Hoje' : format(selectedDayDate, "EEEE", { locale: ptBR })}
+                </h3>
+                <span className="text-sm text-muted-foreground">
+                  {format(selectedDayDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                </span>
+              </div>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={goToNextDay}
+                className="h-8 w-8 p-0 hover:bg-primary/10 text-primary"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </Button>
+            </>
           )}
         </div>
         
@@ -235,15 +269,30 @@ export function WeeklyCalendar({ appointments, onAppointmentClick, onTimeSlotCli
             </span>
           )}
           
+          {/* Botão Hoje - sempre visível */}
+          {viewMode === "day" && !isTodayFn(selectedDayDate) && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={goToToday}
+              className="h-7 px-3 text-xs font-medium border-primary text-primary hover:bg-primary/10"
+            >
+              Voltar para Hoje
+            </Button>
+          )}
+          
           {/* Toggle Dia/Semana */}
           <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
             <Button 
               variant={viewMode === "day" ? "default" : "ghost"}
               size="sm" 
-              onClick={() => setViewMode("day")}
+              onClick={() => {
+                setViewMode("day");
+                setSelectedDayDate(new Date());
+              }}
               className="h-7 px-3 text-xs font-medium"
             >
-              Hoje
+              Dia
             </Button>
             <Button 
               variant={viewMode === "week" ? "default" : "ghost"}
