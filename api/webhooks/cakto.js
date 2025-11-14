@@ -1,19 +1,13 @@
 // Vercel Serverless Function para Webhook do Cakto
 import { createClient } from '@supabase/supabase-js';
 
-// Configuração do Supabase
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
-
 // Função para validar webhook
 function validateWebhook(webhookData) {
   return webhookData.secret === process.env.CAKTO_WEBHOOK_SECRET;
 }
 
 // Função para buscar usuário
-async function findUserByEmail(email) {
+async function findUserByEmail(email, supabase) {
   const { data: profile } = await supabase
     .from('profiles')
     .select('*')

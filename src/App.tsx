@@ -29,6 +29,7 @@ import { useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useReminderScheduler } from "@/hooks/useReminderScheduler";
 import ScrollToTop from "@/components/ScrollToTop";
+import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 
 const queryClient = new QueryClient();
 
@@ -76,6 +77,7 @@ const AppContent = () => {
   return (
     <>
       <ScrollToTop />
+      <PWAInstallPrompt />
       <Routes>
         {/* Rotas públicas - não precisam de autenticação */}
         <Route path="/" element={<Home />} />

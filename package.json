@@ -8,7 +8,9 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "generate-icons": "node scripts/generate-icons.js",
+    "pwa:check": "node -e \"console.log('Verificando PWA...'); import('./src/lib/serviceWorker.ts').then(() => console.log('✅ Service Worker OK'))\""
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
