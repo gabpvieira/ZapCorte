@@ -1,6 +1,6 @@
 /**
- * Logger utility que silencia logs em produção
- * Em desenvolvimento, funciona normalmente
+ * Sistema de logging profissional
+ * Logs só aparecem em desenvolvimento, nunca em produção
  */
 
 const isDevelopment = import.meta.env.DEV;
@@ -36,3 +36,12 @@ export const logger = {
     }
   }
 };
+
+// Silenciar todos os console.logs em produção
+if (!isDevelopment) {
+  console.log = () => {};
+  console.error = () => {};
+  console.warn = () => {};
+  console.info = () => {};
+  console.debug = () => {};
+}
