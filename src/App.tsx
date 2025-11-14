@@ -24,6 +24,8 @@ import EmailConfirmado from "./pages/EmailConfirmado";
 import AuthConfirm from "./pages/AuthConfirm";
 import AuthCallback from "./pages/AuthCallback";
 import AuthVerify from "./pages/AuthVerify";
+import ResetPassword from "./pages/ResetPassword";
+import ForgotPassword from "./pages/ForgotPassword";
 
 import { useEffect } from "react";
 import { supabase } from "@/lib/supabase";
@@ -107,13 +109,15 @@ const AppContent = () => {
         <Route path="/my-appointments" element={<MyAppointments />} />
         <Route path="/login" element={user ? <Navigate to="/dashboard" replace /> : <Login />} />
         <Route path="/register" element={user ? <Navigate to="/dashboard" replace /> : <Register />} />
+        <Route path="/forgot-password" element={user ? <Navigate to="/dashboard" replace /> : <ForgotPassword />} />
         
-        {/* Rotas de confirmação de email */}
+        {/* Rotas de confirmação de email e redefinição de senha */}
         <Route path="/confirmar-email" element={<ConfirmarEmail />} />
         <Route path="/email-confirmado" element={<EmailConfirmado />} />
         <Route path="/auth/confirm" element={<AuthConfirm />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/auth/verify" element={<AuthVerify />} />
+        <Route path="/auth/reset-password" element={<ResetPassword />} />
         
         {/* Rotas protegidas - precisam de autenticação */}
         <Route 

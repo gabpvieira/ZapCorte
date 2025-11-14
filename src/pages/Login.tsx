@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import logotipo from "@/assets/zapcorte-icon.png";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,27 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
+
+  // Mostrar mensagens de sucesso baseadas nos parâmetros da URL
+  useEffect(() => {
+    const confirmed = searchParams.get('confirmed');
+    const reset = searchParams.get('reset');
+
+    if (confirmed === 'true') {
+      toast({
+        title: "Email confirmado!",
+        description: "Seu email foi confirmado com sucesso. Faça login para continuar.",
+      });
+    }
+
+    if (reset === 'success') {
+      toast({
+        title: "Senha redefinida!",
+        description: "Sua senha foi alterada com sucesso. Faça login com a nova senha.",
+      });
+    }
+  }, [searchParams, toast]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -161,6 +182,14 @@ const Login = () => {
                     )}
                   </Button>
                 </div>
+              </div>
+              <div className="flex items-center justify-end">
+                <Link 
+                  to="/forgot-password" 
+                  className="text-sm text-primary hover:underline"
+                >
+                  Esqueceu a senha?
+                </Link>
               </div>
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? "Entrando..." : "Entrar"}

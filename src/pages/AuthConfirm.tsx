@@ -7,11 +7,11 @@ export default function AuthConfirm() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
-  const [message, setMessage] = useState('Verificando seu email...');
+  const [message, setMessage] = useState('Verificando...');
   const [attempts, setAttempts] = useState<string[]>([]);
 
   useEffect(() => {
-    verifyEmail();
+    handleConfirmation();
   }, []);
 
   const addLog = (log: string) => {
@@ -19,7 +19,7 @@ export default function AuthConfirm() {
     setAttempts(prev => [...prev, log]);
   };
 
-  const verifyEmail = async () => {
+  const handleConfirmation = async () => {
     try {
       // Extrair parâmetros da URL
       const token_hash = searchParams.get('token_hash');
@@ -29,7 +29,7 @@ export default function AuthConfirm() {
       const error = searchParams.get('error');
       const error_description = searchParams.get('error_description');
 
-      addLog(`Parâmetros recebidos: token_hash=${!!token_hash}, token=${!!token}, code=${!!code}, type=${type}`);
+      addLog(`Parâmetros: token_hash=${!!token_hash}, token=${!!token}, code=${!!code}, type=${type}`);
 
       // Verificar se há erro na URL
       if (error) {
@@ -45,6 +45,21 @@ export default function AuthConfirm() {
         throw new Error(error_description || error);
       }
 
+      // Se type=recovery, redirecionar para página de redefinir senha
+      if (type === 'recovery') {
+        addLog('Tipo: recovery - redirecionando para redefinir senha');
+        const tokenParam = token_hash || token || code;
+        if (tokenParam) {
+          navigate(`/auth/reset-password?token=${tokenParam}`);
+          return;
+        } else {
+          throw new Error('Token de recuperação não encontrado');
+        }
+      }
+
+      // Caso contrário, confirmar email
+      setMessage('Confirmando seu email...');
+
       // Método 1: Verificar com token_hash usando verifyOtp
       if (token_hash) {
         addLog('Tentativa 1: verifyOtp com token_hash');
@@ -58,7 +73,7 @@ export default function AuthConfirm() {
             addLog('✅ Sucesso com verifyOtp + token_hash');
             setStatus('success');
             setMessage('Email confirmado com sucesso!');
-            setTimeout(() => navigate('/email-confirmado'), 1500);
+            setTimeout(() => navigate('/login?confirmed=true'), 1500);
             return;
           }
           addLog(`❌ Falha: ${error?.message || 'Sem dados'}`);
@@ -77,7 +92,7 @@ export default function AuthConfirm() {
             addLog('✅ Sucesso com exchangeCodeForSession + token_hash');
             setStatus('success');
             setMessage('Email confirmado com sucesso!');
-            setTimeout(() => navigate('/email-confirmado'), 1500);
+            setTimeout(() => navigate('/login?confirmed=true'), 1500);
             return;
           }
           addLog(`❌ Falha: ${error?.message || 'Sem sessão'}`);
@@ -86,9 +101,9 @@ export default function AuthConfirm() {
         }
       }
 
-      // Método 3: Verificar com token como code usando verifyOtp
+      // Método 3: Verificar com token usando verifyOtp
       if (token) {
-        addLog('Tentativa 3: verifyOtp com token como code');
+        addLog('Tentativa 3: verifyOtp com token');
         try {
           const { data, error } = await supabase.auth.verifyOtp({
             token_hash: token,
@@ -99,7 +114,7 @@ export default function AuthConfirm() {
             addLog('✅ Sucesso com verifyOtp + token');
             setStatus('success');
             setMessage('Email confirmado com sucesso!');
-            setTimeout(() => navigate('/email-confirmado'), 1500);
+            setTimeout(() => navigate('/login?confirmed=true'), 1500);
             return;
           }
           addLog(`❌ Falha: ${error?.message || 'Sem dados'}`);
@@ -118,7 +133,7 @@ export default function AuthConfirm() {
             addLog('✅ Sucesso com exchangeCodeForSession + code');
             setStatus('success');
             setMessage('Email confirmado com sucesso!');
-            setTimeout(() => navigate('/email-confirmado'), 1500);
+            setTimeout(() => navigate('/login?confirmed=true'), 1500);
             return;
           }
           addLog(`❌ Falha: ${error?.message || 'Sem sessão'}`);
@@ -127,15 +142,15 @@ export default function AuthConfirm() {
         }
       }
 
-      // Método 5: Verificar sessão atual (pode já estar confirmado)
+      // Método 5: Verificar sessão atual
       addLog('Tentativa 5: Verificar sessão atual');
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
       if (session?.user && !sessionError) {
-        addLog('✅ Usuário já autenticado com sessão válida');
+        addLog('✅ Usuário já autenticado');
         setStatus('success');
         setMessage('Email confirmado com sucesso!');
-        setTimeout(() => navigate('/email-confirmado'), 1500);
+        setTimeout(() => navigate('/login?confirmed=true'), 1500);
         return;
       }
 
@@ -144,10 +159,10 @@ export default function AuthConfirm() {
       throw new Error('Não foi possível confirmar o email. Token pode estar expirado.');
 
     } catch (error: any) {
-      console.error('Erro ao verificar email:', error);
+      console.error('Erro ao confirmar:', error);
       addLog(`💥 Erro final: ${error.message}`);
       setStatus('error');
-      setMessage(error.message || 'Erro ao confirmar email');
+      setMessage(error.message || 'Erro ao processar confirmação');
     }
   };
 
