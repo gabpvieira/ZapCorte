@@ -30,62 +30,66 @@ interface WeeklyCalendarProps {
 
 const HOURS = Array.from({ length: 15 }, (_, i) => i + 8); // 8h às 22h
 const HALF_HOURS = Array.from({ length: 30 }, (_, i) => 8 + (i * 0.5)); // 8h às 22h em intervalos de 30min
-const DAYS_OF_WEEK = 7;
-const PIXELS_PER_HOUR = 60; // 60px por hora (padrão iOS)
+const PIXELS_PER_HOUR = 48; // 48px por hora (compacto)
 
-// Cores da paleta ZapCorte - estilo iOS Calendar
+// Sistema de cores rico e saturado - ZapCorte Premium
 const statusColors = {
   pending: {
-    bg: "bg-[#3A2F1E]", // Amarelo escuro translúcido
+    bg: "bg-[#4D3D1A]", // Amarelo escuro rico
     border: "border-l-[#FFC107]",
-    text: "text-white"
+    borderStyle: "border-l-4 border-solid",
+    text: "text-[#FFF9E6]",
+    hover: "hover:bg-[#5C4920]"
   },
   confirmed: {
-    bg: "bg-[#1E3A32]", // Verde escuro translúcido
+    bg: "bg-[#1A4D3C]", // Verde escuro rico
     border: "border-l-[#00C853]",
-    text: "text-white"
+    borderStyle: "border-l-4 border-solid",
+    text: "text-[#E8F5E9]",
+    hover: "hover:bg-[#225542]"
   },
   cancelled: {
     bg: "bg-[#2A2A2A]", // Cinza escuro
     border: "border-l-[#666666]",
-    text: "text-gray-400"
+    borderStyle: "border-l-4 border-dashed", // Borda pontilhada para cancelado
+    text: "text-[#999999]",
+    hover: "hover:bg-[#333333]"
   },
 };
 
+// Função para extrair iniciais do nome
+const getInitials = (name: string) => {
+  return name.substring(0, 2).toUpperCase();
+};
+
+// Função para calcular horário de término
+const getEndTime = (startTime: string, duration: number) => {
+  const start = parseISO(startTime);
+  const end = new Date(start.getTime() + duration * 60000);
+  return format(end, 'HH:mm');
+};
+
 export function WeeklyCalendar({ appointments, onAppointmentClick, onTimeSlotClick }: WeeklyCalendarProps) {
-  const [currentWeekStart, setCurrentWeekStart] = useState(() => startOfWeek(new Date(), { weekStartsOn: 0 }));
-  const [viewMode, setViewMode] = useState<"week" | "day">("day"); // Iniciar no modo dia
-  const [selectedDayDate, setSelectedDayDate] = useState(new Date()); // Data selecionada no modo dia
+  const [selectedDayDate, setSelectedDayDate] = useState(new Date()); // Data selecionada
   const [scrollContainerRef, setScrollContainerRef] = useState<HTMLDivElement | null>(null);
 
   const weekDays = useMemo(() => {
-    if (viewMode === "day") {
-      return [selectedDayDate]; // Data selecionada
-    }
-    return Array.from({ length: DAYS_OF_WEEK }, (_, i) => addDays(currentWeekStart, i));
-  }, [currentWeekStart, viewMode, selectedDayDate]);
+    return [selectedDayDate]; // Sempre modo dia
+  }, [selectedDayDate]);
 
-  // Scroll automático para hora atual quando montar ou mudar para modo dia
+  // Scroll automático para hora atual quando montar
   useMemo(() => {
-    if (scrollContainerRef && viewMode === "day") {
+    if (scrollContainerRef) {
       setTimeout(() => {
         const currentHour = new Date().getHours();
         const hourIndex = currentHour - 8; // 8h é o início
         if (hourIndex >= 0) {
-          const scrollPosition = hourIndex * 70 - 100; // 70px por hora, -100px para centralizar
+          const scrollPosition = hourIndex * 48 - 100; // 48px por hora, -100px para centralizar
           scrollContainerRef.scrollTo({ top: Math.max(0, scrollPosition), behavior: 'smooth' });
         }
       }, 100);
     }
-  }, [scrollContainerRef, viewMode]);
-
-  const goToPreviousWeek = () => {
-    setCurrentWeekStart(prev => subWeeks(prev, 1));
-  };
-
-  const goToNextWeek = () => {
-    setCurrentWeekStart(prev => addWeeks(prev, 1));
-  };
+  }, [scrollContainerRef]);
 
   const goToPreviousDay = () => {
     setSelectedDayDate(prev => addDays(prev, -1));
@@ -96,10 +100,7 @@ export function WeeklyCalendar({ appointments, onAppointmentClick, onTimeSlotCli
   };
 
   const goToToday = () => {
-    const today = new Date();
-    setSelectedDayDate(today);
-    setCurrentWeekStart(startOfWeek(today, { weekStartsOn: 0 }));
-    setViewMode("day");
+    setSelectedDayDate(new Date());
   };
 
   // Obter todos os agendamentos de um dia específico
@@ -206,104 +207,46 @@ export function WeeklyCalendar({ appointments, onAppointmentClick, onTimeSlotCli
 
   return (
     <div className="flex flex-col h-full bg-background rounded-xl border border-border overflow-hidden">
-      {/* Header - Paleta ZapCorte */}
+      {/* Header - Navegação de Dia */}
       <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-border bg-card flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          {viewMode === "week" && (
-            <>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={goToPreviousWeek}
-                className="h-8 w-8 p-0 hover:bg-primary/10 text-primary"
-              >
-                <ChevronLeft className="h-5 w-5" />
-              </Button>
-              <h3 className="text-base font-semibold text-foreground">
-                {format(currentWeekStart, "MMMM", { locale: ptBR }).charAt(0).toUpperCase() + format(currentWeekStart, "MMMM", { locale: ptBR }).slice(1)}
-              </h3>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={goToNextWeek}
-                className="h-8 w-8 p-0 hover:bg-primary/10 text-primary"
-              >
-                <ChevronRight className="h-5 w-5" />
-              </Button>
-            </>
-          )}
-          {viewMode === "day" && (
-            <>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={goToPreviousDay}
-                className="h-8 w-8 p-0 hover:bg-primary/10 text-primary"
-              >
-                <ChevronLeft className="h-5 w-5" />
-              </Button>
-              <div className="flex flex-col items-center">
-                <h3 className="text-base font-bold text-foreground">
-                  {isTodayFn(selectedDayDate) ? 'Hoje' : format(selectedDayDate, "EEEE", { locale: ptBR })}
-                </h3>
-                <span className="text-sm text-muted-foreground">
-                  {format(selectedDayDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-                </span>
-              </div>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={goToNextDay}
-                className="h-8 w-8 p-0 hover:bg-primary/10 text-primary"
-              >
-                <ChevronRight className="h-5 w-5" />
-              </Button>
-            </>
-          )}
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={goToPreviousDay}
+            className="h-8 w-8 p-0 hover:bg-primary/10 text-primary"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </Button>
+          <div className="flex flex-col items-center">
+            <h3 className="text-base font-bold text-foreground">
+              {isTodayFn(selectedDayDate) ? 'Hoje' : format(selectedDayDate, "EEEE", { locale: ptBR })}
+            </h3>
+            <span className="text-sm text-muted-foreground">
+              {format(selectedDayDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+            </span>
+          </div>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={goToNextDay}
+            className="h-8 w-8 p-0 hover:bg-primary/10 text-primary"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </Button>
         </div>
         
-        <div className="flex items-center gap-2">
-          {viewMode === "week" && (
-            <span className="text-sm text-muted-foreground hidden sm:inline">
-              {format(currentWeekStart, "dd MMM", { locale: ptBR })} - {format(endOfWeek(currentWeekStart, { weekStartsOn: 0 }), "dd MMM yyyy", { locale: ptBR })}
-            </span>
-          )}
-          
-          {/* Botão Hoje - sempre visível */}
-          {viewMode === "day" && !isTodayFn(selectedDayDate) && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={goToToday}
-              className="h-7 px-3 text-xs font-medium border-primary text-primary hover:bg-primary/10"
-            >
-              Voltar para Hoje
-            </Button>
-          )}
-          
-          {/* Toggle Dia/Semana */}
-          <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
-            <Button 
-              variant={viewMode === "day" ? "default" : "ghost"}
-              size="sm" 
-              onClick={() => {
-                setViewMode("day");
-                setSelectedDayDate(new Date());
-              }}
-              className="h-7 px-3 text-xs font-medium"
-            >
-              Dia
-            </Button>
-            <Button 
-              variant={viewMode === "week" ? "default" : "ghost"}
-              size="sm" 
-              onClick={() => setViewMode("week")}
-              className="h-7 px-3 text-xs font-medium"
-            >
-              Semana
-            </Button>
-          </div>
-        </div>
+        {/* Botão Hoje - apenas quando não está no dia atual */}
+        {!isTodayFn(selectedDayDate) && (
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={goToToday}
+            className="h-7 px-3 text-xs font-medium border-primary text-primary hover:bg-primary/10"
+          >
+            Voltar para Hoje
+          </Button>
+        )}
       </div>
 
       {/* Calendário - Design Apple */}
@@ -312,11 +255,8 @@ export function WeeklyCalendar({ appointments, onAppointmentClick, onTimeSlotCli
         className="flex-1 overflow-y-auto overflow-x-hidden bg-background scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent"
       >
         <div className="w-full">
-          {/* Header dos dias - Estilo Apple minimalista */}
-          <div className={cn(
-            "grid sticky top-0 bg-card z-10 border-b border-border/50",
-            viewMode === "day" ? "grid-cols-[56px_1fr]" : "grid-cols-[56px_repeat(7,1fr)]"
-          )}>
+          {/* Header do dia - Estilo minimalista */}
+          <div className="grid sticky top-0 bg-card z-10 border-b border-border/50 grid-cols-[48px_1fr]">
             {/* Coluna vazia para horários */}
             <div className="border-r border-border/30" />
             
@@ -326,7 +266,7 @@ export function WeeklyCalendar({ appointments, onAppointmentClick, onTimeSlotCli
                 <div
                   key={index}
                   className={cn(
-                    "py-2 text-center border-r border-border/30 last:border-r-0",
+                    "py-2 text-center",
                     isToday && "bg-primary/5"
                   )}
                 >
@@ -354,20 +294,17 @@ export function WeeklyCalendar({ appointments, onAppointmentClick, onTimeSlotCli
               const isFullHour = time % 1 === 0;
               
               return (
-                <div key={time} className={cn(
-                  "grid h-[30px]", // 30px para cada meia hora
-                  viewMode === "day" ? "grid-cols-[60px_1fr]" : "grid-cols-[60px_repeat(7,1fr)]"
-                )}>
-                  {/* Coluna de horário - Estilo iOS */}
-                  <div className="pr-2 flex justify-end items-start pt-1">
+                <div key={time} className="grid h-[24px] grid-cols-[48px_1fr]">
+                  {/* Coluna de horário - ultra-compacta */}
+                  <div className="pr-1.5 flex justify-end items-start pt-0.5">
                     {isFullHour && (
-                      <span className="text-[13px] text-[#666666] font-normal leading-none">
+                      <span className="text-[10px] text-[#666666]/80 font-medium leading-none tabular-nums">
                         {String(hour).padStart(2, '0')}:00
                       </span>
                     )}
                   </div>
 
-                  {/* Colunas dos dias - apenas background */}
+                  {/* Coluna do dia - apenas background */}
                   {weekDays.map((day, dayIndex) => {
                     const isToday = isTodayFn(day);
                     return (
@@ -378,8 +315,7 @@ export function WeeklyCalendar({ appointments, onAppointmentClick, onTimeSlotCli
                           isToday && "bg-primary/5"
                         )}
                         style={{
-                          borderRight: dayIndex < weekDays.length - 1 ? '1px solid #2A2A2A' : 'none',
-                          borderTop: isFullHour ? '1px solid #333333' : '1px solid #2A2A2A',
+                          borderTop: isFullHour ? '1px solid #333333' : '1px solid #27272A',
                         }}
                         onClick={() => {
                           const timeString = `${String(hour).padStart(2, '0')}:${isFullHour ? '00' : '30'}`;
@@ -392,13 +328,13 @@ export function WeeklyCalendar({ appointments, onAppointmentClick, onTimeSlotCli
               );
             })}
 
-            {/* Linha de hora atual - Estilo iOS Calendar */}
-            {viewMode === "day" && (() => {
+            {/* Linha de hora atual - compacta */}
+            {(() => {
               const now = new Date();
               const currentHour = now.getHours();
               const currentMinutes = now.getMinutes();
               
-              if (currentHour >= 8 && currentHour < 22) {
+              if (currentHour >= 8 && currentHour < 22 && isTodayFn(selectedDayDate)) {
                 const currentTime = currentHour + (currentMinutes / 60);
                 const topPosition = (currentTime - 8) * PIXELS_PER_HOUR;
                 
@@ -410,31 +346,34 @@ export function WeeklyCalendar({ appointments, onAppointmentClick, onTimeSlotCli
                     animate={{ opacity: 1 }}
                     transition={{ duration: 0.5 }}
                   >
-                    {/* Bolinha vermelha - 8px */}
-                    <div className="absolute left-[56px] -translate-y-1/2">
-                      <div className="w-2 h-2 rounded-full bg-[#FF3B30]" />
+                    {/* Círculo indicador menor */}
+                    <div className="absolute left-[44px] -translate-y-1/2">
+                      <motion.div
+                        className="w-1.5 h-1.5 rounded-full bg-red-500 shadow-md shadow-red-500/50"
+                        animate={{ scale: [1, 1.3, 1] }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                      />
                     </div>
-                    {/* Linha vermelha - 2px */}
-                    <div className="absolute left-[60px] right-0 h-[2px] bg-[#FF3B30]" />
+                    {/* Linha vermelha mais fina */}
+                    <div className="absolute left-[48px] right-0 h-[1px] bg-red-500/80" />
                   </motion.div>
                 );
               }
               return null;
             })()}
 
-            {/* Agendamentos posicionados absolutamente com organograma em colunas */}
+            {/* Agendamentos com design adaptativo por tamanho */}
             {weekDays.map((day, dayIndex) => {
               const dayAppointments = getAppointmentsForDay(day);
               const organizedAppointments = organizeAppointmentsInColumns(dayAppointments);
-              const columnWidth = viewMode === "day" ? "calc(100% - 56px)" : `${100 / 7}%`;
 
               return (
                 <div
                   key={`appointments-${dayIndex}`}
                   className="absolute top-0 bottom-0 pointer-events-none"
                   style={{
-                    left: viewMode === "day" ? "56px" : `calc(56px + ${dayIndex} * (100% - 56px) / 7)`,
-                    width: columnWidth,
+                    left: "48px",
+                    width: "calc(100% - 48px)",
                   }}
                 >
                   {organizedAppointments.map(({ appointment: apt, column, totalColumns }) => {

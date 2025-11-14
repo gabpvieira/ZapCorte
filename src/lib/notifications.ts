@@ -200,19 +200,11 @@ Este é um lembrete do seu agendamento:
 Nos vemos em breve!
 
 _Mensagem enviada automaticamente pelo ZapCorte_`,
-      cancelamento: `❌ *Agendamento Cancelado*
+      cancelamento: `📢 Olá *${primeiroNome}*, informamos que seu *agendamento* para ${serviceName} às ${horaFormatada} foi cancelado.
 
-Olá *${primeiroNome}*,
+Caso queira *agendar outro horário*, entre em contato conosco.
 
-Seu agendamento foi cancelado:
-
-📅 *Data:* ${diaSemana}, ${dataFormatada}
-🕐 *Horário:* ${horaFormatada}
-✂️ *Serviço:* ${serviceName}
-
-Para reagendar, entre em contato conosco.
-
-_Mensagem enviada automaticamente pelo ZapCorte_`,
+_Aviso automático - ZapCorte_`,
       reagendamento: `🔄 *Agendamento Reagendado!*
 
 Olá *${primeiroNome}*!
@@ -287,6 +279,85 @@ _Mensagem enviada automaticamente pelo ZapCorte_`
 
   } catch (error) {
     console.error('[WhatsApp] ❌ Erro ao enviar lembrete:', error);
+    return false;
+  }
+}
+
+// Função específica para enviar cancelamento com link da barbearia
+export async function enviarCancelamentoWhatsApp({
+  barbershopId,
+  barbershopSlug,
+  customerName,
+  customerPhone,
+  scheduledAt,
+  serviceName,
+}: {
+  barbershopId: string;
+  barbershopSlug: string;
+  customerName: string;
+  customerPhone: string;
+  scheduledAt: string;
+  serviceName: string;
+}) {
+  try {
+    // Buscar dados da barbearia e verificar se WhatsApp está conectado
+    const { data: barbershop, error: barbershopError } = await supabase
+      .from('barbershops')
+      .select('whatsapp_session_id, whatsapp_connected, name')
+      .eq('id', barbershopId)
+      .single();
+
+    if (barbershopError) {
+      console.error('[WhatsApp] Erro ao buscar barbearia:', barbershopError);
+      return false;
+    }
+
+    if (!barbershop.whatsapp_connected || !barbershop.whatsapp_session_id) {
+      console.log('[WhatsApp] WhatsApp não conectado para esta barbearia');
+      return false;
+    }
+
+    // Formatar hora
+    const date = new Date(scheduledAt);
+    const horaFormatada = format(date, "HH:mm");
+
+    // Extrair primeiro nome
+    const primeiroNome = customerName.split(' ')[0];
+
+    // Construir link da página do barbeiro
+    const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://zapcorte.com';
+    const linkBarbeiro = `${baseUrl}/barbershop/${barbershopSlug}`;
+
+    // Mensagem de cancelamento com link
+    const mensagem = `📢 Olá *${primeiroNome}*, informamos que seu *agendamento* para ${serviceName} às ${horaFormatada} foi cancelado.
+
+Caso queira *agendar outro horário*, clique no link abaixo: 👇
+${linkBarbeiro}
+
+_Aviso automático - ZapCorte_`;
+
+    console.log('[WhatsApp] Enviando cancelamento:', {
+      sessionId: barbershop.whatsapp_session_id,
+      customerPhone,
+      customerName,
+      linkBarbeiro
+    });
+
+    // Enviar mensagem via Evolution API
+    const sucesso = await evolutionApi.sendMessage(barbershop.whatsapp_session_id, {
+      phone: customerPhone,
+      message: mensagem,
+    });
+
+    if (sucesso) {
+      console.log(`[WhatsApp] ✅ Mensagem de cancelamento enviada para ${customerName} (${customerPhone})`);
+      return true;
+    } else {
+      console.error('[WhatsApp] ❌ Falha ao enviar mensagem de cancelamento');
+      return false;
+    }
+  } catch (error) {
+    console.error('[WhatsApp] ❌ Erro ao enviar cancelamento:', error);
     return false;
   }
 }

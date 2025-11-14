@@ -240,18 +240,32 @@ export async function getAvailableTimeSlots(
   let cursor = roundToNext5(new Date(workStart));
 
   const stepMs = (serviceDuration + breakTime) * 60000;
+  
+  // Obter hora atual no timezone brasileiro
+  const now = new Date();
+  const nowBrazil = new Date(now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
 
   while (new Date(cursor.getTime() + serviceDuration * 60000) <= workEnd) {
     const slotStart = new Date(cursor);
     const slotEnd = new Date(slotStart.getTime() + serviceDuration * 60000);
 
+    // Verificar se o horário já passou (não permitir agendamento no passado)
+    const isPastTime = slotStart <= nowBrazil;
+
     // Verificar colisão com períodos ocupados (agendamento + pausa no atendimento existente)
     let available = true;
-    for (const busy of mergedBusyPeriods) {
-      // Se a janela do serviço atual colide com o período ocupado (agendamento + 5min de pausa)
-      if (slotStart < busy.end && slotEnd > busy.start) {
-        available = false;
-        break;
+    
+    // Se o horário já passou, marcar como indisponível
+    if (isPastTime) {
+      available = false;
+    } else {
+      // Verificar colisão com períodos ocupados
+      for (const busy of mergedBusyPeriods) {
+        // Se a janela do serviço atual colide com o período ocupado (agendamento + 5min de pausa)
+        if (slotStart < busy.end && slotEnd > busy.start) {
+          available = false;
+          break;
+        }
       }
     }
 

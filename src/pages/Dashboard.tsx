@@ -10,6 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { useDashboardData } from "@/hooks/useDashboardData";
+import { enviarLembreteWhatsApp } from "@/lib/notifications";
 import {
   Dialog,
   DialogContent,
@@ -111,23 +112,66 @@ const Dashboard = () => {
     
     setStatusUpdateLoading(true);
     try {
-      const response = await fetch(`/api/appointments/${selectedAppointment.id}/status`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user?.access_token}`,
-        },
-        body: JSON.stringify({ status: newStatus }),
-      });
+      // Buscar dados completos do agendamento antes de atualizar
+      const { data: appointmentData, error: fetchError } = await supabase
+        .from("appointments")
+        .select(`
+          *,
+          service:services(name, duration),
+          barbershop:barbershops(slug, name)
+        `)
+        .eq("id", selectedAppointment.id)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Atualizar status
+      const { error } = await supabase
+        .from("appointments")
+        .update({ status: newStatus })
+        .eq("id", selectedAppointment.id);
       
-      if (!response.ok) throw new Error('Erro ao atualizar status');
+      if (error) throw error;
+
+      // Se foi cancelado, enviar mensagem WhatsApp
+      if (newStatus === 'cancelled' && appointmentData) {
+        try {
+          const serviceName = appointmentData.service?.name || 'Serviço';
+          const barbershopSlug = appointmentData.barbershop?.slug || '';
+
+          // Enviar via WhatsApp com link da barbearia
+          const { enviarCancelamentoWhatsApp } = await import('@/lib/notifications');
+          await enviarCancelamentoWhatsApp({
+            barbershopId: appointmentData.barbershop_id,
+            barbershopSlug: barbershopSlug,
+            customerName: appointmentData.customer_name,
+            customerPhone: appointmentData.customer_phone,
+            scheduledAt: appointmentData.scheduled_at,
+            serviceName: serviceName,
+          });
+        } catch (whatsappError) {
+          console.error('Erro ao enviar WhatsApp:', whatsappError);
+          // Não falhar se WhatsApp der erro
+        }
+      }
       
       // Atualizar o agendamento localmente
       selectedAppointment.status = newStatus;
       refetchDashboard();
+
+      // Feedback de sucesso
+      const { showToast } = await import('@/lib/toast-helper');
+      if (newStatus === 'cancelled') {
+        showToast.info('Agendamento cancelado', 'O cliente foi notificado via WhatsApp.');
+      } else if (newStatus === 'confirmed') {
+        showToast.success('Agendamento confirmado', 'Status atualizado com sucesso.');
+      } else {
+        showToast.success('Status atualizado', 'O status foi alterado com sucesso.');
+      }
       
     } catch (error) {
-      alert('Erro ao atualizar status do agendamento');
+      const { showToast } = await import('@/lib/toast-helper');
+      showToast.error('Erro ao atualizar', 'Não foi possível atualizar o status.');
     } finally {
       setStatusUpdateLoading(false);
     }
@@ -138,23 +182,24 @@ const Dashboard = () => {
     
     setNotesUpdateLoading(true);
     try {
-      const response = await fetch(`/api/appointments/${selectedAppointment.id}/notes`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user?.access_token}`,
-        },
-        body: JSON.stringify({ notes }),
-      });
+      const { error } = await supabase
+        .from('appointments')
+        .update({ notes })
+        .eq('id', selectedAppointment.id);
       
-      if (!response.ok) throw new Error('Erro ao atualizar observações');
+      if (error) throw error;
       
       // Atualizar o agendamento localmente
       selectedAppointment.notes = notes;
       refetchDashboard();
+
+      // Feedback de sucesso
+      const { showToast } = await import('@/lib/toast-helper');
+      showToast.success('Observações atualizadas', 'As observações foram salvas com sucesso.');
       
     } catch (error) {
-      alert('Erro ao atualizar observações do agendamento');
+      const { showToast } = await import('@/lib/toast-helper');
+      showToast.error('Erro ao atualizar', 'Não foi possível atualizar as observações.');
     } finally {
       setNotesUpdateLoading(false);
     }
@@ -162,20 +207,24 @@ const Dashboard = () => {
   
   const deleteAppointment = async (appointmentId) => {
     try {
-      const response = await fetch(`/api/appointments/${appointmentId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${user?.access_token}`,
-        },
-      });
+      const { error } = await supabase
+        .from('appointments')
+        .delete()
+        .eq('id', appointmentId);
       
-      if (!response.ok) throw new Error('Erro ao excluir agendamento');
+      if (error) throw error;
+
+      // Importar dinamicamente o toast helper
+      const { showToast } = await import('@/lib/toast-helper');
+      showToast.success('Agendamento excluído', 'O agendamento foi removido com sucesso.');
       
       refetchDashboard();
       closeViewModal();
       
     } catch (error) {
-      alert('Erro ao excluir agendamento');
+      // Importar dinamicamente o toast helper
+      const { showToast } = await import('@/lib/toast-helper');
+      showToast.error('Erro ao excluir', 'Não foi possível excluir o agendamento.');
     }
   };
 

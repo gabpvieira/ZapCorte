@@ -337,6 +337,20 @@ const Appointments = () => {
 
   const handleStatusChange = async (appointmentId: string, newStatus: string) => {
     try {
+      // Buscar dados completos do agendamento antes de atualizar
+      const { data: appointmentData, error: fetchError } = await supabase
+        .from("appointments")
+        .select(`
+          *,
+          service:services(name, duration),
+          barbershop:barbershops(slug, name)
+        `)
+        .eq("id", appointmentId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Atualizar status
       const { error } = await supabase
         .from("appointments")
         .update({ status: newStatus })
@@ -344,10 +358,41 @@ const Appointments = () => {
 
       if (error) throw error;
 
-      toast({
-        title: "Sucesso",
-        description: "Status atualizado com sucesso!",
-      });
+      // Se foi cancelado, enviar mensagem WhatsApp
+      if (newStatus === 'cancelled' && appointmentData) {
+        try {
+          const serviceName = appointmentData.service?.name || 'Serviço';
+          const barbershopSlug = appointmentData.barbershop?.slug || '';
+
+          // Enviar via WhatsApp com link da barbearia
+          const { enviarCancelamentoWhatsApp } = await import('@/lib/notifications');
+          await enviarCancelamentoWhatsApp({
+            barbershopId: appointmentData.barbershop_id,
+            barbershopSlug: barbershopSlug,
+            customerName: appointmentData.customer_name,
+            customerPhone: appointmentData.customer_phone,
+            scheduledAt: appointmentData.scheduled_at,
+            serviceName: serviceName,
+          });
+
+          toast({
+            title: "Agendamento cancelado",
+            description: "Cliente notificado via WhatsApp sobre o cancelamento.",
+          });
+        } catch (whatsappError) {
+          console.error('Erro ao enviar WhatsApp:', whatsappError);
+          // Não falhar se WhatsApp der erro
+          toast({
+            title: "Status atualizado",
+            description: "Status atualizado, mas não foi possível enviar WhatsApp.",
+          });
+        }
+      } else {
+        toast({
+          title: "Sucesso",
+          description: "Status atualizado com sucesso!",
+        });
+      }
 
       fetchAppointments();
     } catch (error) {

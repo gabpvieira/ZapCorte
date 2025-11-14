@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { format, parseISO, startOfDay, addDays, isSameDay, isToday } from 'date-fns';
+import { format, parseISO, addDays, isSameDay, isToday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -34,6 +34,9 @@ const AppleCalendarView: React.FC<AppleCalendarViewProps> = ({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const hasScrolled = useRef(false);
 
+  // Altura reduzida para visualização compacta
+  const HOUR_HEIGHT = 48; // Reduzido de 60px para 48px
+
   // Atualizar hora atual a cada minuto
   useEffect(() => {
     const timer = setInterval(() => {
@@ -50,7 +53,7 @@ const AppleCalendarView: React.FC<AppleCalendarViewProps> = ({
       if (currentHour >= 8 && currentHour <= 22) {
         setTimeout(() => {
           const hourIndex = currentHour - 8;
-          const scrollPosition = hourIndex * 60 - 120; // 60px por hora, centralizar
+          const scrollPosition = hourIndex * HOUR_HEIGHT - 100; // Centralizar na tela
           scrollContainerRef.current?.scrollTo({
             top: Math.max(0, scrollPosition),
             behavior: 'smooth'
@@ -59,7 +62,7 @@ const AppleCalendarView: React.FC<AppleCalendarViewProps> = ({
         }, 300);
       }
     }
-  }, [currentDate, currentTime]);
+  }, [currentDate, currentTime, HOUR_HEIGHT]);
 
   // Horários de 8h às 22h
   const hours = useMemo(() => {
@@ -73,22 +76,22 @@ const AppleCalendarView: React.FC<AppleCalendarViewProps> = ({
     );
   }, [appointments, currentDate]);
 
-  // Calcular posição do agendamento no grid
+  // Calcular posição do agendamento no grid (com altura reduzida)
   const getAppointmentStyle = (scheduledAt: string, duration: number) => {
     const date = parseISO(scheduledAt);
     const hour = date.getHours();
     const minutes = date.getMinutes();
     
-    // Posição vertical baseada na hora
-    const top = (hour - 8) * 60 + (minutes / 60) * 60;
+    // Posição vertical baseada na hora (usando HOUR_HEIGHT)
+    const top = (hour - 8) * HOUR_HEIGHT + (minutes / 60) * HOUR_HEIGHT;
     
-    // Altura baseada na duração
-    const height = (duration / 60) * 60;
+    // Altura baseada na duração (usando HOUR_HEIGHT)
+    const height = (duration / 60) * HOUR_HEIGHT;
     
     return { top, height };
   };
 
-  // Calcular posição da linha de hora atual
+  // Calcular posição da linha de hora atual (com altura reduzida)
   const getCurrentTimePosition = () => {
     if (!isToday(currentDate)) return null;
     
@@ -97,7 +100,7 @@ const AppleCalendarView: React.FC<AppleCalendarViewProps> = ({
     
     if (hour < 8 || hour >= 22) return null;
     
-    return (hour - 8) * 60 + (minutes / 60) * 60;
+    return (hour - 8) * HOUR_HEIGHT + (minutes / 60) * HOUR_HEIGHT;
   };
 
   const currentTimePosition = getCurrentTimePosition();
@@ -123,38 +126,75 @@ const AppleCalendarView: React.FC<AppleCalendarViewProps> = ({
     onDateChange?.(today);
   };
 
-  const getStatusColor = (status: string) => {
+  // Sistema de cores rico e saturado para melhor identificação
+  const getStatusStyles = (status: string) => {
     switch (status) {
       case 'confirmed':
-        return 'bg-blue-500/90 border-blue-400';
+        return {
+          bg: 'bg-[#1A4D3C]', // Verde escuro rico
+          border: 'border-l-[#00C853]',
+          text: 'text-[#E8F5E9]',
+          hover: 'hover:bg-[#225542]',
+          borderStyle: 'border-l-4 border-solid'
+        };
       case 'pending':
-        return 'bg-amber-500/90 border-amber-400';
+        return {
+          bg: 'bg-[#4D3D1A]', // Amarelo escuro rico
+          border: 'border-l-[#FFC107]',
+          text: 'text-[#FFF9E6]',
+          hover: 'hover:bg-[#5C4920]',
+          borderStyle: 'border-l-4 border-solid'
+        };
       case 'cancelled':
-        return 'bg-gray-500/90 border-gray-400';
+        return {
+          bg: 'bg-[#2A2A2A]', // Cinza escuro
+          border: 'border-l-[#666666]',
+          text: 'text-[#999999]',
+          hover: 'hover:bg-[#333333]',
+          borderStyle: 'border-l-4 border-dashed' // Borda pontilhada para cancelado
+        };
       default:
-        return 'bg-gray-500/90 border-gray-400';
+        return {
+          bg: 'bg-[#2A2A2A]',
+          border: 'border-l-[#666666]',
+          text: 'text-[#999999]',
+          hover: 'hover:bg-[#333333]',
+          borderStyle: 'border-l-4 border-solid'
+        };
     }
+  };
+
+  // Extrair iniciais do nome (primeiras 2 letras)
+  const getInitials = (name: string) => {
+    return name.substring(0, 2).toUpperCase();
+  };
+
+  // Calcular horário de término
+  const getEndTime = (startTime: string, duration: number) => {
+    const start = parseISO(startTime);
+    const end = new Date(start.getTime() + duration * 60000);
+    return format(end, 'HH:mm');
   };
 
   return (
     <div className="flex flex-col h-full bg-[#0C0C0C] rounded-2xl overflow-hidden border border-[#27272A]">
-      {/* Header estilo Apple */}
-      <div className="flex items-center justify-between px-4 py-3 bg-[#18181B]/80 backdrop-blur-sm border-b border-[#27272A]">
-        <div className="flex items-center space-x-3">
+      {/* Header compacto estilo Apple */}
+      <div className="flex items-center justify-between px-3 py-2.5 bg-[#18181B]/80 backdrop-blur-sm border-b border-[#27272A]">
+        <div className="flex items-center space-x-2">
           <Button
             variant="ghost"
             size="sm"
             onClick={handlePreviousDay}
-            className="h-8 w-8 p-0 text-gray-400 hover:text-white hover:bg-[#27272A]"
+            className="h-7 w-7 p-0 text-gray-400 hover:text-white hover:bg-[#27272A]"
           >
-            <ChevronLeft className="h-4 w-4" />
+            <ChevronLeft className="h-3.5 w-3.5" />
           </Button>
           
           <Button
             variant="ghost"
             size="sm"
             onClick={handleToday}
-            className="text-sm font-medium text-gray-300 hover:text-white hover:bg-[#27272A] px-3"
+            className="text-xs font-medium text-gray-300 hover:text-white hover:bg-[#27272A] px-2.5 h-7"
           >
             Hoje
           </Button>
@@ -163,61 +203,69 @@ const AppleCalendarView: React.FC<AppleCalendarViewProps> = ({
             variant="ghost"
             size="sm"
             onClick={handleNextDay}
-            className="h-8 w-8 p-0 text-gray-400 hover:text-white hover:bg-[#27272A]"
+            className="h-7 w-7 p-0 text-gray-400 hover:text-white hover:bg-[#27272A]"
           >
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight className="h-3.5 w-3.5" />
           </Button>
         </div>
 
         <div className="text-center">
-          <h2 className="text-lg font-semibold text-white">
+          <h2 className="text-sm font-semibold text-white capitalize leading-tight">
             {format(currentDate, 'EEEE', { locale: ptBR })}
           </h2>
-          <p className="text-sm text-gray-400">
-            {format(currentDate, 'd MMMM yyyy', { locale: ptBR })}
+          <p className="text-[11px] text-gray-400 leading-tight">
+            {format(currentDate, 'd MMM yyyy', { locale: ptBR })}
           </p>
         </div>
 
-        <div className="w-24" /> {/* Spacer para centralizar */}
+        <div className="w-20" /> {/* Spacer para centralizar */}
       </div>
 
-      {/* Grid de horários estilo Apple */}
+      {/* Grid de horários compacto estilo Apple */}
       <div 
         ref={scrollContainerRef}
         className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-[#27272A] scrollbar-track-transparent"
       >
         <div className="relative">
-          {/* Grid de horas */}
+          {/* Grid de horas - altura reduzida */}
           {hours.map((hour) => (
             <div
               key={hour}
-              className="flex border-b border-[#27272A]/30"
-              style={{ height: '60px' }}
+              className="flex border-b border-[#27272A]/20"
+              style={{ height: `${HOUR_HEIGHT}px` }}
             >
-              {/* Coluna de horários (compacta, estilo Apple) */}
-              <div className="w-14 flex-shrink-0 pr-2 pt-1">
-                <span className="text-[11px] font-medium text-gray-500 leading-none">
-                  {hour.toString().padStart(2, '0')}
+              {/* Coluna de horários ultra-compacta */}
+              <div className="w-11 flex-shrink-0 pr-1.5 pt-0.5">
+                <span className="text-[10px] font-medium text-gray-500/80 leading-none tabular-nums">
+                  {hour.toString().padStart(2, '0')}:00
                 </span>
               </div>
 
               {/* Área de agendamentos */}
               <div className="flex-1 relative">
-                {/* Linha divisória sutil */}
-                <div className="absolute top-0 left-0 right-0 h-px bg-[#27272A]/30" />
+                {/* Linha divisória ultra-sutil */}
+                <div className="absolute top-0 left-0 right-0 h-px bg-[#27272A]/20" />
               </div>
             </div>
           ))}
 
-          {/* Agendamentos posicionados absolutamente */}
-          <div className="absolute top-0 left-14 right-0 bottom-0 pointer-events-none">
+          {/* Agendamentos com design adaptativo por tamanho */}
+          <div className="absolute top-0 left-11 right-0 bottom-0 pointer-events-none">
             <AnimatePresence>
               {dayAppointments.map((appointment) => {
                 const { top, height } = getAppointmentStyle(
                   appointment.scheduled_at,
                   appointment.service?.duration || 30
                 );
-                const statusColor = getStatusColor(appointment.status);
+                const duration = appointment.service?.duration || 30;
+                const styles = getStatusStyles(appointment.status);
+                const startTime = format(parseISO(appointment.scheduled_at), 'HH:mm');
+                const endTime = getEndTime(appointment.scheduled_at, duration);
+                
+                // Determinar tipo de card baseado na duração
+                const isSmall = duration < 45; // < 45min
+                const isMedium = duration >= 45 && duration <= 90; // 45min - 1h30
+                const isLarge = duration > 90; // > 1h30
 
                 return (
                   <motion.div
@@ -226,37 +274,92 @@ const AppleCalendarView: React.FC<AppleCalendarViewProps> = ({
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.95 }}
                     className={cn(
-                      "absolute left-1 right-1 rounded-lg border-l-4 pointer-events-auto cursor-pointer",
-                      "transition-all duration-200 hover:shadow-lg hover:z-10",
-                      statusColor
+                      "absolute left-0.5 right-0.5 rounded-md pointer-events-auto cursor-pointer",
+                      "transition-all duration-200 hover:shadow-lg hover:z-10 hover:-translate-y-0.5",
+                      "font-['Inter','-apple-system','sans-serif']",
+                      styles.bg,
+                      styles.border,
+                      styles.text,
+                      styles.hover,
+                      styles.borderStyle,
+                      appointment.status === 'cancelled' && 'opacity-60'
                     )}
                     style={{
                       top: `${top}px`,
-                      height: `${Math.max(height, 30)}px`
+                      height: `${Math.max(height, 32)}px`,
+                      boxShadow: '0 1px 3px rgba(0, 0, 0, 0.3)'
                     }}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Agendamento de ${appointment.customer_name}, ${appointment.service?.name || 'Serviço'}, às ${startTime}, status: ${appointment.status === 'confirmed' ? 'confirmado' : appointment.status === 'pending' ? 'pendente' : 'cancelado'}`}
                   >
-                    <div className="p-2 h-full flex flex-col justify-between overflow-hidden">
-                      <div>
-                        <p className="text-xs font-semibold text-white leading-tight truncate">
-                          {appointment.customer_name}
+                    {/* CARD PEQUENO (< 45min): Apenas iniciais + horário */}
+                    {isSmall && (
+                      <div className="h-full flex flex-col items-center justify-center px-2 py-1">
+                        <p className="text-base font-bold leading-none tracking-tight">
+                          {getInitials(appointment.customer_name)}
                         </p>
-                        {appointment.service && (
-                          <p className="text-[10px] text-white/80 leading-tight truncate">
-                            {appointment.service.name}
-                          </p>
-                        )}
+                        <p className="text-[10px] font-medium opacity-80 mt-1 tabular-nums">
+                          {startTime}
+                        </p>
                       </div>
-                      <p className="text-[10px] text-white/70 leading-none">
-                        {format(parseISO(appointment.scheduled_at), 'HH:mm')}
-                      </p>
-                    </div>
+                    )}
+
+                    {/* CARD MÉDIO (45min - 1h30): Nome + Serviço + Horário */}
+                    {isMedium && (
+                      <div className="h-full flex flex-col justify-between px-1.5 py-1 overflow-hidden">
+                        <div className="space-y-0.5">
+                          <p 
+                            className="text-xs font-semibold leading-tight truncate"
+                            style={{ letterSpacing: '-0.01em' }}
+                          >
+                            {appointment.customer_name.split(' ')[0]}
+                          </p>
+                          {appointment.service && (
+                            <p 
+                              className="text-[10px] font-normal opacity-85 leading-tight truncate"
+                            >
+                              {appointment.service.name}
+                            </p>
+                          )}
+                        </div>
+                        <p className="text-[9px] font-medium opacity-70 tabular-nums">
+                          {startTime}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* CARD GRANDE (> 1h30): Nome completo + Ícone + Serviço + Duração */}
+                    {isLarge && (
+                      <div className="h-full flex flex-col justify-between px-2 py-1.5 overflow-hidden">
+                        <div className="space-y-1">
+                          <p 
+                            className="text-xs font-semibold leading-tight"
+                            style={{ letterSpacing: '-0.01em' }}
+                          >
+                            {appointment.customer_name}
+                          </p>
+                          {appointment.service && (
+                            <div className="flex items-center gap-1">
+                              <span className="text-[10px]">💈</span>
+                              <p className="text-[11px] font-normal opacity-90 leading-tight truncate">
+                                {appointment.service.name}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                        <p className="text-[10px] font-medium opacity-80 tabular-nums">
+                          {startTime} - {endTime}
+                        </p>
+                      </div>
+                    )}
                   </motion.div>
                 );
               })}
             </AnimatePresence>
           </div>
 
-          {/* Linha de hora atual (estilo Apple) */}
+          {/* Linha de hora atual compacta (estilo Apple) */}
           {currentTimePosition !== null && (
             <motion.div
               className="absolute left-0 right-0 z-20 pointer-events-none"
@@ -265,28 +368,41 @@ const AppleCalendarView: React.FC<AppleCalendarViewProps> = ({
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5 }}
             >
-              {/* Círculo indicador */}
-              <div className="absolute left-[52px] -translate-x-1/2 -translate-y-1/2">
+              {/* Círculo indicador menor */}
+              <div className="absolute left-[42px] -translate-x-1/2 -translate-y-1/2">
                 <motion.div
-                  className="w-2 h-2 rounded-full bg-red-500 shadow-lg shadow-red-500/50"
-                  animate={{ scale: [1, 1.2, 1] }}
+                  className="w-1.5 h-1.5 rounded-full bg-red-500 shadow-md shadow-red-500/50"
+                  animate={{ scale: [1, 1.3, 1] }}
                   transition={{ duration: 2, repeat: Infinity }}
                 />
               </div>
               
-              {/* Linha vermelha */}
-              <div className="absolute left-14 right-0 h-[1px] bg-red-500" />
+              {/* Linha vermelha mais fina */}
+              <div className="absolute left-11 right-0 h-[1px] bg-red-500/80" />
             </motion.div>
           )}
         </div>
       </div>
 
-      {/* Footer com contador de agendamentos */}
+      {/* Footer com estatísticas visuais */}
       {dayAppointments.length > 0 && (
-        <div className="px-4 py-2 bg-[#18181B]/80 backdrop-blur-sm border-t border-[#27272A]">
-          <p className="text-xs text-gray-400 text-center">
-            {dayAppointments.length} agendamento{dayAppointments.length > 1 ? 's' : ''} hoje
-          </p>
+        <div className="px-3 py-1.5 bg-[#18181B]/80 backdrop-blur-sm border-t border-[#27272A]">
+          <div className="flex items-center justify-center gap-2.5 text-[10px] text-gray-400">
+            <div className="flex items-center gap-1">
+              <div className="w-2 h-2 rounded-sm bg-[#00C853]" />
+              <span className="font-medium">{dayAppointments.filter(a => a.status === 'confirmed').length}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-2 h-2 rounded-sm bg-[#FFC107]" />
+              <span className="font-medium">{dayAppointments.filter(a => a.status === 'pending').length}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-2 h-2 rounded-sm bg-[#666666] border border-dashed border-gray-500" />
+              <span className="font-medium">{dayAppointments.filter(a => a.status === 'cancelled').length}</span>
+            </div>
+            <span className="text-gray-500 mx-0.5">•</span>
+            <span className="font-semibold text-gray-300">{dayAppointments.length} total</span>
+          </div>
         </div>
       )}
     </div>
