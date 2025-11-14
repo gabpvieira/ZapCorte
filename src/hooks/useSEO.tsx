@@ -47,8 +47,8 @@ export const useSEO = ({ title, description, image, type = 'website' }: SEOConfi
 // Configurações de SEO pré-definidas para cada página
 export const SEO_CONFIGS = {
   home: {
-    title: 'ZapCorte - Sua barbearia organizada, no seu ritmo',
-    description: 'Sua barbearia organizada, no seu ritmo. Sistema completo: minisite personalizado, agendamentos online e lembretes automáticos via WhatsApp. Comece grátis!',
+    title: 'ZapCorte - Sua Barbearia Organizada, No Seu Ritmo.',
+    description: 'Sua Barbearia Organizada, No Seu Ritmo. Sistema completo: minisite personalizado, agendamentos online e lembretes automáticos via WhatsApp. Comece grátis!',
   },
   login: {
     title: 'Login - ZapCorte',

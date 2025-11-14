@@ -290,6 +290,15 @@ const HomeNew = () => {
                 </span>
               </h1>
 
+              <motion.p 
+                className="text-2xl sm:text-3xl font-semibold text-[#24C36B] leading-relaxed"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4, duration: 0.6 }}
+              >
+                Sua Barbearia Organizada, No Seu Ritmo.
+              </motion.p>
+
               <p className="text-xl text-gray-300 leading-relaxed">
                 Pare de perder tempo com ligações e mensagens. Deixe seus clientes agendarem online 24/7 enquanto você foca no que faz de melhor: Atende seus clientes.
               </p>
