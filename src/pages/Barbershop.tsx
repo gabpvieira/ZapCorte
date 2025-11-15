@@ -410,8 +410,8 @@ const Barbershop = () => {
                     placeholder="Ex: 11987654321"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    className="h-11 sm:h-12 text-base border-border/50 focus:border-primary transition-all"
-                    style={{ fontSize: '16px' }}
+                    className="h-11 sm:h-12 border-border/50 focus:border-primary transition-all"
+                    style={{ fontSize: '16px', WebkitTextSizeAdjust: '100%' }}
                   />
                   <p className="text-xs text-muted-foreground">
                     Digite o número usado no agendamento

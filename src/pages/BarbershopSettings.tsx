@@ -502,14 +502,14 @@ const BarbershopSettings = () => {
         </Card>
         
         {/* Horários de Funcionamento - Otimizado Mobile */}
-        <Card className="border-2 md:col-span-2">
+        <Card className="border-2 md:col-span-2 w-full max-w-full overflow-hidden">
           <CardHeader className="p-4 sm:p-6">
             <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
               <Clock className="h-4 w-4 sm:h-5 sm:w-5" />
               Horários de Funcionamento
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-4 sm:p-6">
+          <CardContent className="p-4 sm:p-6 w-full max-w-full overflow-x-hidden">
             {/* Agrupamento Visual Semanal - Otimizado Mobile */}
             <div className="mb-4 sm:mb-6 space-y-3">
               <Label className="font-medium text-sm">Aplicar mesmo horário para:</Label>
@@ -589,14 +589,15 @@ const BarbershopSettings = () => {
                   <div 
                     key={day} 
                     className={cn(
-                      "space-y-2 p-3 border rounded-lg transition-all",
+                      "space-y-2 p-3 border rounded-lg transition-all w-full max-w-full overflow-hidden",
                       isClosed ? "bg-muted/30" : "bg-background"
                     )}
+                    style={{ boxSizing: 'border-box' }}
                   >
-                    <div className="flex items-center justify-between gap-2">
-                      <Label className="font-medium text-sm truncate">{name}</Label>
+                    <div className="flex items-center justify-between gap-2 w-full">
+                      <Label className="font-medium text-sm truncate flex-1 min-w-0">{name}</Label>
                       <div className="flex items-center gap-2 shrink-0">
-                        <Label className="text-xs text-muted-foreground">{isClosed ? "Fechado" : "Aberto"}</Label>
+                        <Label className="text-xs text-muted-foreground whitespace-nowrap">{isClosed ? "Fechado" : "Aberto"}</Label>
                         <Switch 
                           checked={!isClosed} 
                           onCheckedChange={(checked)=>setDayOpen(day, Boolean(checked))}
@@ -606,27 +607,35 @@ const BarbershopSettings = () => {
                     </div>
                     
                     {!isClosed && (
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <Label className="text-xs text-muted-foreground">Abertura</Label>
+                      <div className="grid grid-cols-2 gap-2 w-full max-w-full">
+                        <div className="flex-1 min-w-0">
+                          <Label className="text-xs text-muted-foreground block mb-1">Abertura</Label>
                           <Input
                             type="time"
                             value={daySchedule?.start || ''}
                             onChange={(e) => handleOpeningHoursChange(day, 'start', e.target.value)}
                             step={900}
-                            className="h-11 text-base mt-1"
-                            style={{ fontSize: '16px' }}
+                            className="h-11 w-full"
+                            style={{ 
+                              fontSize: 'clamp(0.875rem, 3.5vw, 1rem)',
+                              boxSizing: 'border-box',
+                              maxWidth: '100%'
+                            }}
                           />
                         </div>
-                        <div>
-                          <Label className="text-xs text-muted-foreground">Fechamento</Label>
+                        <div className="flex-1 min-w-0">
+                          <Label className="text-xs text-muted-foreground block mb-1">Fechamento</Label>
                           <Input
                             type="time"
                             value={daySchedule?.end || ''}
                             onChange={(e) => handleOpeningHoursChange(day, 'end', e.target.value)}
                             step={900}
-                            className="h-11 text-base mt-1"
-                            style={{ fontSize: '16px' }}
+                            className="h-11 w-full"
+                            style={{ 
+                              fontSize: 'clamp(0.875rem, 3.5vw, 1rem)',
+                              boxSizing: 'border-box',
+                              maxWidth: '100%'
+                            }}
                           />
                         </div>
                       </div>

@@ -935,15 +935,45 @@ const Appointments = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <Label htmlFor="date-filter" className="text-xs text-muted-foreground">Data</Label>
-                  <Input
-                    id="date-filter"
-                    type="date"
-                    lang="pt-BR"
-                    value={dateFilter}
-                    onChange={(e) => setDateFilter(e.target.value)}
-                    className="mt-1 h-11 text-base"
-                    style={{ fontSize: '16px' }}
-                  />
+                  <div className="relative mt-1">
+                    <Input
+                      id="date-filter"
+                      type="text"
+                      placeholder="dd/mm/aaaa"
+                      value={dateFilter ? format(parseISO(dateFilter), 'dd/MM/yyyy') : ''}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, '');
+                        let formatted = value;
+                        
+                        if (value.length >= 2) {
+                          formatted = value.slice(0, 2) + '/' + value.slice(2);
+                        }
+                        if (value.length >= 4) {
+                          formatted = value.slice(0, 2) + '/' + value.slice(2, 4) + '/' + value.slice(4, 8);
+                        }
+                        
+                        // Validar e converter para formato ISO se completo
+                        if (value.length === 8) {
+                          const day = value.slice(0, 2);
+                          const month = value.slice(2, 4);
+                          const year = value.slice(4, 8);
+                          const isoDate = `${year}-${month}-${day}`;
+                          
+                          // Validar se é uma data válida
+                          const testDate = new Date(isoDate);
+                          if (!isNaN(testDate.getTime())) {
+                            setDateFilter(isoDate);
+                          }
+                        } else if (value.length === 0) {
+                          setDateFilter('');
+                        }
+                      }}
+                      maxLength={10}
+                      className="h-11 pr-10"
+                      style={{ fontSize: '16px' }}
+                    />
+                    <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                  </div>
                 </div>
                 <div>
                   <Label htmlFor="status-filter" className="text-xs text-muted-foreground">Status</Label>
@@ -1358,8 +1388,8 @@ const Appointments = () => {
               appointments={filteredAppointments}
               onAppointmentClick={(appointment) => openViewModal(appointment)}
               onTimeSlotClick={(date, time) => {
-                // Preencher formulário com data e hora selecionadas
-                const dateString = format(date, 'yyyy-MM-dd');
+                // Preencher formulário com data e hora selecionadas no formato correto
+                const dateString = format(date, 'dd/MM/yyyy');
                 setFormData({
                   ...formData,
                   scheduled_date: dateString,
