@@ -122,17 +122,30 @@ All colors MUST be HSL.
     overflow: hidden;
   }
 
-  /* Estilização para placeholder de input date em mobile */
-  input[type="date"]::-webkit-datetime-edit {
-    color: transparent;
-  }
-
-  input[type="date"]:focus::-webkit-datetime-edit {
+  /* Estilização para input date visível em mobile */
+  input[type="date"].date-input-visible::-webkit-datetime-edit {
     color: inherit;
   }
 
-  input[type="date"]:not(:placeholder-shown)::-webkit-datetime-edit {
-    color: inherit;
+  input[type="date"].date-input-visible::-webkit-calendar-picker-indicator {
+    opacity: 0.6;
+    cursor: pointer;
+  }
+
+  input[type="date"].date-input-visible:hover::-webkit-calendar-picker-indicator {
+    opacity: 1;
+  }
+
+  /* Placeholder customizado para input date vazio */
+  input[type="date"].date-input-visible::-webkit-datetime-edit-text,
+  input[type="date"].date-input-visible::-webkit-datetime-edit-month-field,
+  input[type="date"].date-input-visible::-webkit-datetime-edit-day-field,
+  input[type="date"].date-input-visible::-webkit-datetime-edit-year-field {
+    color: hsl(var(--foreground));
+  }
+
+  input[type="date"].date-input-visible:invalid::-webkit-datetime-edit {
+    color: hsl(var(--muted-foreground));
   }
 
   /* Garantir que inputs de tempo sejam responsivos */

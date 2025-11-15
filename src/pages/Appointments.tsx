@@ -925,73 +925,48 @@ const Appointments = () => {
 
         {/* Visualização em Lista */}
         <TabsContent value="list" className="mt-0 space-y-4">
-          {/* Filtros Compactos */}
-          <Card>
-            <CardContent className="p-3 sm:p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <Filter className="h-4 w-4 text-primary" />
-                <h3 className="font-semibold text-sm">Filtros</h3>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <Label htmlFor="date-filter" className="text-xs text-muted-foreground">Data</Label>
-                  <div className="relative mt-1">
-                    <Input
-                      id="date-filter"
-                      type="text"
-                      placeholder="dd/mm/aaaa"
-                      value={dateFilter ? format(parseISO(dateFilter), 'dd/MM/yyyy') : ''}
-                      onChange={(e) => {
-                        const value = e.target.value.replace(/\D/g, '');
-                        let formatted = value;
-                        
-                        if (value.length >= 2) {
-                          formatted = value.slice(0, 2) + '/' + value.slice(2);
-                        }
-                        if (value.length >= 4) {
-                          formatted = value.slice(0, 2) + '/' + value.slice(2, 4) + '/' + value.slice(4, 8);
-                        }
-                        
-                        // Validar e converter para formato ISO se completo
-                        if (value.length === 8) {
-                          const day = value.slice(0, 2);
-                          const month = value.slice(2, 4);
-                          const year = value.slice(4, 8);
-                          const isoDate = `${year}-${month}-${day}`;
-                          
-                          // Validar se é uma data válida
-                          const testDate = new Date(isoDate);
-                          if (!isNaN(testDate.getTime())) {
-                            setDateFilter(isoDate);
-                          }
-                        } else if (value.length === 0) {
-                          setDateFilter('');
-                        }
-                      }}
-                      maxLength={10}
-                      className="h-11 pr-10"
-                      style={{ fontSize: '16px' }}
-                    />
-                    <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-                  </div>
-                </div>
-                <div>
-                  <Label htmlFor="status-filter" className="text-xs text-muted-foreground">Status</Label>
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="mt-1 h-9 text-sm">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos</SelectItem>
-                      <SelectItem value="pending">Pendente</SelectItem>
-                      <SelectItem value="confirmed">Confirmado</SelectItem>
-                      <SelectItem value="cancelled">Cancelado</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Filtros Minimalistas */}
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 p-3 sm:p-4 bg-muted/30 rounded-lg border border-border/50">
+            <div className="flex items-center gap-2 flex-1">
+              <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
+              <Input
+                id="date-filter"
+                type="date"
+                value={dateFilter}
+                onChange={(e) => setDateFilter(e.target.value)}
+                className="h-9 border-0 bg-background/50 hover:bg-background transition-colors date-input-visible"
+                style={{ fontSize: '16px' }}
+              />
+            </div>
+            <div className="flex items-center gap-2 flex-1">
+              <Filter className="h-4 w-4 text-muted-foreground shrink-0" />
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="h-9 border-0 bg-background/50 hover:bg-background transition-colors">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os status</SelectItem>
+                  <SelectItem value="pending">Pendente</SelectItem>
+                  <SelectItem value="confirmed">Confirmado</SelectItem>
+                  <SelectItem value="cancelled">Cancelado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {(dateFilter || statusFilter !== "all") && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setDateFilter("");
+                  setStatusFilter("all");
+                }}
+                className="h-9 px-3 text-xs shrink-0"
+              >
+                <X className="h-3 w-3 mr-1" />
+                Limpar
+              </Button>
+            )}
+          </div>
 
           {filteredAppointments.length === 0 ? (
         <motion.div
