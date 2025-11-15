@@ -1022,7 +1022,8 @@ const HomeNew = () => {
                 period: "/mês",
                 description: "Perfeito para começar",
                 features: [
-                  "Agendamentos ilimitados",
+                  "Até 5 agendamentos por dia",
+                  "Máximo 4 serviços",
                   "Página personalizada",
                   "Gestão de serviços",
                   "Dashboard básico",
