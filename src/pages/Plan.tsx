@@ -33,14 +33,15 @@ const Plan = () => {
     starter: {
       maxAppointmentsPerDay: 999,
       maxServices: 999,
-      name: 'Starter',
-      price: 'R$ 30/mês',
+      name: 'Premium',
+      price: 'R$ 49,90/mês',
+      oldPrice: 'R$ 97,00',
       features: [
         'Agendamentos ilimitados',
         'Serviços ilimitados',
         'Domínio personalizado',
         'WhatsApp integrado',
-        'Suporte básico',
+        'Suporte prioritário',
         'Relatórios básicos'
       ]
     },
@@ -191,7 +192,15 @@ const Plan = () => {
                   
                   <div className="plan-card-header text-center mb-4">
                     <h3 className="plan-card-title text-lg md:text-xl font-bold">{plan.name}</h3>
+                    {plan.oldPrice && (
+                      <p className="text-sm text-muted-foreground line-through mt-1">{plan.oldPrice}</p>
+                    )}
                     <p className="plan-card-price text-xl md:text-2xl font-bold text-primary mt-2">{plan.price}</p>
+                    {plan.oldPrice && (
+                      <span className="inline-block mt-2 text-xs bg-primary/20 text-primary px-2 py-1 rounded-full font-bold">
+                        Economize 50%
+                      </span>
+                    )}
                   </div>
                   
                   <ul className="plan-card-features space-y-2 mb-4">

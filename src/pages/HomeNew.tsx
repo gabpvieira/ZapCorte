@@ -1033,7 +1033,8 @@ const HomeNew = () => {
               },
               {
                 name: "Premium",
-                price: "29,90",
+                price: "49,90",
+                oldPrice: "97,00",
                 period: "/mês",
                 description: "Mais popular entre barbeiros",
                 features: [
@@ -1097,8 +1098,20 @@ const HomeNew = () => {
                     <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
                     <p className="text-gray-400 mb-6">{plan.description}</p>
                     <div className="mb-6">
+                      {plan.oldPrice && (
+                        <div className="mb-2">
+                          <span className="text-2xl text-gray-500 line-through">R$ {plan.oldPrice}</span>
+                        </div>
+                      )}
                       <span className="text-5xl font-bold">R$ {plan.price}</span>
                       <span className="text-gray-400">{plan.period}</span>
+                      {plan.oldPrice && (
+                        <div className="mt-2">
+                          <span className="text-sm bg-[#24C36B]/20 text-[#24C36B] px-3 py-1 rounded-full font-bold">
+                            Economize 50%
+                          </span>
+                        </div>
+                      )}
                     </div>
                     <ul className="space-y-4 mb-8">
                       {plan.features.map((feature, j) => (
