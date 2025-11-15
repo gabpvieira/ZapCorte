@@ -173,12 +173,19 @@ const Plan = () => {
                     currentPlan === planKey 
                       ? 'border-primary bg-primary/5 ring-2 ring-primary/20' 
                       : 'border-border'
-                  }`}
+                  } ${planKey === 'pro' ? 'opacity-75' : ''}`}
                 >
                   {/* Badge de Plano Atual */}
                   {currentPlan === planKey && (
                     <div className="absolute top-2 right-2 bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-full shadow-md">
                       ✓ Atual
+                    </div>
+                  )}
+                  
+                  {/* Badge EM BREVE para plano Pro */}
+                  {planKey === 'pro' && (
+                    <div className="absolute top-2 right-2 bg-yellow-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md">
+                      EM BREVE
                     </div>
                   )}
                   
@@ -197,13 +204,19 @@ const Plan = () => {
                   </ul>
                   
                   {currentPlan !== planKey && planKey !== 'freemium' && (
-                    <UpgradeButton 
-                      className="plan-card-button w-full" 
-                      variant="outline"
-                      planType={planKey as 'starter' | 'pro'}
-                    >
-                      {currentPlan === 'freemium' ? 'Assinar Agora' : 'Mudar de Plano'}
-                    </UpgradeButton>
+                    planKey === 'pro' ? (
+                      <Button className="plan-card-button w-full" disabled variant="outline">
+                        Em Breve
+                      </Button>
+                    ) : (
+                      <UpgradeButton 
+                        className="plan-card-button w-full" 
+                        variant="outline"
+                        planType={planKey as 'starter' | 'pro'}
+                      >
+                        {currentPlan === 'freemium' ? 'Assinar Agora' : 'Mudar de Plano'}
+                      </UpgradeButton>
+                    )
                   )}
                   
                   {currentPlan === planKey && (
