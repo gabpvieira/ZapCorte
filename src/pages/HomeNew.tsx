@@ -1061,8 +1061,9 @@ const HomeNew = () => {
                   "Integrações avançadas",
                   "Suporte VIP 24/7"
                 ],
-                cta: "Assinar Pro",
-                highlighted: false
+                cta: "Em Breve",
+                highlighted: false,
+                comingSoon: true
               }
             ].map((plan, i) => (
               <motion.div
@@ -1080,11 +1081,18 @@ const HomeNew = () => {
                     </span>
                   </div>
                 )}
+                {plan.comingSoon && (
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10">
+                    <span className="bg-yellow-500 text-white px-4 py-1 rounded-full text-sm font-bold">
+                      EM BREVE
+                    </span>
+                  </div>
+                )}
                 <Card className={`h-full ${
                   plan.highlighted
                     ? 'bg-gradient-to-br from-[#24C36B]/10 to-[#18181B] border-[#24C36B] border-2'
                     : 'bg-[#18181B] border-[#27272A]'
-                }`}>
+                } ${plan.comingSoon ? 'opacity-75' : ''}`}>
                   <CardContent className="p-8">
                     <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
                     <p className="text-gray-400 mb-6">{plan.description}</p>
@@ -1106,9 +1114,14 @@ const HomeNew = () => {
                           ? 'bg-[#24C36B] hover:bg-[#1ea557] text-black'
                           : 'bg-transparent border-2 border-[#24C36B] text-[#24C36B] hover:bg-[#24C36B] hover:text-black'
                       }`}
-                      asChild
+                      disabled={plan.comingSoon}
+                      asChild={!plan.comingSoon}
                     >
-                      <Link to="/register">{plan.cta}</Link>
+                      {plan.comingSoon ? (
+                        <span>{plan.cta}</span>
+                      ) : (
+                        <Link to="/register">{plan.cta}</Link>
+                      )}
                     </Button>
                   </CardContent>
                 </Card>
