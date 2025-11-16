@@ -1466,16 +1466,16 @@ const Appointments = () => {
                   </a>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-muted/50 rounded-lg p-3 min-w-0 overflow-hidden">
+                <div className="flex gap-3">
+                  <div className="bg-muted/50 rounded-lg p-3 flex-1 min-w-0">
                     <label className="text-xs text-muted-foreground block mb-1">Data</label>
-                    <p className="font-semibold text-xs leading-tight break-words hyphens-auto" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>
+                    <p className="font-semibold text-sm truncate">
                       {formatDate(selectedAppointment.scheduled_at)}
                     </p>
                   </div>
-                  <div className="bg-muted/50 rounded-lg p-3 min-w-0">
+                  <div className="bg-muted/50 rounded-lg p-3 flex-shrink-0 w-24">
                     <label className="text-xs text-muted-foreground block mb-1">Horário</label>
-                    <p className="font-semibold text-sm">{formatTime(selectedAppointment.scheduled_at)}</p>
+                    <p className="font-semibold text-sm text-center">{formatTime(selectedAppointment.scheduled_at)}</p>
                   </div>
                 </div>
 
