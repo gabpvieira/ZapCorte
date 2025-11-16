@@ -4,24 +4,21 @@
 
 As meta tags Open Graph com logo estático não estavam gerando previews adequados nos compartilhamentos de WhatsApp, Facebook e outras redes sociais após mais de 3 horas.
 
-## 🎯 Nova Estratégia: API de Geração Dinâmica de Imagens
+## 🎯 Nova Estratégia: Serviço Externo de Geração de Imagens
 
-Implementação de uma API serverless que gera imagens OG personalizadas para cada barbearia em tempo real.
+Uso do serviço público og-image.vercel.app para gerar imagens OG personalizadas dinamicamente, sem necessidade de API própria.
 
 ## 🏗️ Arquitetura
 
-### 1. API Serverless (Edge Function)
-**Arquivo:** `api/og/[slug].tsx`
-
-```typescript
-import { ImageResponse } from '@vercel/og';
-```
+### 1. Serviço Externo (og-image.vercel.app)
+**URL Base:** `https://og-image.vercel.app/`
 
 **Características:**
-- Runtime: Edge (execução rápida e global)
+- Serviço público e gratuito da Vercel
 - Gera imagem PNG de 1200x630px
-- Busca dados da barbearia do Supabase
-- Renderiza HTML/CSS como imagem
+- Suporta texto e imagens
+- Cache automático
+- Sem necessidade de API própria
 
 ### 2. Fluxo de Funcionamento
 
@@ -30,20 +27,16 @@ import { ImageResponse } from '@vercel/og';
    ↓
 2. Rede social faz request para meta tag og:image
    ↓
-3. URL aponta para /api/og/[slug]
+3. URL aponta para og-image.vercel.app com parâmetros
    ↓
-4. API busca dados da barbearia no Supabase
+4. Serviço gera imagem com:
+   - Nome da barbearia
+   - Texto "Agende Online"
+   - Logo do ZapCorte (se não tiver logo próprio)
    ↓
-5. Gera imagem dinâmica com:
-   - Logo da barbearia
-   - Nome
-   - Subtítulo
-   - CTA "Agende Online"
-   - Branding ZapCorte
+5. Retorna imagem PNG cacheada
    ↓
-6. Retorna imagem PNG
-   ↓
-7. Rede social exibe preview rico
+6. Rede social exibe preview rico
 ```
 
 ## 🎨 Design da Imagem OG
