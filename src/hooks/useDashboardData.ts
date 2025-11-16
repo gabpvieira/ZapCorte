@@ -48,7 +48,10 @@ export function useDashboardData(barbershopId: string | undefined) {
   const [error, setError] = useState<string | null>(null);
 
   const fetchDashboardData = useCallback(async () => {
-    if (!barbershopId) return;
+    if (!barbershopId) {
+      setLoading(false);
+      return;
+    }
 
     try {
       setLoading(true);
@@ -150,8 +153,19 @@ export function useDashboardData(barbershopId: string | undefined) {
   }, [barbershopId]);
 
   useEffect(() => {
-    fetchDashboardData();
-  }, [barbershopId]);
+    let mounted = true;
+    
+    const loadData = async () => {
+      if (!barbershopId || !mounted) return;
+      await fetchDashboardData();
+    };
+    
+    loadData();
+    
+    return () => {
+      mounted = false;
+    };
+  }, [barbershopId, fetchDashboardData]);
 
   return {
     stats,

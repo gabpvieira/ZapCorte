@@ -2,12 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Responsividade completa do painel */
-@import './styles/responsive-dashboard.css';
-
-/* Premium Image Upload */
-@import './styles/image-upload-premium.css';
-
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
 All colors MUST be HSL.
 */

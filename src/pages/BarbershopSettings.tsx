@@ -35,6 +35,15 @@ const BarbershopSettings = () => {
   const [groupStart, setGroupStart] = useState<string>("09:00");
   const [groupEnd, setGroupEnd] = useState<string>("19:00");
   const [validationError, setValidationError] = useState<string>("");
+  const [lunchBreak, setLunchBreak] = useState<{
+    start: string;
+    end: string;
+    enabled: boolean;
+  }>({
+    start: "13:00",
+    end: "14:00",
+    enabled: false
+  });
   
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [bannerFile, setBannerFile] = useState<File | null>(null);
@@ -59,6 +68,11 @@ const BarbershopSettings = () => {
       
       // Carregar horários de funcionamento
       setOpeningHours(barbershop.opening_hours || {});
+      
+      // Carregar intervalo de almoço
+      if (barbershop.lunch_break) {
+        setLunchBreak(barbershop.lunch_break);
+      }
     }
   }, [barbershop]);
 
@@ -260,6 +274,17 @@ const BarbershopSettings = () => {
         }
       }
 
+      // Validar intervalo de almoço se estiver habilitado
+      if (lunchBreak.enabled && lunchBreak.start >= lunchBreak.end) {
+        toast({
+          title: "Horário de almoço inválido",
+          description: "O horário de início deve ser menor que o de fim.",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
       // Atualizar dados da barbearia
       await updateBarbershop(barbershop.id, {
         name: formData.name,
@@ -270,7 +295,8 @@ const BarbershopSettings = () => {
         maps_url: formData.maps_url,
         logo_url: logoUrl,
         banner_url: bannerUrl,
-        opening_hours: openingHours
+        opening_hours: openingHours,
+        lunch_break: lunchBreak
       });
 
       // Recarregar dados
@@ -648,6 +674,96 @@ const BarbershopSettings = () => {
             <p className="text-xs text-muted-foreground mt-4 bg-blue-50 dark:bg-blue-950/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
               💡 Configure os horários de funcionamento da sua barbearia. Dias marcados como "Fechado" não aparecerão no site.
             </p>
+          </CardContent>
+        </Card>
+
+        {/* Intervalo de Almoço */}
+        <Card className="border-2 md:col-span-2 w-full max-w-full overflow-hidden">
+          <CardHeader className="p-4 sm:p-6 bg-gradient-to-r from-amber-500/5 to-amber-500/10 border-b">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600" />
+              Intervalo de Almoço
+            </CardTitle>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+              Configure um horário fixo de pausa para o almoço
+            </p>
+          </CardHeader>
+          <CardContent className="p-4 sm:p-6 w-full max-w-full overflow-x-hidden">
+            <div className="space-y-4">
+              {/* Toggle para habilitar/desabilitar */}
+              <div className="flex items-center justify-between p-4 rounded-lg bg-muted/30 border border-border/50">
+                <div className="flex-1">
+                  <Label className="text-sm font-medium">Ativar Intervalo de Almoço</Label>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Quando ativado, este horário não estará disponível para agendamentos
+                  </p>
+                </div>
+                <Switch
+                  checked={lunchBreak.enabled}
+                  onCheckedChange={(checked) => setLunchBreak(prev => ({ ...prev, enabled: checked }))}
+                />
+              </div>
+
+              {/* Configuração de horários */}
+              {lunchBreak.enabled && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-amber-600" />
+                      Início do Intervalo
+                    </Label>
+                    <Input
+                      type="time"
+                      value={lunchBreak.start}
+                      onChange={(e) => setLunchBreak(prev => ({ ...prev, start: e.target.value }))}
+                      step={900}
+                      className="h-11 text-base"
+                      style={{ fontSize: '16px' }}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-amber-600" />
+                      Fim do Intervalo
+                    </Label>
+                    <Input
+                      type="time"
+                      value={lunchBreak.end}
+                      onChange={(e) => setLunchBreak(prev => ({ ...prev, end: e.target.value }))}
+                      step={900}
+                      className="h-11 text-base"
+                      style={{ fontSize: '16px' }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Informação adicional */}
+              <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-2 flex items-center gap-2">
+                  <span>ℹ️</span>
+                  Como funciona?
+                </h4>
+                <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-1.5">
+                  <li className="flex items-start gap-2">
+                    <span className="text-blue-500 mt-0.5">•</span>
+                    <span>O intervalo de almoço bloqueia automaticamente os horários para agendamento</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-blue-500 mt-0.5">•</span>
+                    <span>Este horário será aplicado em todos os dias de funcionamento</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-blue-500 mt-0.5">•</span>
+                    <span>Exemplo: Das 13:00 às 14:00 - nenhum cliente poderá agendar neste período</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-blue-500 mt-0.5">•</span>
+                    <span>Você pode desativar o intervalo a qualquer momento</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>

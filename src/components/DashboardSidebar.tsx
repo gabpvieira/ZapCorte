@@ -219,14 +219,14 @@ export const DashboardSidebar = ({ className }: DashboardSidebarProps) => {
 
   return (
     <>
-      {/* Mobile Menu Button */}
+      {/* Mobile Menu Button - Maior para melhor usabilidade */}
       <Button
         variant="ghost"
-        size="sm"
-        className="fixed top-4 left-4 z-50 md:hidden bg-background/80 backdrop-blur-sm"
+        size="lg"
+        className="fixed top-4 left-4 z-50 md:hidden bg-background/80 backdrop-blur-sm h-12 w-12 p-0"
         onClick={() => setIsMobileOpen(true)}
       >
-        <Menu className="h-5 w-5" />
+        <Menu className="h-7 w-7" />
       </Button>
 
       {/* Desktop Sidebar */}

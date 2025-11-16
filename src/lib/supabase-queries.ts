@@ -140,10 +140,10 @@ export async function getAvailableTimeSlots(
   const dateWithTimezone = new Date(date + 'T12:00:00-03:00');
   const dayOfWeek = dateWithTimezone.getDay();
 
-  // Primeiro, buscar a barbearia para verificar opening_hours
+  // Primeiro, buscar a barbearia para verificar opening_hours e lunch_break
   const { data: barbershop, error: barbershopError } = await supabase
     .from('barbershops')
-    .select('opening_hours')
+    .select('opening_hours, lunch_break')
     .eq('id', barbershopId)
     .single();
 
@@ -265,6 +265,17 @@ export async function getAvailableTimeSlots(
         if (slotStart < busy.end && slotEnd > busy.start) {
           available = false;
           break;
+        }
+      }
+
+      // Verificar se o horário colide com o intervalo de almoço
+      if (available && barbershop.lunch_break?.enabled) {
+        const lunchStart = new Date(`${date}T${barbershop.lunch_break.start}-03:00`);
+        const lunchEnd = new Date(`${date}T${barbershop.lunch_break.end}-03:00`);
+        
+        // Se o serviço começa antes do fim do almoço E termina depois do início do almoço
+        if (slotStart < lunchEnd && slotEnd > lunchStart) {
+          available = false;
         }
       }
     }

@@ -10,6 +10,7 @@ import { getBarbershopBySlug, getBarbershopServices } from "@/lib/supabase-queri
 import { isBarbershopOpen, formatOpeningHours } from "@/lib/barbershop-utils";
 import type { Barbershop, Service } from "@/lib/supabase";
 import { supabase } from "@/lib/supabase";
+import { BarbershopSEO } from "@/components/BarbershopSEO";
 import "@/styles/booking-premium.css";
 
 const Barbershop = () => {
@@ -123,12 +124,16 @@ const Barbershop = () => {
   };
 
   return (
-    <motion.div 
-      className="min-h-screen bg-gradient-to-br from-background via-background to-muted/10 overflow-x-hidden"
-      variants={containerVariants}
-      initial="initial"
-      animate="animate"
-    >
+    <>
+      {/* SEO Dinâmico */}
+      <BarbershopSEO barbershop={barbershop} />
+      
+      <motion.div 
+        className="min-h-screen bg-gradient-to-br from-background via-background to-muted/10 overflow-x-hidden"
+        variants={containerVariants}
+        initial="initial"
+        animate="animate"
+      >
       {/* Hero Banner Premium - Full Width */}
       <motion.div 
         className="relative w-full h-[300px] sm:h-[350px] md:h-[350px] lg:h-[350px] xl:h-[350px] mb-16 sm:mb-20"
@@ -590,6 +595,7 @@ const Barbershop = () => {
         </div>
       </motion.footer>
     </motion.div>
+    </>
   );
 };
 

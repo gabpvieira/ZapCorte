@@ -30,10 +30,23 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let mounted = true;
+    
     // Obter sessão inicial com persistência reforçada
     const getInitialSession = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (!mounted) return;
+        
+        if (error) {
+          console.error('Erro ao obter sessão:', error);
+          setSession(null);
+          setUser(null);
+          localStorage.removeItem('zapcorte_user_session');
+          setLoading(false);
+          return;
+        }
         
         if (session?.user) {
           setSession(session);
@@ -45,18 +58,24 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             expires_at: session.expires_at
           }));
           
+          // Não bloquear a renderização esperando o profile
           createOrUpdateProfile(session.user).catch(() => {});
         } else {
           setSession(null);
           setUser(null);
           localStorage.removeItem('zapcorte_user_session');
         }
-      } catch {
-        setSession(null);
-        setUser(null);
-        localStorage.removeItem('zapcorte_user_session');
+      } catch (error) {
+        console.error('Erro ao carregar sessão:', error);
+        if (mounted) {
+          setSession(null);
+          setUser(null);
+          localStorage.removeItem('zapcorte_user_session');
+        }
       } finally {
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     };
 
@@ -65,6 +84,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     // Configurar listener para mudanças de autenticação com persistência
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        if (!mounted) return;
+        
         // Verificar se o token está próximo do vencimento e fazer refresh automático
         if (session?.expires_at) {
           const expiresAt = session.expires_at * 1000;
@@ -75,7 +96,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           if (timeUntilExpiry < tenMinutes && timeUntilExpiry > 0) {
             try {
               const { data: { session: refreshedSession } } = await supabase.auth.refreshSession();
-              if (refreshedSession) {
+              if (refreshedSession && mounted) {
                 setSession(refreshedSession);
                 setUser(refreshedSession.user);
                 
@@ -86,13 +107,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
                 }));
                 return;
               }
-            } catch {}
+            } catch (error) {
+              console.error('Erro ao atualizar token:', error);
+            }
           }
         }
         
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
+        if (mounted) {
+          setSession(session);
+          setUser(session?.user ?? null);
+          setLoading(false);
+        }
 
         // Gerenciar localStorage baseado no evento
         if (event === 'SIGNED_IN' && session?.user) {
@@ -115,7 +140,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
     );
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const createOrUpdateProfile = async (user: User) => {

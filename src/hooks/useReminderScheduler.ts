@@ -8,15 +8,27 @@ export const useReminderScheduler = () => {
   useEffect(() => {
     // Só iniciar o scheduler se o usuário estiver logado
     if (user) {
-      reminderScheduler.start();
+      // Usar setTimeout para não bloquear a renderização inicial
+      const timeoutId = setTimeout(() => {
+        try {
+          reminderScheduler.start();
+        } catch (error) {
+          console.error('Erro ao iniciar scheduler:', error);
+        }
+      }, 2000); // Aguardar 2 segundos após o login
       
       return () => {
-        reminderScheduler.stop();
+        clearTimeout(timeoutId);
+        try {
+          reminderScheduler.stop();
+        } catch (error) {
+          console.error('Erro ao parar scheduler:', error);
+        }
       };
     }
   }, [user]);
 
   return {
-    isRunning: true, // Podemos adicionar um estado para isso se necessário
+    isRunning: true,
   };
 };

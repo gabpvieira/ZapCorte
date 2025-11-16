@@ -55,7 +55,7 @@ class ReminderScheduler {
       // Buscar lembretes que devem ser enviados agora usando query SQL direta
       const { data: reminders, error } = await supabase.rpc('get_pending_reminders', {
         p_current_time: now.toISOString()
-      });
+      }).timeout(5000); // Timeout de 5 segundos
 
       // Se a função não existir, usar query alternativa
       if (error && error.code === 'PGRST202') {

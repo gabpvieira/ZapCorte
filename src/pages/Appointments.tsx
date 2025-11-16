@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Edit, Trash2, Calendar, Clock, Phone, User, Filter, Eye, RefreshCw, X, CheckCircle, List, CalendarDays } from "lucide-react";
+import { Plus, Edit, Trash2, Calendar, Clock, Phone, User, Filter, Eye, RefreshCw, X, CheckCircle, List } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { RecurringAppointments } from "@/components/RecurringAppointments";
 import { useToast } from "@/hooks/use-toast";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { useUserData } from "@/hooks/useUserData";
@@ -20,7 +21,6 @@ import { format, parseISO, parse, isPast, isToday, addDays, startOfDay, endOfDay
 import { ptBR } from "date-fns/locale";
 import { enviarLembreteWhatsApp } from "@/lib/notifications";
 import { DatePicker } from "@/components/DatePicker";
-import { WeeklyCalendar } from "@/components/WeeklyCalendar";
 import { cn } from "@/lib/utils";
 
 interface Service {
@@ -85,7 +85,7 @@ const Appointments = () => {
   });
   const [dateFilter, setDateFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
+  const [viewMode, setViewMode] = useState<"list" | "recurring">("list");
   
   // Estados para modal de visualização e ações
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
@@ -487,6 +487,86 @@ const Appointments = () => {
       toast({
         title: "Erro",
         description: "Não foi possível atualizar o status.",
+        variant: "destructive",
+      });
+    } finally {
+      setStatusUpdateLoading(false);
+    }
+  };
+
+  // Nova função para salvar alterações (status + observações)
+  const saveAppointmentChanges = async (appointment: Appointment | null) => {
+    if (!appointment) return;
+
+    setStatusUpdateLoading(true);
+    try {
+      // Buscar o status original do banco
+      const { data: originalData, error: fetchError } = await supabase
+        .from("appointments")
+        .select(`
+          *,
+          service:services(name, duration),
+          barbershop:barbershops(slug, name)
+        `)
+        .eq("id", appointment.id)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      const statusChanged = originalData.status !== appointment.status;
+      const wasCancelled = appointment.status === 'cancelled' && statusChanged;
+
+      // Atualizar no banco
+      const { error } = await supabase
+        .from("appointments")
+        .update({ 
+          status: appointment.status,
+          notes: appointment.notes || null
+        })
+        .eq("id", appointment.id);
+
+      if (error) throw error;
+
+      // Se foi cancelado, enviar mensagem WhatsApp
+      if (wasCancelled) {
+        try {
+          const serviceName = originalData.service?.name || 'Serviço';
+          const barbershopSlug = originalData.barbershop?.slug || '';
+
+          const { enviarCancelamentoWhatsApp } = await import('@/lib/notifications');
+          await enviarCancelamentoWhatsApp({
+            barbershopId: originalData.barbershop_id,
+            barbershopSlug: barbershopSlug,
+            customerName: originalData.customer_name,
+            customerPhone: originalData.customer_phone,
+            scheduledAt: originalData.scheduled_at,
+            serviceName: serviceName,
+          });
+
+          toast({
+            title: "Alterações Salvas! ✅",
+            description: "Agendamento cancelado e cliente notificado via WhatsApp.",
+          });
+        } catch (whatsappError) {
+          console.error('Erro ao enviar WhatsApp:', whatsappError);
+          toast({
+            title: "Alterações Salvas",
+            description: "Status atualizado, mas não foi possível enviar WhatsApp.",
+          });
+        }
+      } else {
+        toast({
+          title: "Alterações Salvas! ✅",
+          description: "As alterações foram salvas com sucesso.",
+        });
+      }
+
+      fetchAppointments();
+      closeViewModal();
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível salvar as alterações.",
         variant: "destructive",
       });
     } finally {
@@ -909,16 +989,16 @@ const Appointments = () => {
       }
     >
       {/* Toggle de Visualização */}
-      <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as "list" | "calendar")} className="w-full">
+      <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as "list" | "recurring")} className="w-full">
         <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
           <TabsList className="grid w-full max-w-[400px] grid-cols-2">
             <TabsTrigger value="list" className="flex items-center gap-2">
               <List className="h-4 w-4" />
               <span className="hidden sm:inline">Lista</span>
             </TabsTrigger>
-            <TabsTrigger value="calendar" className="flex items-center gap-2">
-              <CalendarDays className="h-4 w-4" />
-              <span className="hidden sm:inline">Calendário</span>
+            <TabsTrigger value="recurring" className="flex items-center gap-2">
+              <RefreshCw className="h-4 w-4" />
+              <span className="hidden sm:inline">Recorrentes</span>
             </TabsTrigger>
           </TabsList>
         </div>
@@ -1354,28 +1434,13 @@ const Appointments = () => {
           </AnimatePresence>
         </motion.div>
       )}
-        </TabsContent>
+      </TabsContent>
 
-        {/* Visualização em Calendário */}
-        <TabsContent value="calendar" className="mt-0">
-          <div className="h-[calc(100vh-250px)] min-h-[600px]">
-            <WeeklyCalendar
-              appointments={filteredAppointments}
-              onAppointmentClick={(appointment) => openViewModal(appointment)}
-              onTimeSlotClick={(date, time) => {
-                // Preencher formulário com data e hora selecionadas no formato correto
-                const dateString = format(date, 'dd/MM/yyyy');
-                setFormData({
-                  ...formData,
-                  scheduled_date: dateString,
-                  scheduled_time: time,
-                });
-                setIsDialogOpen(true);
-              }}
-            />
-          </div>
-        </TabsContent>
-      </Tabs>
+      {/* Visualização de Agendamentos Recorrentes */}
+      <TabsContent value="recurring" className="mt-0">
+        {barbershop?.id && <RecurringAppointments barbershopId={barbershop.id} />}
+      </TabsContent>
+    </Tabs>
 
       {/* Modal de Visualização Otimizado */}
       <Dialog open={viewModalOpen} onOpenChange={setViewModalOpen}>
@@ -1426,7 +1491,13 @@ const Appointments = () => {
                 <Label className="text-xs text-muted-foreground">Status</Label>
                 <Select
                   value={selectedAppointment.status}
-                  onValueChange={(value) => updateAppointmentStatus(selectedAppointment.id, value)}
+                  onValueChange={(value) => {
+                    // Atualizar apenas localmente
+                    setSelectedAppointment({
+                      ...selectedAppointment,
+                      status: value as "pending" | "confirmed" | "cancelled"
+                    });
+                  }}
                   disabled={statusUpdateLoading}
                 >
                   <SelectTrigger className="mt-1 h-9">
@@ -1445,11 +1516,17 @@ const Appointments = () => {
                 <Label className="text-xs text-muted-foreground">Observações</Label>
                 <Textarea
                   value={selectedAppointment.notes || ''}
-                  onChange={(e) => updateAppointmentNotes(selectedAppointment.id, e.target.value)}
+                  onChange={(e) => {
+                    // Atualizar apenas localmente
+                    setSelectedAppointment({
+                      ...selectedAppointment,
+                      notes: e.target.value
+                    });
+                  }}
                   placeholder="Adicione observações..."
                   className="mt-1 text-sm"
                   rows={3}
-                  disabled={notesUpdateLoading}
+                  disabled={statusUpdateLoading}
                 />
               </div>
             </div>
@@ -1458,6 +1535,23 @@ const Appointments = () => {
           <DialogFooter className="flex-col sm:flex-row gap-2">
             <Button variant="outline" onClick={() => setViewModalOpen(false)} className="w-full sm:w-auto">
               Fechar
+            </Button>
+            <Button 
+              onClick={() => saveAppointmentChanges(selectedAppointment)}
+              disabled={statusUpdateLoading}
+              className="w-full sm:w-auto"
+            >
+              {statusUpdateLoading ? (
+                <>
+                  <div className="h-4 w-4 mr-2 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Salvando...
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Salvar Alterações
+                </>
+              )}
             </Button>
             <AlertDialog>
               <AlertDialogTrigger asChild>

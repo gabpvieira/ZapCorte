@@ -42,6 +42,11 @@ export interface Barbershop {
   opening_hours?: {
     [key: string]: { start: string; end: string } | null
   }
+  lunch_break?: {
+    start: string
+    end: string
+    enabled: boolean
+  }
   is_active: boolean
   plan_type: 'freemium' | 'starter' | 'pro'
   monthly_appointment_count: number
@@ -78,7 +83,35 @@ export interface Appointment {
   customer_phone: string
   scheduled_at: string
   status: 'pending' | 'confirmed' | 'cancelled' | 'completed'
+  recurring_appointment_id?: string
   created_at: string
+}
+
+export interface RecurringAppointment {
+  id: string
+  barbershop_id: string
+  customer_id: string
+  service_id: string
+  frequency: 'weekly' | 'biweekly' | 'monthly'
+  day_of_week?: number
+  time_of_day: string
+  start_date: string
+  end_date?: string
+  is_active: boolean
+  last_generated_date?: string
+  notes?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface Customer {
+  id: string
+  barbershop_id: string
+  name: string
+  phone: string
+  notes?: string
+  created_at: string
+  updated_at: string
 }
 
 export interface WebhookLog {

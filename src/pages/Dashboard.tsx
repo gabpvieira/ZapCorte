@@ -45,6 +45,7 @@ import { useToast } from "@/hooks/use-toast";
 import { getAvailableTimeSlots, createAppointment } from "@/lib/supabase-queries";
 import { motion } from "framer-motion";
 import WeeklyDatePicker from "@/components/WeeklyDatePicker";
+import { DayCalendar } from "@/components/DayCalendar";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -77,6 +78,58 @@ const Dashboard = () => {
   const [customers, setCustomers] = useState<any[]>([]);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
   const [customerSearchTerm, setCustomerSearchTerm] = useState("");
+  
+  // Estados para calendário
+  const [calendarDate, setCalendarDate] = useState(new Date());
+  const [calendarAppointments, setCalendarAppointments] = useState<any[]>([]);
+  
+  // Buscar agendamentos do dia selecionado
+  useEffect(() => {
+    let mounted = true;
+    
+    const fetchCalendarAppointments = async () => {
+      if (!barbershop?.id || !mounted) return;
+      
+      try {
+        const startOfDay = new Date(calendarDate);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(calendarDate);
+        endOfDay.setHours(23, 59, 59, 999);
+        
+        const { data, error } = await supabase
+          .from("appointments")
+          .select(`
+            *,
+            services (name, duration)
+          `)
+          .eq("barbershop_id", barbershop.id)
+          .gte("scheduled_at", startOfDay.toISOString())
+          .lte("scheduled_at", endOfDay.toISOString())
+          .order("scheduled_at", { ascending: true });
+        
+        if (error) throw error;
+        
+        if (mounted) {
+          setCalendarAppointments(data?.map(apt => ({
+            ...apt,
+            service_name: apt.services?.name,
+            service_duration: apt.services?.duration
+          })) || []);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar agendamentos:", error);
+        if (mounted) {
+          setCalendarAppointments([]);
+        }
+      }
+    };
+    
+    fetchCalendarAppointments();
+    
+    return () => {
+      mounted = false;
+    };
+  }, [barbershop?.id, calendarDate]);
   
   // Dashboard render tracking removed for production
   
@@ -418,7 +471,18 @@ const Dashboard = () => {
     }
   }, [authLoading, user, navigate]);
 
-  if (authLoading) {
+  // Timeout de segurança - força renderização após 3 segundos
+  const [forceRender, setForceRender] = useState(false);
+  
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setForceRender(true);
+    }, 3000);
+    
+    return () => clearTimeout(timeout);
+  }, []);
+
+  if (authLoading && !forceRender) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -429,7 +493,7 @@ const Dashboard = () => {
     );
   }
 
-  if (userLoading || dashboardLoading) {
+  if ((userLoading || dashboardLoading) && !forceRender) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -456,7 +520,7 @@ const Dashboard = () => {
     );
   }
 
-  if (!barbershop) {
+  if (!barbershop && !forceRender) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -470,6 +534,31 @@ const Dashboard = () => {
           </Button>
         </div>
       </div>
+    );
+  }
+  
+  // Se forceRender está ativo mas não tem barbershop, mostrar mensagem inline
+  if (!barbershop && forceRender) {
+    return (
+      <DashboardLayout
+        title="Dashboard"
+        subtitle="Configuração Necessária"
+      >
+        <Card className="border-2 border-yellow-500">
+          <CardContent className="p-6">
+            <div className="text-center">
+              <AlertCircle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
+              <h2 className="text-xl font-bold mb-2">Barbearia não configurada</h2>
+              <p className="text-muted-foreground mb-4">
+                Configure sua barbearia para começar a usar o sistema.
+              </p>
+              <Button asChild>
+                <Link to="/dashboard/barbershop">Configurar Agora</Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </DashboardLayout>
     );
   }
 
@@ -615,67 +704,36 @@ const Dashboard = () => {
           </Card>
         </div>
 
-        {/* Today's Appointments */}
+        {/* Agenda de Hoje - Estilo Apple Calendar */}
         <Card className="border-2">
-          <CardHeader>
-            <CardTitle>Agendamentos de Hoje</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {todayAppointments.length === 0 ? (
-              <p className="py-8 text-center text-muted-foreground">
-                Nenhum agendamento para hoje
-              </p>
-            ) : (
-              <div className="space-y-4">
-                {todayAppointments.map((appointment) => {
-                  return (
-                    <div
-                      key={appointment.id}
-                      className="appointment-card flex flex-col md:flex-row md:items-center md:justify-between rounded-lg border border-border p-4 hover:bg-muted/50 dark:hover:bg-muted/20 transition-colors gap-4"
-                    >
-                      <div className="appointment-card-content flex items-center gap-3 md:gap-4 flex-1">
-                        <div className="flex h-10 w-10 md:h-12 md:w-12 items-center justify-center rounded-full bg-primary/10 flex-shrink-0">
-                          <Clock className="h-5 w-5 md:h-6 md:w-6 text-primary" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-bold text-sm md:text-base truncate">{appointment.customer_name}</p>
-                          <p className="text-xs md:text-sm text-muted-foreground truncate">
-                            {appointment.service_name}
-                          </p>
-                          <p className="text-xs text-muted-foreground md:hidden">
-                            {appointment.customer_phone}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="appointment-card-actions flex items-center justify-between md:justify-end gap-3 w-full md:w-auto">
-                        <div className="text-left md:text-right">
-                          <p className="font-bold text-sm md:text-base">
-                            {new Date(appointment.scheduled_at).toLocaleTimeString("pt-BR", {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </p>
-                          <Badge
-                            variant={appointment.status === "confirmed" ? "default" : appointment.status === "cancelled" ? "destructive" : "secondary"}
-                            className="text-xs mt-1"
-                          >
-                            {appointment.status === "confirmed" ? "Confirmado" : appointment.status === "cancelled" ? "Cancelado" : "Pendente"}
-                          </Badge>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => openViewModal(appointment)}
-                          className="h-8 w-8 p-0 flex-shrink-0"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+          <CardContent className="p-0">
+            <div className="h-[700px]">
+              <DayCalendar
+                appointments={calendarAppointments.map(apt => ({
+                  id: apt.id,
+                  customer_name: apt.customer_name,
+                  customer_phone: apt.customer_phone,
+                  scheduled_at: apt.scheduled_at,
+                  status: apt.status as "pending" | "confirmed" | "cancelled",
+                  service_name: apt.service_name,
+                  service_duration: apt.service_duration
+                }))}
+                onAppointmentClick={(appointment) => {
+                  const fullAppointment = calendarAppointments.find(apt => apt.id === appointment.id);
+                  if (fullAppointment) {
+                    openViewModal(fullAppointment);
+                  }
+                }}
+                onTimeSlotClick={(time) => {
+                  setSelectedDate(calendarDate);
+                  setSelectedTime(time);
+                  setNewAppointmentOpen(true);
+                }}
+                onDateChange={(date) => {
+                  setCalendarDate(date);
+                }}
+              />
+            </div>
           </CardContent>
         </Card>
 
@@ -985,14 +1043,14 @@ const Dashboard = () => {
                   </a>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="bg-muted/50 rounded-lg p-3">
                     <Label className="text-xs text-muted-foreground">Data</Label>
                     <Input 
                       type="date"
                       value={editDate}
                       onChange={(e) => setEditDate(e.target.value)}
-                      className="mt-1 h-11 text-base"
+                      className="mt-1 h-11 text-base w-full"
                       style={{ fontSize: '16px' }}
                     />
                   </div>
@@ -1002,7 +1060,7 @@ const Dashboard = () => {
                       type="time"
                       value={editTime}
                       onChange={(e) => setEditTime(e.target.value)}
-                      className="mt-1 h-11 text-base"
+                      className="mt-1 h-11 text-base w-full"
                       style={{ fontSize: '16px' }}
                     />
                   </div>
