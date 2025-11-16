@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Calendar, Clock, ArrowLeft } from "lucide-react";
+import { Calendar, Clock, ArrowLeft, Zap, Bell, Shield, CheckCircle2, ExternalLink, Sparkles } from "lucide-react";
 import { getBarbershopBySlug, getBarbershopServices, createAppointment, getAvailableTimeSlots } from "@/lib/supabase-queries";
 import { supabase } from "@/lib/supabase";
 import { notificarNovoAgendamento } from '@/lib/notifications';
@@ -552,11 +552,12 @@ const Booking = () => {
                     </Button>
                     {selectedTime && customerName && customerPhone && (
                       <motion.p 
-                        className="text-center text-xs text-muted-foreground mt-3"
+                        className="text-center text-xs text-muted-foreground mt-3 flex items-center justify-center gap-1.5"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                       >
-                        ✓ Tudo pronto! Clique para confirmar
+                        <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                        Tudo pronto! Clique para confirmar
                       </motion.p>
                     )}
                   </motion.div>
@@ -572,22 +573,90 @@ const Booking = () => {
           variants={itemVariants}
         >
           {[
-            { icon: "⚡", title: "Confirmação Instantânea", desc: "Receba confirmação imediata" },
-            { icon: "🔔", title: "Lembretes Automáticos", desc: "Nunca perca seu horário" },
-            { icon: "🔒", title: "Dados Seguros", desc: "Suas informações protegidas" }
+            { 
+              Icon: Zap, 
+              title: "Confirmação Instantânea", 
+              desc: "Receba confirmação imediata",
+              gradient: "from-yellow-500 to-orange-500"
+            },
+            { 
+              Icon: Bell, 
+              title: "Lembretes Automáticos", 
+              desc: "Nunca perca seu horário",
+              gradient: "from-blue-500 to-cyan-500"
+            },
+            { 
+              Icon: Shield, 
+              title: "Dados Seguros", 
+              desc: "Suas informações protegidas",
+              gradient: "from-green-500 to-emerald-500"
+            }
           ].map((badge, i) => (
             <motion.div
               key={i}
-              className="text-center p-4 sm:p-6 rounded-xl bg-card/30 border border-border/50"
+              className="text-center p-4 sm:p-6 rounded-xl bg-card/30 border border-border/50 hover:border-primary/30 transition-colors"
               whileHover={{ scale: 1.05 }}
               transition={{ duration: 0.2 }}
             >
-              <div className="text-2xl sm:text-3xl mb-2">{badge.icon}</div>
+              <div className={`inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br ${badge.gradient} mb-3 sm:mb-4`}>
+                <badge.Icon className="h-6 w-6 sm:h-7 sm:w-7 text-white" />
+              </div>
               <h4 className="font-semibold text-sm sm:text-base mb-1">{badge.title}</h4>
               <p className="text-xs text-muted-foreground">{badge.desc}</p>
             </motion.div>
           ))}
         </motion.div>
+
+        {/* Footer Premium com CTA */}
+        <motion.footer 
+          className="relative border-t border-border/50 py-12 sm:py-16 mt-16 sm:mt-20 overflow-hidden"
+          variants={itemVariants}
+        >
+          <div className="absolute inset-0 bg-gradient-to-t from-primary/5 to-transparent" />
+          <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10 max-w-4xl">
+            {/* CTA Principal */}
+            <motion.div 
+              className="mb-8 sm:mb-10"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <div className="inline-flex items-center gap-2 mb-3 sm:mb-4">
+                <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-primary animate-pulse" />
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground">
+                  Quer um sistema como este para sua barbearia?
+                </p>
+                <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-primary animate-pulse" />
+              </div>
+              <a
+                href="https://www.zapcorte.com.br"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-4 rounded-xl sm:rounded-2xl bg-gradient-to-r from-primary via-primary to-primary/80 text-primary-foreground font-semibold text-sm sm:text-base shadow-xl shadow-primary/30 hover:shadow-2xl hover:shadow-primary/40 transition-all hover:scale-105 group"
+              >
+                <span>Conhecer o ZapCorte</span>
+                <ExternalLink className="h-4 w-4 sm:h-5 sm:w-5 group-hover:translate-x-1 transition-transform" />
+              </a>
+            </motion.div>
+
+            {/* Branding */}
+            <div className="mb-4 sm:mb-6">
+              <p className="text-sm sm:text-base font-medium text-foreground mb-2">
+                Powered by ZapCorte
+              </p>
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                Sistema de Agendamento Premium
+              </p>
+            </div>
+            
+            {/* Tagline */}
+            <div className="flex items-center justify-center gap-2 text-xs sm:text-sm text-muted-foreground">
+              <span>Feito com</span>
+              <span className="text-red-500 animate-pulse">❤️</span>
+              <span>para profissionais</span>
+            </div>
+          </div>
+        </motion.footer>
       </motion.div>
     </div>
   );

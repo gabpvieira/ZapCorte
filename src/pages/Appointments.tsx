@@ -1467,12 +1467,12 @@ const Appointments = () => {
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-muted/50 rounded-lg p-3">
-                    <label className="text-xs text-muted-foreground">Data</label>
-                    <p className="font-semibold text-sm">{formatDate(selectedAppointment.scheduled_at)}</p>
+                  <div className="bg-muted/50 rounded-lg p-3 min-w-0">
+                    <label className="text-xs text-muted-foreground block mb-1">Data</label>
+                    <p className="font-semibold text-sm break-words overflow-hidden">{formatDate(selectedAppointment.scheduled_at)}</p>
                   </div>
-                  <div className="bg-muted/50 rounded-lg p-3">
-                    <label className="text-xs text-muted-foreground">Horário</label>
+                  <div className="bg-muted/50 rounded-lg p-3 min-w-0">
+                    <label className="text-xs text-muted-foreground block mb-1">Horário</label>
                     <p className="font-semibold text-sm">{formatTime(selectedAppointment.scheduled_at)}</p>
                   </div>
                 </div>

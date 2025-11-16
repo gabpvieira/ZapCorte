@@ -167,8 +167,12 @@ export async function getAvailableTimeSlots(
     return [];
   }
 
-  // Buscar serviço e agendamentos
-  const [{ data: service, error: serviceError }, { data: appointments, error: appointmentsError }] = await Promise.all([
+  // Buscar serviço, agendamentos normais e agendamentos recorrentes
+  const [
+    { data: service, error: serviceError }, 
+    { data: appointments, error: appointmentsError },
+    { data: recurringAppointments, error: recurringError }
+  ] = await Promise.all([
     supabase
       .from('services')
       .select('duration')
@@ -181,6 +185,14 @@ export async function getAvailableTimeSlots(
       .gte('scheduled_at', new Date(date + 'T00:00:00-03:00').toISOString())
       .lte('scheduled_at', new Date(date + 'T23:59:59-03:00').toISOString())
       .neq('status', 'cancelled'),
+    supabase
+      .from('recurring_appointments')
+      .select('time_of_day, day_of_week, services(duration)')
+      .eq('barbershop_id', barbershopId)
+      .eq('is_active', true)
+      .eq('day_of_week', dayOfWeek)
+      .lte('start_date', date)
+      .or(`end_date.is.null,end_date.gte.${date}`)
   ]);
 
   if (serviceError || !service) {
@@ -188,6 +200,9 @@ export async function getAvailableTimeSlots(
   }
   if (appointmentsError) {
     return [];
+  }
+  if (recurringError) {
+    console.error('[getAvailableTimeSlots] Erro ao buscar agendamentos recorrentes:', recurringError);
   }
 
   // 2. Definir durações e horários de trabalho
@@ -199,12 +214,30 @@ export async function getAvailableTimeSlots(
   // 3. Construir períodos ocupados (agendamento + pausa)
   const busyPeriods: { start: Date; end: Date }[] = [];
 
+  // 3.1. Adicionar agendamentos normais
   appointments?.forEach((apt) => {
     const aptStart = new Date(apt.scheduled_at);
     const aptServiceDuration = (apt.services as any)?.duration || 30;
     const aptEnd = new Date(aptStart.getTime() + aptServiceDuration * 60000);
     const aptEndWithBreak = new Date(aptEnd.getTime() + breakTime * 60000);
     busyPeriods.push({ start: aptStart, end: aptEndWithBreak });
+  });
+
+  // 3.2. Adicionar agendamentos recorrentes (que reservam o horário fixo)
+  recurringAppointments?.forEach((recurring: any) => {
+    // Criar data/hora completa do agendamento recorrente
+    const recurringStart = new Date(`${date}T${recurring.time_of_day}-03:00`);
+    const recurringServiceDuration = recurring.services?.duration || 30;
+    const recurringEnd = new Date(recurringStart.getTime() + recurringServiceDuration * 60000);
+    const recurringEndWithBreak = new Date(recurringEnd.getTime() + breakTime * 60000);
+    
+    busyPeriods.push({ start: recurringStart, end: recurringEndWithBreak });
+    
+    console.log('[getAvailableTimeSlots] Agendamento recorrente bloqueado:', {
+      time: recurring.time_of_day,
+      duration: recurringServiceDuration,
+      date
+    });
   });
 
   // 4. Ordenar e mesclar períodos sobrepostos

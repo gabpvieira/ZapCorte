@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Clock, MapPin, Instagram, MessageCircle, Calendar, Search } from "lucide-react";
+import { Clock, MapPin, Instagram, MessageCircle, Calendar, Search, ExternalLink, Sparkles } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getBarbershopBySlug, getBarbershopServices } from "@/lib/supabase-queries";
 import { isBarbershopOpen, formatOpeningHours } from "@/lib/barbershop-utils";
@@ -574,20 +574,48 @@ const Barbershop = () => {
 
       {/* Footer Premium */}
       <motion.footer 
-        className="relative border-t border-border/50 py-12 mt-20 overflow-hidden w-full"
+        className="relative border-t border-border/50 py-12 sm:py-16 mt-20 overflow-hidden w-full"
         variants={itemVariants}
       >
         <div className="absolute inset-0 bg-gradient-to-t from-primary/5 to-transparent" />
         <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10 max-w-7xl">
-          <div className="mb-4">
-            <p className="text-sm font-medium text-foreground mb-2">
+          {/* CTA Principal */}
+          <motion.div 
+            className="mb-8 sm:mb-10"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <div className="inline-flex items-center gap-2 mb-3 sm:mb-4">
+              <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-primary animate-pulse" />
+              <p className="text-xs sm:text-sm font-medium text-muted-foreground">
+                Quer um sistema como este para sua barbearia?
+              </p>
+              <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-primary animate-pulse" />
+            </div>
+            <a
+              href="https://www.zapcorte.com.br"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-4 rounded-xl sm:rounded-2xl bg-gradient-to-r from-primary via-primary to-primary/80 text-primary-foreground font-semibold text-sm sm:text-base shadow-xl shadow-primary/30 hover:shadow-2xl hover:shadow-primary/40 transition-all hover:scale-105 group"
+            >
+              <span>Conhecer o ZapCorte</span>
+              <ExternalLink className="h-4 w-4 sm:h-5 sm:w-5 group-hover:translate-x-1 transition-transform" />
+            </a>
+          </motion.div>
+
+          {/* Branding */}
+          <div className="mb-4 sm:mb-6">
+            <p className="text-sm sm:text-base font-medium text-foreground mb-2">
               Powered by ZapCorte
             </p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs sm:text-sm text-muted-foreground">
               Sistema de Agendamento Premium
             </p>
           </div>
-          <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+          
+          {/* Tagline */}
+          <div className="flex items-center justify-center gap-2 text-xs sm:text-sm text-muted-foreground">
             <span>Feito com</span>
             <span className="text-red-500 animate-pulse">❤️</span>
             <span>para profissionais</span>
