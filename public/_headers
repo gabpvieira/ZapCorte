@@ -1,0 +1,10 @@
+# Headers para melhorar cache e SEO
+
+/barbershop/*
+  Cache-Control: public, max-age=0, must-revalidate
+  X-Robots-Tag: index, follow
+  
+/*
+  X-Frame-Options: SAMEORIGIN
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin

@@ -10,11 +10,9 @@ export function BarbershopSEO({ barbershop }: BarbershopSEOProps) {
   const siteUrl = import.meta.env.VITE_SITE_URL || 'https://zapcorte.com';
   const pageUrl = `${siteUrl}/barbershop/${barbershop.slug}`;
   
-  // Estratégia melhorada: Usar serviço de geração de OG Image
-  // Se tem logo, usa o logo. Senão, gera uma imagem com o nome da barbearia
-  const imageUrl = barbershop.logo_url 
-    ? barbershop.logo_url 
-    : `https://og-image.vercel.app/${encodeURIComponent(barbershop.name + ' - Agende Online')}.png?theme=dark&md=1&fontSize=75px&images=https%3A%2F%2Fzapcorte.com%2Fzapcorte-icon.png`;
+  // SEMPRE usar o logo da barbearia se disponível
+  // Garantir que a URL seja absoluta e acessível
+  const imageUrl = barbershop.logo_url || barbershop.banner_url || `${siteUrl}/zapcorte-og-default.png`;
   
   // Título otimizado para SEO
   const title = `${barbershop.name} - Agende Online | ZapCorte`;
@@ -95,13 +93,19 @@ export function BarbershopSEO({ barbershop }: BarbershopSEOProps) {
       <meta property="og:title" content={title} />
       <meta property="og:description" content={description} />
       <meta property="og:image" content={imageUrl} />
+      <meta property="og:image:url" content={imageUrl} />
       <meta property="og:image:secure_url" content={imageUrl} />
-      <meta property="og:image:type" content="image/png" />
+      <meta property="og:image:type" content="image/jpeg" />
       <meta property="og:image:width" content="1200" />
       <meta property="og:image:height" content="630" />
-      <meta property="og:image:alt" content={`Logo ${barbershop.name}`} />
+      <meta property="og:image:alt" content={`${barbershop.name} - Agende Online`} />
       <meta property="og:site_name" content="ZapCorte" />
       <meta property="og:locale" content="pt_BR" />
+      
+      {/* Meta tags específicas para WhatsApp */}
+      <meta property="og:updated_time" content={new Date().toISOString()} />
+      <meta property="article:author" content={barbershop.name} />
+      <meta property="article:publisher" content="ZapCorte" />
 
       {/* Twitter Card */}
       <meta name="twitter:card" content="summary_large_image" />
