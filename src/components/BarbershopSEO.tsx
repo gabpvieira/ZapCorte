@@ -10,8 +10,8 @@ export function BarbershopSEO({ barbershop }: BarbershopSEOProps) {
   const siteUrl = import.meta.env.VITE_SITE_URL || 'https://zapcorte.com';
   const pageUrl = `${siteUrl}/barbershop/${barbershop.slug}`;
   
-  // Usar logo da barbearia ou fallback para logo do ZapCorte
-  const imageUrl = barbershop.logo_url || `${siteUrl}/zapcorte-icon.png`;
+  // Usar API de OG Image dinâmica
+  const imageUrl = `${siteUrl}/api/og/${barbershop.slug}?slug=${barbershop.slug}`;
   
   // Título otimizado para SEO
   const title = `${barbershop.name} - Agende Online | ZapCorte`;
