@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import type { Barbershop } from "@/lib/supabase";
 
@@ -23,6 +24,60 @@ export function BarbershopSEO({ barbershop }: BarbershopSEOProps) {
   // Keywords relevantes
   const keywords = `${barbershop.name}, barbearia, agendamento online, corte de cabelo, barba, ${barbershop.slug}, zapcorte`;
 
+  // Atualizar meta tags dinamicamente via JavaScript (fallback para crawlers)
+  useEffect(() => {
+    // Atualizar título
+    document.title = title;
+    
+    // Função helper para atualizar ou criar meta tag
+    const updateMetaTag = (property: string, content: string, isProperty = false) => {
+      const attribute = isProperty ? 'property' : 'name';
+      let element = document.querySelector(`meta[${attribute}="${property}"]`);
+      
+      if (!element) {
+        element = document.createElement('meta');
+        element.setAttribute(attribute, property);
+        document.head.appendChild(element);
+      }
+      
+      element.setAttribute('content', content);
+    };
+
+    // Meta tags básicas
+    updateMetaTag('description', description);
+    updateMetaTag('keywords', keywords);
+    
+    // Open Graph
+    updateMetaTag('og:type', 'website', true);
+    updateMetaTag('og:url', pageUrl, true);
+    updateMetaTag('og:title', title, true);
+    updateMetaTag('og:description', description, true);
+    updateMetaTag('og:image', imageUrl, true);
+    updateMetaTag('og:image:secure_url', imageUrl, true);
+    updateMetaTag('og:image:width', '1200', true);
+    updateMetaTag('og:image:height', '630', true);
+    updateMetaTag('og:image:alt', `Logo ${barbershop.name}`, true);
+    updateMetaTag('og:site_name', 'ZapCorte', true);
+    updateMetaTag('og:locale', 'pt_BR', true);
+    
+    // Twitter Card
+    updateMetaTag('twitter:card', 'summary_large_image');
+    updateMetaTag('twitter:url', pageUrl);
+    updateMetaTag('twitter:title', title);
+    updateMetaTag('twitter:description', description);
+    updateMetaTag('twitter:image', imageUrl);
+    updateMetaTag('twitter:image:alt', `Logo ${barbershop.name}`);
+    
+    // Canonical
+    let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement;
+    if (!canonical) {
+      canonical = document.createElement('link');
+      canonical.rel = 'canonical';
+      document.head.appendChild(canonical);
+    }
+    canonical.href = pageUrl;
+  }, [barbershop, title, description, imageUrl, pageUrl, keywords]);
+
   return (
     <Helmet>
       {/* Meta Tags Básicas */}
@@ -31,7 +86,7 @@ export function BarbershopSEO({ barbershop }: BarbershopSEOProps) {
       <meta name="keywords" content={keywords} />
       <link rel="canonical" href={pageUrl} />
 
-      {/* Open Graph / Facebook */}
+      {/* Open Graph / Facebook / WhatsApp */}
       <meta property="og:type" content="website" />
       <meta property="og:url" content={pageUrl} />
       <meta property="og:title" content={title} />
@@ -53,10 +108,6 @@ export function BarbershopSEO({ barbershop }: BarbershopSEOProps) {
       <meta name="twitter:image" content={imageUrl} />
       <meta name="twitter:image:alt" content={`Logo ${barbershop.name}`} />
       <meta name="twitter:creator" content="@zapcorte" />
-
-      {/* WhatsApp Preview (usa Open Graph) */}
-      <meta property="og:image:width" content="400" />
-      <meta property="og:image:height" content="400" />
 
       {/* Schema.org para Google */}
       <script type="application/ld+json">
