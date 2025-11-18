@@ -12,7 +12,8 @@ import {
   X,
   User,
   MessageCircle,
-  Users
+  Users,
+  Bell
 } from "lucide-react";
 import logotipo from "@/assets/zapcorte-icon.png";
 import { Button } from "@/components/ui/button";
@@ -62,7 +63,13 @@ const sidebarItems: SidebarItem[] = [
     id: "whatsapp",
     label: "WhatsApp",
     icon: MessageCircle,
-    href: "/dashboard/whatsapp",
+    href: "/dashboard/whatsapp"
+  },
+  {
+    id: "notifications",
+    label: "Notificações",
+    icon: Bell,
+    href: "/dashboard/notifications",
     badge: "Novo"
   },
   {
@@ -188,7 +195,7 @@ export const DashboardSidebar = ({ className }: DashboardSidebarProps) => {
                 <Icon className="h-5 w-5 flex-shrink-0" />
                 <span className="flex-1">{item.label}</span>
                 {item.badge && (
-                  <span className="rounded-full bg-red-500 px-2 py-1 text-xs text-white">
+                  <span className="rounded-full bg-black px-2 py-1 text-xs text-[#24C36B] font-bold border border-[#24C36B]">
                     {item.badge}
                   </span>
                 )}

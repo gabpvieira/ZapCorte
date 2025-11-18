@@ -44,34 +44,27 @@ function stringify(value: unknown) {
 }
 
 export function showErrorOverlay(title: string, detail: unknown) {
-  const el = ensureOverlay();
+  // Overlay desabilitado - erros apenas no console
   const ts = new Date().toLocaleTimeString();
-  const block = `\n[${ts}] ${title}\n${stringify(detail)}\n`;
-  el.textContent = (el.textContent || "") + block;
+  console.error(`[${ts}] ${title}`, detail);
 }
 
 export function installGlobalDebug() {
   if (typeof window === "undefined") return;
   const isDev = import.meta.env.DEV;
 
-  // Apenas mostrar overlay em desenvolvimento
+  // Apenas logar no console, sem overlay visual
   if (!isDev) return;
 
   const originalError = console.error.bind(console);
-  console.error = (...args: unknown[]) => {
-    originalError(...args);
-    showErrorOverlay("console.error", args.map(stringify).join(" "));
-  };
-
+  
   window.addEventListener("error", (evt) => {
     const err = (evt as ErrorEvent).error || (evt as ErrorEvent).message;
     originalError("[GlobalError]", err, evt);
-    showErrorOverlay("GlobalError", err);
   });
 
   window.addEventListener("unhandledrejection", (evt) => {
     const reason = (evt as PromiseRejectionEvent).reason;
     originalError("[UnhandledRejection]", reason);
-    showErrorOverlay("UnhandledRejection", reason);
   });
 }

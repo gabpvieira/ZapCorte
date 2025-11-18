@@ -1,12 +1,13 @@
-/**
- * Web Push Service - Cliente
- * Sistema nativo de notificações push
- */
+// Web Push API - Cliente
+// Sistema de notificações nativo do navegador
 
+import { supabase } from './supabase';
+
+// Chave pública VAPID (pode ser exposta no frontend)
 const VAPID_PUBLIC_KEY = 'BKgmKhuhrgdKq_1htzMDYWUKt4DjAU1EyP5iFGTdjv9HT4L9t_qt9pa_j3J95uE2FKiqO1LKc7dfV8-cYPB5law';
 
 /**
- * Converte chave VAPID para Uint8Array
+ * Converte chave VAPID de base64 para Uint8Array
  */
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
   const padding = '='.repeat((4 - base64String.length % 4) % 4);
@@ -24,350 +25,300 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
 }
 
 /**
+ * Verifica se o navegador suporta notificações push
+ */
+export function isPushSupported(): boolean {
+  return 'serviceWorker' in navigator && 
+         'PushManager' in window && 
+         'Notification' in window;
+}
+
+/**
+ * Verifica o status da permissão de notificações
+ */
+export function getNotificationPermission(): NotificationPermission {
+  if (!('Notification' in window)) {
+    return 'denied';
+  }
+  return Notification.permission;
+}
+
+/**
  * Registra o Service Worker
  */
 export async function registerServiceWorker(): Promise<ServiceWorkerRegistration | null> {
   if (!('serviceWorker' in navigator)) {
-    console.error('Service Worker não suportado neste navegador');
+    console.warn('[WebPush] Service Worker não suportado');
     return null;
   }
 
   try {
-    console.log('📝 Registrando Service Worker...');
-    
-    // Tentar registrar o service worker
     const registration = await navigator.serviceWorker.register('/sw.js', {
       scope: '/'
     });
     
-    console.log('✅ Service Worker registrado:', registration.scope);
+    console.log('[WebPush] Service Worker registrado:', registration);
     
-    // Aguardar o service worker estar pronto
+    // Aguardar ativação
     await navigator.serviceWorker.ready;
-    console.log('✅ Service Worker pronto');
     
     return registration;
   } catch (error) {
-    console.error('❌ Erro ao registrar Service Worker:', error);
+    console.error('[WebPush] Erro ao registrar Service Worker:', error);
     return null;
   }
-}
-
-/**
- * Verifica se notificações estão suportadas
- */
-export function isPushSupported(): boolean {
-  // Verificações básicas
-  if (!('serviceWorker' in navigator)) {
-    console.warn('Service Worker não suportado');
-    return false;
-  }
-  
-  if (!('PushManager' in window)) {
-    console.warn('Push Manager não suportado');
-    return false;
-  }
-  
-  if (!('Notification' in window)) {
-    console.warn('Notification API não suportada');
-    return false;
-  }
-  
-  return true;
-}
-
-/**
- * Detecta se é iOS/Safari
- */
-export function isIOSSafari(): boolean {
-  const ua = navigator.userAgent;
-  const isIOS = /iPad|iPhone|iPod/.test(ua);
-  const isSafari = /Safari/.test(ua) && !/Chrome/.test(ua);
-  return isIOS || isSafari;
-}
-
-/**
- * Verifica se notificações estão habilitadas
- */
-export function isNotificationEnabled(): boolean {
-  return Notification.permission === 'granted';
 }
 
 /**
  * Solicita permissão para notificações
  */
 export async function requestNotificationPermission(): Promise<boolean> {
-  if (!isPushSupported()) {
-    console.error('Push não suportado neste dispositivo');
+  if (!('Notification' in window)) {
+    console.warn('[WebPush] Notificações não suportadas');
     return false;
   }
 
   try {
-    console.log('🔔 Solicitando permissão de notificações...');
-    console.log('📱 Dispositivo:', getDeviceInfo());
-    console.log('🌐 Navegador:', navigator.userAgent);
-    
-    // Verificar se já tem permissão
-    if (Notification.permission === 'granted') {
-      console.log('✅ Permissão já concedida');
-      return true;
-    }
-    
-    if (Notification.permission === 'denied') {
-      console.error('❌ Permissão negada anteriormente');
-      return false;
-    }
-    
-    // Solicitar permissão
     const permission = await Notification.requestPermission();
-    console.log('📋 Resultado da permissão:', permission);
-    
+    console.log('[WebPush] Permissão de notificação:', permission);
     return permission === 'granted';
   } catch (error) {
-    console.error('❌ Erro ao solicitar permissão:', error);
+    console.error('[WebPush] Erro ao solicitar permissão:', error);
     return false;
   }
 }
 
 /**
- * Inscreve o usuário para receber notificações
+ * Cria uma subscription de push
  */
-export async function subscribeToPush(): Promise<PushSubscription | null> {
+export async function subscribeToPush(
+  registration: ServiceWorkerRegistration
+): Promise<PushSubscription | null> {
   try {
-    console.log('📝 Iniciando inscrição push...');
+    const applicationServerKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
     
-    const registration = await registerServiceWorker();
-    if (!registration) {
-      console.error('❌ Falha ao registrar Service Worker');
-      return null;
-    }
+    const subscription = await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: applicationServerKey
+    });
 
-    // Aguardar o service worker estar ativo
-    console.log('⏳ Aguardando Service Worker ficar pronto...');
-    await navigator.serviceWorker.ready;
-    console.log('✅ Service Worker pronto');
-
-    // Verificar se já existe uma subscription
-    console.log('🔍 Verificando subscription existente...');
-    let subscription = await registration.pushManager.getSubscription();
-
-    if (subscription) {
-      console.log('✅ Subscription existente encontrada');
-      return subscription;
-    }
-
-    // Criar nova subscription
-    console.log('📝 Criando nova subscription...');
-    
-    try {
-      subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
-      });
-      
-      console.log('✅ Subscription criada com sucesso');
-      return subscription;
-    } catch (subscribeError: any) {
-      console.error('❌ Erro ao criar subscription:', subscribeError);
-      
-      // Tentar novamente sem a chave VAPID (fallback para alguns navegadores)
-      if (subscribeError.name === 'NotSupportedError' || subscribeError.name === 'InvalidStateError') {
-        console.log('🔄 Tentando novamente sem VAPID...');
-        try {
-          subscription = await registration.pushManager.subscribe({
-            userVisibleOnly: true
-          });
-          console.log('✅ Subscription criada (sem VAPID)');
-          return subscription;
-        } catch (fallbackError) {
-          console.error('❌ Falha no fallback:', fallbackError);
-          return null;
-        }
-      }
-      
-      return null;
-    }
+    console.log('[WebPush] Subscription criada:', subscription);
+    return subscription;
   } catch (error) {
-    console.error('❌ Erro geral ao inscrever:', error);
+    console.error('[WebPush] Erro ao criar subscription:', error);
     return null;
   }
 }
 
 /**
- * Cancela a inscrição de notificações
+ * Obtém a subscription existente
  */
-export async function unsubscribeFromPush(): Promise<boolean> {
+export async function getExistingSubscription(
+  registration: ServiceWorkerRegistration
+): Promise<PushSubscription | null> {
   try {
-    const registration = await navigator.serviceWorker.ready;
     const subscription = await registration.pushManager.getSubscription();
-    
-    if (subscription) {
-      await subscription.unsubscribe();
-      return true;
-    }
-    
-    return false;
+    return subscription;
   } catch (error) {
-    return false;
+    console.error('[WebPush] Erro ao obter subscription:', error);
+    return null;
   }
 }
 
 /**
- * Detecta informações do dispositivo
- */
-function getDeviceInfo() {
-  const ua = navigator.userAgent;
-  const isMobile = /Mobile|Android|iPhone|iPad|iPod/i.test(ua);
-  const isTablet = /iPad|Android/i.test(ua) && !/Mobile/i.test(ua);
-  
-  let deviceType = 'desktop';
-  if (isTablet) deviceType = 'tablet';
-  else if (isMobile) deviceType = 'mobile';
-  
-  let browser = 'unknown';
-  if (ua.includes('Chrome')) browser = 'chrome';
-  else if (ua.includes('Firefox')) browser = 'firefox';
-  else if (ua.includes('Safari')) browser = 'safari';
-  else if (ua.includes('Edge')) browser = 'edge';
-  
-  return {
-    type: deviceType,
-    browser,
-    platform: navigator.platform,
-    isMobile,
-    isTablet,
-  };
-}
-
-/**
- * Salva a subscription no banco de dados (suporta múltiplos dispositivos)
+ * Salva a subscription no banco de dados
  */
 export async function saveSubscriptionToDatabase(
   barbershopId: string,
   subscription: PushSubscription
 ): Promise<boolean> {
   try {
-    const { supabase } = await import('@/lib/supabase');
+    const subscriptionJson = subscription.toJSON();
     
-    const subscriptionData = subscription.toJSON();
-    const deviceInfo = getDeviceInfo();
-    const endpoint = subscriptionData.endpoint;
-    
-    console.log('💾 Salvando subscription:', { 
-      barbershopId, 
-      deviceInfo,
-      endpoint: endpoint?.substring(0, 50) + '...'
-    });
-    
-    // Verificar se já existe uma subscription com este endpoint
-    const { data: existing } = await supabase
-      .from('push_subscriptions')
-      .select('id')
-      .eq('barbershop_id', barbershopId)
-      .eq('subscription->>endpoint', endpoint)
-      .single();
-
-    if (existing) {
-      // Atualizar subscription existente
-      const { error: updateError } = await supabase
-        .from('push_subscriptions')
-        .update({
-          subscription: subscriptionData,
-          device_info: deviceInfo,
-          user_agent: navigator.userAgent,
-          is_active: true,
-          last_used_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', existing.id);
-
-      if (updateError) {
-        console.error('❌ Erro ao atualizar subscription:', updateError);
-        return false;
-      }
-      
-      console.log('✅ Subscription atualizada com sucesso');
-    } else {
-      // Criar nova subscription
-      const { error: insertError } = await supabase
-        .from('push_subscriptions')
-        .insert({
-          barbershop_id: barbershopId,
-          subscription: subscriptionData,
-          device_info: deviceInfo,
-          user_agent: navigator.userAgent,
-          is_active: true,
-          last_used_at: new Date().toISOString()
-        });
-
-      if (insertError) {
-        console.error('❌ Erro ao inserir subscription:', insertError);
-        return false;
-      }
-      
-      console.log('✅ Nova subscription criada com sucesso');
-    }
-
-    // Atualizar flag na tabela barbershops
-    await supabase
+    const { error } = await supabase
       .from('barbershops')
       .update({
-        push_enabled: true,
-        push_last_updated: new Date().toISOString()
+        push_subscription: subscriptionJson
       })
       .eq('id', barbershopId);
 
+    if (error) {
+      console.error('[WebPush] Erro ao salvar subscription:', error);
+      return false;
+    }
+
+    console.log('[WebPush] Subscription salva no banco de dados');
     return true;
   } catch (error) {
-    console.error('❌ Erro ao salvar subscription:', error);
+    console.error('[WebPush] Erro ao salvar subscription:', error);
     return false;
   }
 }
 
 /**
- * Envia notificação de teste
+ * Remove a subscription do banco de dados
  */
-export async function sendTestNotification(barbershopId: string): Promise<boolean> {
+export async function removeSubscriptionFromDatabase(
+  barbershopId: string
+): Promise<boolean> {
   try {
-    // Detecta ambiente automaticamente
-    const isProduction = window.location.hostname !== 'localhost';
-    
-    // Em produção, usa a mesma URL base (Vercel Functions)
-    // Em desenvolvimento, usa o servidor local
-    const apiUrl = isProduction 
-      ? window.location.origin  // https://zapcorte.vercel.app
-      : (import.meta.env.VITE_API_URL || 'http://localhost:3001');
-    
-    console.log('🌐 Enviando para:', apiUrl);
-    
-    const response = await fetch(`${apiUrl}/api/send-notification`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        barbershopId,
-      }),
-    });
+    const { error } = await supabase
+      .from('barbershops')
+      .update({
+        push_subscription: null
+      })
+      .eq('id', barbershopId);
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('❌ Erro da API:', errorText);
-      
-      let errorMessage = 'Erro ao enviar notificação';
-      try {
-        const errorJson = JSON.parse(errorText);
-        errorMessage = errorJson.error || errorMessage;
-      } catch (e) {
-        errorMessage = errorText || errorMessage;
-      }
-      
-      throw new Error(errorMessage);
+    if (error) {
+      console.error('[WebPush] Erro ao remover subscription:', error);
+      return false;
     }
 
-    const result = await response.json();
-    console.log('✅ Resposta da API:', result);
+    console.log('[WebPush] Subscription removida do banco de dados');
     return true;
   } catch (error) {
-    console.error('❌ Erro ao enviar notificação de teste:', error);
+    console.error('[WebPush] Erro ao remover subscription:', error);
+    return false;
+  }
+}
+
+/**
+ * Cancela a subscription de push
+ */
+export async function unsubscribeFromPush(
+  registration: ServiceWorkerRegistration
+): Promise<boolean> {
+  try {
+    const subscription = await registration.pushManager.getSubscription();
+    
+    if (subscription) {
+      await subscription.unsubscribe();
+      console.log('[WebPush] Subscription cancelada');
+      return true;
+    }
+    
+    return false;
+  } catch (error) {
+    console.error('[WebPush] Erro ao cancelar subscription:', error);
+    return false;
+  }
+}
+
+/**
+ * Fluxo completo: ativar notificações
+ */
+export async function enablePushNotifications(
+  barbershopId: string
+): Promise<{ success: boolean; message: string }> {
+  try {
+    // 1. Verificar suporte
+    if (!isPushSupported()) {
+      return {
+        success: false,
+        message: 'Seu navegador não suporta notificações push'
+      };
+    }
+
+    // 2. Solicitar permissão
+    const hasPermission = await requestNotificationPermission();
+    if (!hasPermission) {
+      return {
+        success: false,
+        message: 'Permissão de notificação negada'
+      };
+    }
+
+    // 3. Registrar Service Worker
+    const registration = await registerServiceWorker();
+    if (!registration) {
+      return {
+        success: false,
+        message: 'Erro ao registrar Service Worker'
+      };
+    }
+
+    // 4. Criar subscription
+    const subscription = await subscribeToPush(registration);
+    if (!subscription) {
+      return {
+        success: false,
+        message: 'Erro ao criar subscription'
+      };
+    }
+
+    // 5. Salvar no banco
+    const saved = await saveSubscriptionToDatabase(barbershopId, subscription);
+    if (!saved) {
+      return {
+        success: false,
+        message: 'Erro ao salvar subscription'
+      };
+    }
+
+    return {
+      success: true,
+      message: 'Notificações ativadas com sucesso!'
+    };
+  } catch (error) {
+    console.error('[WebPush] Erro ao ativar notificações:', error);
+    return {
+      success: false,
+      message: 'Erro ao ativar notificações'
+    };
+  }
+}
+
+/**
+ * Fluxo completo: desativar notificações
+ */
+export async function disablePushNotifications(
+  barbershopId: string
+): Promise<{ success: boolean; message: string }> {
+  try {
+    // 1. Obter registration
+    const registration = await navigator.serviceWorker.ready;
+
+    // 2. Cancelar subscription
+    await unsubscribeFromPush(registration);
+
+    // 3. Remover do banco
+    await removeSubscriptionFromDatabase(barbershopId);
+
+    return {
+      success: true,
+      message: 'Notificações desativadas'
+    };
+  } catch (error) {
+    console.error('[WebPush] Erro ao desativar notificações:', error);
+    return {
+      success: false,
+      message: 'Erro ao desativar notificações'
+    };
+  }
+}
+
+/**
+ * Verifica se as notificações estão ativadas
+ */
+export async function areNotificationsEnabled(): Promise<boolean> {
+  try {
+    if (!isPushSupported()) {
+      return false;
+    }
+
+    if (getNotificationPermission() !== 'granted') {
+      return false;
+    }
+
+    const registration = await navigator.serviceWorker.getRegistration('/');
+    if (!registration) {
+      return false;
+    }
+
+    const subscription = await registration.pushManager.getSubscription();
+    return subscription !== null;
+  } catch (error) {
+    console.error('[WebPush] Erro ao verificar status:', error);
     return false;
   }
 }

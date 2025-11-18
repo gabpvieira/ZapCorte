@@ -709,7 +709,7 @@ const HomeNew = () => {
       </section>
 
       {/* Benefits Section */}
-      <section id="beneficios" className="py-32 bg-gradient-to-b from-[#0C0C0C] via-[#18181B] to-[#0C0C0C] relative overflow-hidden">
+      <section id="beneficios" className="py-32 bg-gradient-to-b from-[#0C0C0C] via-[#18181B] to-[#0C0C0C] relative overflow-x-hidden">
         {/* Animated Background Elements */}
         <div className="absolute inset-0 pointer-events-none">
           <motion.div
@@ -730,7 +730,7 @@ const HomeNew = () => {
           />
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 overflow-visible">
           {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -757,26 +757,27 @@ const HomeNew = () => {
           </motion.div>
 
           {/* Content with Mockup Centered */}
-          <div className="relative max-w-7xl mx-auto min-h-[600px] flex items-center justify-center">
+          <div className="relative w-full min-h-[600px] flex items-center justify-center">
             {/* Mockup Central - Desktop */}
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
-              className="hidden lg:flex justify-center items-center relative"
+              className="hidden lg:flex justify-center items-center"
             >
               <motion.img 
                 src="/MOCKUP-APP.png" 
                 alt="ZapCorte App Mockup" 
-                className="w-full max-w-2xl h-auto drop-shadow-2xl relative z-10"
+                className="w-full max-w-2xl h-auto drop-shadow-2xl"
                 animate={{ y: [0, -10, 0] }}
                 transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
               />
+            </motion.div>
 
-              {/* Floating Badges - Desktop */}
-              <motion.div
-                className="absolute top-0 -left-32 xl:-left-40 bg-gradient-to-br from-[#24C36B] to-[#1ea557] text-black px-6 py-4 rounded-2xl shadow-2xl max-w-xs z-20"
+            {/* Floating Badges - Desktop (fora da imagem) */}
+            <motion.div
+                className="hidden lg:block absolute top-0 left-0 bg-gradient-to-br from-[#24C36B] to-[#1ea557] text-black px-6 py-4 rounded-2xl shadow-2xl max-w-xs z-20"
                 initial={{ opacity: 0, x: -50 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
@@ -796,8 +797,8 @@ const HomeNew = () => {
                 <p className="text-sm text-black/70 font-medium">Clientes agendam 24/7</p>
               </motion.div>
 
-              <motion.div
-                className="absolute top-32 -right-32 xl:-right-40 bg-white text-black px-6 py-4 rounded-2xl shadow-2xl max-w-xs z-20"
+            <motion.div
+                className="hidden lg:block absolute top-32 right-0 bg-white text-black px-6 py-4 rounded-2xl shadow-2xl max-w-xs z-20"
                 initial={{ opacity: 0, x: 50 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
@@ -817,8 +818,8 @@ const HomeNew = () => {
                 <p className="text-sm text-black/60 font-medium">Sem interrupções</p>
               </motion.div>
 
-              <motion.div
-                className="absolute bottom-32 -left-28 xl:-left-36 bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] text-white px-6 py-4 rounded-2xl shadow-2xl border-2 border-[#24C36B]/40 max-w-xs z-20"
+            <motion.div
+                className="hidden lg:block absolute bottom-32 left-0 bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] text-white px-6 py-4 rounded-2xl shadow-2xl border-2 border-[#24C36B]/40 max-w-xs z-20"
                 initial={{ opacity: 0, x: -50 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
@@ -838,8 +839,8 @@ const HomeNew = () => {
                 <p className="text-sm text-gray-300 font-medium">Rápido e fácil</p>
               </motion.div>
 
-              <motion.div
-                className="absolute bottom-0 -right-28 xl:-right-36 bg-gradient-to-br from-[#1a3a2a] to-[#0f2419] text-white px-6 py-4 rounded-2xl shadow-2xl border-2 border-[#24C36B]/40 max-w-xs z-20"
+            <motion.div
+                className="hidden lg:block absolute bottom-0 right-0 bg-gradient-to-br from-[#1a3a2a] to-[#0f2419] text-white px-6 py-4 rounded-2xl shadow-2xl border-2 border-[#24C36B]/40 max-w-xs z-20"
                 initial={{ opacity: 0, x: 50 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
@@ -858,7 +859,6 @@ const HomeNew = () => {
                 </div>
                 <p className="text-sm text-gray-300 font-medium">Dados protegidos</p>
               </motion.div>
-            </motion.div>
 
             {/* Mobile Version - Stacked */}
             <div className="lg:hidden space-y-6 w-full">
@@ -1002,8 +1002,8 @@ const HomeNew = () => {
       </section>
 
       {/* Pricing */}
-      <section id="planos" className="py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section id="planos" className="py-20 overflow-visible">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 overflow-visible">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -1014,7 +1014,7 @@ const HomeNew = () => {
             <p className="text-xl text-gray-300">Comece grátis e faça upgrade quando quiser</p>
           </motion.div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto overflow-visible">
             {[
               {
                 name: "Freemium",

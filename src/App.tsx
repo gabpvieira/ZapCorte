@@ -20,6 +20,7 @@ import BarbershopSettings from "./pages/BarbershopSettings";
 import Plan from "./pages/Plan";
 import MyAppointments from "./pages/MyAppointments";
 import WhatsAppSettings from "./pages/WhatsAppSettings";
+import NotificationSettings from "./pages/NotificationSettings";
 import ConfirmarEmail from "./pages/ConfirmarEmail";
 import EmailConfirmado from "./pages/EmailConfirmado";
 import AuthConfirm from "./pages/AuthConfirm";
@@ -174,6 +175,14 @@ const AppContent = () => {
           element={
             <ProtectedRoute>
               <WhatsAppSettings />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/dashboard/notifications" 
+          element={
+            <ProtectedRoute>
+              <NotificationSettings />
             </ProtectedRoute>
           } 
         />

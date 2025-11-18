@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Edit, Trash2, Calendar, Clock, Phone, User, Filter, Eye, RefreshCw, X, CheckCircle, List } from "lucide-react";
+import { Plus, Edit, Trash2, Calendar, Clock, Phone, User, Filter, Eye, RefreshCw, X, CheckCircle, List, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,6 +13,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RecurringAppointments } from "@/components/RecurringAppointments";
+import { DayCalendar } from "@/components/DayCalendar";
 import { useToast } from "@/hooks/use-toast";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { useUserData } from "@/hooks/useUserData";
@@ -40,6 +42,8 @@ interface Appointment {
   barbershop_id: string;
   created_at: string;
   service?: Service;
+  is_fit_in?: boolean;
+  notes?: string;
 }
 
 interface AppointmentFormData {
@@ -48,6 +52,7 @@ interface AppointmentFormData {
   scheduled_date: string;
   scheduled_time: string;
   service_id: string;
+  is_fit_in: boolean;
 }
 
 const statusColors = {
@@ -82,10 +87,11 @@ const Appointments = () => {
     scheduled_date: "",
     scheduled_time: "",
     service_id: "",
+    is_fit_in: false,
   });
   const [dateFilter, setDateFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [viewMode, setViewMode] = useState<"list" | "recurring">("list");
+  const [viewMode, setViewMode] = useState<"list" | "calendar" | "recurring">("list");
   
   // Estados para modal de visualização e ações
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
@@ -187,6 +193,7 @@ const Appointments = () => {
       scheduled_date: "",
       scheduled_time: "",
       service_id: "",
+      is_fit_in: false,
     });
     setSelectedCustomerId("");
     setEditingAppointment(null);
@@ -225,6 +232,7 @@ const Appointments = () => {
         service_id: formData.service_id,
         barbershop_id: barbershop.id,
         status: "confirmed" as const, // Barbeiro cria já confirmado
+        is_fit_in: formData.is_fit_in,
       };
 
       if (editingAppointment) {
@@ -294,6 +302,7 @@ const Appointments = () => {
       scheduled_date: format(scheduledDate, 'dd/MM/yyyy'),
       scheduled_time: scheduledDate.toTimeString().slice(0, 5),
       service_id: appointment.service_id,
+      is_fit_in: appointment.is_fit_in || false,
     });
     setIsDialogOpen(true);
   };
@@ -971,6 +980,38 @@ const Appointments = () => {
                 </Select>
               </div>
 
+              {/* Modo Encaixe */}
+              <div className="relative overflow-hidden rounded-lg border-2 border-amber-500/30 bg-gradient-to-br from-zinc-900 via-zinc-900 to-amber-950/20 p-4">
+                {/* Efeito de brilho */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-amber-500/5 to-transparent" />
+                
+                <div className="relative flex items-start justify-between gap-4">
+                  <div className="flex-1 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 rounded-md bg-amber-500/10">
+                        <Zap className="h-4 w-4 text-amber-500" />
+                      </div>
+                      <Label 
+                        htmlFor="is_fit_in" 
+                        className="text-sm font-semibold text-white cursor-pointer"
+                      >
+                        Modo Encaixe
+                      </Label>
+                    </div>
+                    <p className="text-xs text-zinc-400 leading-relaxed">
+                      Permite agendar em horários já ocupados. Útil para serviços rápidos ou quando você sabe que pode fazer sobreposições.
+                    </p>
+                  </div>
+                  
+                  <Switch
+                    id="is_fit_in"
+                    checked={formData.is_fit_in}
+                    onCheckedChange={(checked) => setFormData({ ...formData, is_fit_in: checked })}
+                    className="data-[state=checked]:bg-amber-500"
+                  />
+                </div>
+              </div>
+
               <div className="flex justify-end space-x-2">
                 <Button
                   type="button"
@@ -989,12 +1030,16 @@ const Appointments = () => {
       }
     >
       {/* Toggle de Visualização */}
-      <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as "list" | "recurring")} className="w-full">
+      <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as "list" | "calendar" | "recurring")} className="w-full">
         <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-          <TabsList className="grid w-full max-w-[400px] grid-cols-2">
+          <TabsList className="grid w-full max-w-[600px] grid-cols-3">
             <TabsTrigger value="list" className="flex items-center gap-2">
               <List className="h-4 w-4" />
               <span className="hidden sm:inline">Lista</span>
+            </TabsTrigger>
+            <TabsTrigger value="calendar" className="flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              <span className="hidden sm:inline">Calendário</span>
             </TabsTrigger>
             <TabsTrigger value="recurring" className="flex items-center gap-2">
               <RefreshCw className="h-4 w-4" />
@@ -1130,6 +1175,26 @@ const Appointments = () => {
                         >
                           {getStatusInfo(appointment.status).label}
                         </Badge>
+                        
+                        {/* Badge de Encaixe */}
+                        {appointment.is_fit_in && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Badge 
+                                  variant="outline"
+                                  className="text-[9px] px-1.5 py-0.5 font-medium shrink-0 bg-amber-50 text-amber-700 border-amber-300"
+                                >
+                                  <Zap className="h-2.5 w-2.5 mr-0.5" />
+                                  ENCAIXE
+                                </Badge>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Agendamento feito como encaixe</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
                       </div>
 
                       {/* Info Row - Inline Compacto */}
@@ -1206,6 +1271,26 @@ const Appointments = () => {
                       >
                         {getStatusInfo(appointment.status).label}
                       </Badge>
+
+                      {/* Badge de Encaixe */}
+                      {appointment.is_fit_in && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Badge 
+                                variant="outline"
+                                className="text-[10px] px-2 py-0.5 font-medium shrink-0 bg-amber-50 text-amber-700 border-amber-300"
+                              >
+                                <Zap className="h-3 w-3 mr-1" />
+                                ENCAIXE
+                              </Badge>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Agendamento feito como encaixe</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
 
                       <div className="flex-1" />
 
@@ -1434,6 +1519,37 @@ const Appointments = () => {
           </AnimatePresence>
         </motion.div>
       )}
+      </TabsContent>
+
+      {/* Visualização de Calendário Diário */}
+      <TabsContent value="calendar" className="mt-0">
+        <Card className="border-2">
+          <CardContent className="p-0">
+            <div className="h-[700px]">
+              <DayCalendar
+                appointments={filteredAppointments.map(apt => ({
+                  id: apt.id,
+                  customer_name: apt.customer_name,
+                  customer_phone: apt.customer_phone,
+                  scheduled_at: apt.scheduled_at,
+                  status: apt.status,
+                  service_name: apt.service?.name,
+                  service_duration: apt.service?.duration
+                }))}
+                onAppointmentClick={(appointment) => {
+                  const fullAppointment = filteredAppointments.find(apt => apt.id === appointment.id);
+                  if (fullAppointment) {
+                    openViewModal(fullAppointment);
+                  }
+                }}
+                onDateChange={(date) => {
+                  // Atualizar filtro de data quando mudar o dia no calendário
+                  setDateFilter(format(date, 'yyyy-MM-dd'));
+                }}
+              />
+            </div>
+          </CardContent>
+        </Card>
       </TabsContent>
 
       {/* Visualização de Agendamentos Recorrentes */}

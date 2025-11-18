@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, User, TrendingUp, ExternalLink, AlertCircle, Eye, SquarePen, Trash2, Phone, Plus, Scissors, CalendarCheck } from "lucide-react";
+import { Calendar, Clock, User, TrendingUp, ExternalLink, AlertCircle, Eye, SquarePen, Trash2, Phone, Plus, Scissors, CalendarCheck, Zap } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { format, parseISO } from "date-fns";
@@ -73,6 +74,7 @@ const Dashboard = () => {
   const [customerPhone, setCustomerPhone] = useState("");
   const [timeSlots, setTimeSlots] = useState<{ time: string; available: boolean }[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [isFitIn, setIsFitIn] = useState(false);
   
   // Estados para busca de clientes
   const [customers, setCustomers] = useState<any[]>([]);
@@ -319,6 +321,7 @@ const Dashboard = () => {
     setSelectedCustomerId("");
     setCustomerSearchTerm("");
     setTimeSlots([]);
+    setIsFitIn(false);
   };
 
   // Buscar clientes quando o modal abre
@@ -420,7 +423,8 @@ const Dashboard = () => {
         customer_name: customerName,
         customer_phone: customerPhone,
         scheduled_at: scheduledAt,
-        status: 'confirmed'
+        status: 'confirmed',
+        is_fit_in: isFitIn
       });
 
       // Enviar mensagem de confirmação via WhatsApp
@@ -881,6 +885,38 @@ const Dashboard = () => {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            {/* Modo Encaixe */}
+            <div className="relative overflow-hidden rounded-lg border-2 border-amber-500/30 bg-gradient-to-br from-zinc-900 via-zinc-900 to-amber-950/20 p-4">
+              {/* Efeito de brilho */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-amber-500/5 to-transparent" />
+              
+              <div className="relative flex items-start justify-between gap-4">
+                <div className="flex-1 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded-md bg-amber-500/10">
+                      <Zap className="h-4 w-4 text-amber-500" />
+                    </div>
+                    <Label 
+                      htmlFor="is_fit_in_dashboard" 
+                      className="text-sm font-semibold text-white cursor-pointer"
+                    >
+                      Modo Encaixe
+                    </Label>
+                  </div>
+                  <p className="text-xs text-zinc-400 leading-relaxed">
+                    Permite agendar em horários já ocupados. Útil para serviços rápidos ou quando você sabe que pode fazer sobreposições.
+                  </p>
+                </div>
+                
+                <Switch
+                  id="is_fit_in_dashboard"
+                  checked={isFitIn}
+                  onCheckedChange={(checked) => setIsFitIn(checked)}
+                  className="data-[state=checked]:bg-amber-500"
+                />
+              </div>
             </div>
 
             {/* Seleção de Data */}

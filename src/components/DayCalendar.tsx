@@ -23,7 +23,9 @@ interface DayCalendarProps {
 }
 
 const HOURS = Array.from({ length: 14 }, (_, i) => i + 8); // 8h às 21h
-const HOUR_HEIGHT = 80; // Altura de cada hora em pixels
+const HOUR_HEIGHT = 80; // Altura base por hora
+const MIN_CARD_HEIGHT = 44; // Altura mínima reduzida
+const CARD_SPACING = 4; // Espaçamento entre cards
 
 export function DayCalendar({ appointments, onAppointmentClick, onTimeSlotClick, onDateChange }: DayCalendarProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -69,42 +71,42 @@ export function DayCalendar({ appointments, onAppointmentClick, onTimeSlotClick,
     
     return {
       top: `${top}px`,
-      height: `${Math.max(height, 60)}px`, // Altura mínima de 60px
+      height: `${Math.max(height, MIN_CARD_HEIGHT)}px`, // Altura mínima para mostrar conteúdo
     };
   };
 
-  // Cores por status - Verde (confirmado), Cinza (pendente), Vermelho (cancelado)
+  // Cores por status - Design minimalista com hover claro
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'confirmed':
         return {
-          bg: 'bg-gradient-to-r from-emerald-500/20 to-emerald-600/10',
+          bg: 'bg-emerald-950/40',
           border: 'border-l-emerald-500',
-          hover: 'hover:from-emerald-500/30 hover:to-emerald-600/20',
-          text: 'text-emerald-100',
+          hover: 'hover:bg-emerald-900/70 hover:border-l-emerald-400',
+          text: 'text-emerald-50',
           badge: 'bg-emerald-500/30 text-emerald-100'
         };
       case 'pending':
         return {
-          bg: 'bg-gradient-to-r from-slate-500/20 to-slate-600/10',
-          border: 'border-l-slate-500',
-          hover: 'hover:from-slate-500/30 hover:to-slate-600/20',
-          text: 'text-slate-300',
+          bg: 'bg-slate-800/40',
+          border: 'border-l-slate-400',
+          hover: 'hover:bg-slate-700/70 hover:border-l-slate-300',
+          text: 'text-slate-200',
           badge: 'bg-slate-500/30 text-slate-300'
         };
       case 'cancelled':
         return {
-          bg: 'bg-gradient-to-r from-red-500/20 to-red-600/10',
+          bg: 'bg-red-950/30',
           border: 'border-l-red-500',
-          hover: 'hover:from-red-500/30 hover:to-red-600/20',
+          hover: 'hover:bg-red-900/60 hover:border-l-red-400',
           text: 'text-red-200',
           badge: 'bg-red-500/30 text-red-200'
         };
       default:
         return {
-          bg: 'bg-gradient-to-r from-blue-500/20 to-blue-600/10',
+          bg: 'bg-blue-950/40',
           border: 'border-l-blue-500',
-          hover: 'hover:from-blue-500/30 hover:to-blue-600/20',
+          hover: 'hover:bg-blue-900/70 hover:border-l-blue-400',
           text: 'text-blue-100',
           badge: 'bg-blue-500/30 text-blue-100'
         };
@@ -127,10 +129,52 @@ export function DayCalendar({ appointments, onAppointmentClick, onTimeSlotClick,
     onDateChange?.(newDate);
   };
 
-  // Filtrar agendamentos do dia selecionado
-  const dayAppointments = appointments.filter(apt => 
-    isSameDay(parseISO(apt.scheduled_at), selectedDate)
-  );
+  // Filtrar e ordenar agendamentos do dia selecionado
+  const dayAppointments = appointments
+    .filter(apt => isSameDay(parseISO(apt.scheduled_at), selectedDate))
+    .sort((a, b) => parseISO(a.scheduled_at).getTime() - parseISO(b.scheduled_at).getTime());
+
+  // Calcular posições ajustadas para evitar sobreposição (lista vertical simples)
+  const appointmentsWithLayout = dayAppointments.map((apt, index) => {
+    const start = parseISO(apt.scheduled_at);
+    const duration = apt.service_duration || 30;
+    const end = new Date(start.getTime() + duration * 60000);
+    
+    // Calcular posição base
+    const hours = start.getHours();
+    const minutes = start.getMinutes();
+    const hoursSince8 = hours - 8;
+    const minutesFraction = minutes / 60;
+    let baseTop = (hoursSince8 + minutesFraction) * HOUR_HEIGHT;
+    
+    // Verificar sobreposição com card anterior
+    if (index > 0) {
+      const prevApt = dayAppointments[index - 1];
+      const prevStart = parseISO(prevApt.scheduled_at);
+      const prevDuration = prevApt.service_duration || 30;
+      const prevEnd = new Date(prevStart.getTime() + prevDuration * 60000);
+      
+      const prevHours = prevStart.getHours();
+      const prevMinutes = prevStart.getMinutes();
+      const prevHoursSince8 = prevHours - 8;
+      const prevMinutesFraction = prevMinutes / 60;
+      const prevTop = (prevHoursSince8 + prevMinutesFraction) * HOUR_HEIGHT;
+      const prevHeight = Math.max((prevDuration / 60) * HOUR_HEIGHT, MIN_CARD_HEIGHT);
+      const prevBottom = prevTop + prevHeight + CARD_SPACING;
+      
+      // Se houver sobreposição, ajustar posição
+      if (baseTop < prevBottom) {
+        baseTop = prevBottom;
+      }
+    }
+    
+    return {
+      ...apt,
+      startTime: start,
+      endTime: end,
+      adjustedTop: baseTop
+    };
+  });
 
   return (
     <div className="flex flex-col h-full bg-background rounded-lg overflow-hidden">
@@ -219,43 +263,58 @@ export function DayCalendar({ appointments, onAppointmentClick, onTimeSlotClick,
             </div>
           )}
 
-          {/* Cards de Agendamentos - Design Premium */}
+          {/* Cards de Agendamentos - Lista Vertical Simples */}
           <div className="absolute top-0 left-20 right-0 pointer-events-none">
-            {dayAppointments.map((appointment) => {
-              const style = getAppointmentStyle(appointment);
+            {appointmentsWithLayout.map((appointment) => {
               const colors = getStatusColor(appointment.status);
+              const duration = appointment.service_duration || 30;
+              const cardHeight = Math.max((duration / 60) * HOUR_HEIGHT, MIN_CARD_HEIGHT);
               
               return (
                 <div
                   key={appointment.id}
                   className={cn(
-                    "absolute left-2 right-2 rounded-lg border-l-4 p-3 cursor-pointer pointer-events-auto transition-all backdrop-blur-sm",
+                    "absolute left-2 right-2 rounded-lg border-l-4 cursor-pointer pointer-events-auto",
+                    "transition-all duration-150",
                     colors.bg,
                     colors.border,
                     colors.hover,
-                    "shadow-lg hover:shadow-xl"
+                    "shadow-sm hover:shadow-md hover:z-10",
+                    "px-2 py-1"
                   )}
-                  style={style}
+                  style={{
+                    top: `${appointment.adjustedTop}px`,
+                    height: `${cardHeight}px`,
+                  }}
                   onClick={() => onAppointmentClick(appointment)}
                 >
-                  <div className="flex flex-col gap-1.5">
-                    {/* Nome do Cliente */}
-                    <div className={cn("font-bold text-sm truncate", colors.text)}>
-                      {appointment.customer_name}
+                  {/* Layout Otimizado - Nome + Horário na mesma linha, Serviço abaixo */}
+                  <div className="flex flex-col h-full justify-center gap-0.5">
+                    {/* Linha 1: Nome + Horário */}
+                    <div className="flex items-center justify-between gap-2">
+                      <div className={cn(
+                        "font-semibold text-xs leading-tight truncate flex-1",
+                        colors.text
+                      )}>
+                        {appointment.customer_name}
+                      </div>
+                      <div className={cn(
+                        "text-[10px] font-medium tabular-nums opacity-75 flex-shrink-0",
+                        colors.text
+                      )}>
+                        {format(parseISO(appointment.scheduled_at), 'HH:mm')}
+                      </div>
                     </div>
                     
-                    {/* Serviço e Horário */}
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className={cn(
-                        "text-xs px-2 py-0.5 rounded-full font-medium",
-                        colors.badge
+                    {/* Linha 2: Serviço */}
+                    {appointment.service_name && (
+                      <div className={cn(
+                        "text-[11px] leading-tight truncate opacity-85",
+                        colors.text
                       )}>
                         {appointment.service_name}
-                      </span>
-                      <span className={cn("text-xs font-medium", colors.text)}>
-                        {format(parseISO(appointment.scheduled_at), 'HH:mm')}
-                      </span>
-                    </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               );

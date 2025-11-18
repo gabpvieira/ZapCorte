@@ -23,7 +23,7 @@ export async function notificarNovoAgendamento({
     console.log('🔍 [WEBHOOK] Buscando dados da barbearia:', barbershopId);
     const { data: barbershop, error: barbershopError } = await supabase
       .from('barbershops')
-      .select('whatsapp_number, name, user_id')
+      .select('whatsapp_number, name, user_id, push_subscription')
       .eq('id', barbershopId)
       .single();
 
@@ -38,6 +38,38 @@ export async function notificarNovoAgendamento({
     }
 
     console.log('✅ [WEBHOOK] Barbearia encontrada:', barbershop.name);
+
+    // Enviar notificação push se estiver ativada
+    if (barbershop.push_subscription) {
+      console.log('📱 [PUSH] Enviando notificação push...');
+      try {
+        const response = await fetch('/api/send-push-notification', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            barbershopId,
+            type: 'new_appointment',
+            data: {
+              customerName,
+              scheduledAt,
+              serviceName: serviceName || 'Serviço',
+            },
+          }),
+        });
+
+        if (response.ok) {
+          console.log('✅ [PUSH] Notificação push enviada com sucesso');
+        } else {
+          console.error('❌ [PUSH] Erro ao enviar notificação push:', await response.text());
+        }
+      } catch (pushError) {
+        console.error('❌ [PUSH] Erro ao enviar notificação push:', pushError);
+      }
+    } else {
+      console.log('ℹ️ [PUSH] Notificações push não ativadas para esta barbearia');
+    }
 
     // Formatar data e hora
     const date = new Date(scheduledAt);

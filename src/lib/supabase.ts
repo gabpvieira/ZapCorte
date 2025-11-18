@@ -84,6 +84,7 @@ export interface Appointment {
   scheduled_at: string
   status: 'pending' | 'confirmed' | 'cancelled' | 'completed'
   recurring_appointment_id?: string
+  is_fit_in?: boolean
   created_at: string
 }
 

@@ -22,7 +22,7 @@ class ErrorBoundary extends React.Component<Props, State> {
   componentDidCatch(error: Error, info: React.ErrorInfo) {
     this.setState({ info });
     console.error("[ErrorBoundary] Render error:", error, info);
-    showErrorOverlay("Render error", `${error?.message || error}`);
+    // Overlay desabilitado - erro apenas no console
   }
 
   render() {
