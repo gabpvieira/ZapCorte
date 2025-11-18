@@ -490,7 +490,10 @@ const Dashboard = () => {
       }
 
       closeNewAppointmentModal();
-      refetchDashboard();
+      // Aguardar e forçar atualização
+      setTimeout(() => {
+        refetchDashboard();
+      }, 300);
     } catch (error) {
       toast({
         title: "Erro",
@@ -558,7 +561,10 @@ const Dashboard = () => {
       }
 
       closeNewAppointmentModal();
-      refetchDashboard();
+      // Aguardar e forçar atualização
+      setTimeout(() => {
+        refetchDashboard();
+      }, 300);
       
     } catch (error) {
       toast({

@@ -263,6 +263,7 @@ const Appointments = () => {
 
       // Enviar mensagem de confirmação via WhatsApp
       try {
+        console.log('Tentando enviar WhatsApp...');
         const serviceName = services.find(s => s.id === data.service_id)?.name || 'Serviço';
         
         const mensagemEnviada = await enviarLembreteWhatsApp({
@@ -274,6 +275,8 @@ const Appointments = () => {
           tipo: 'confirmacao',
         });
 
+        console.log('WhatsApp enviado:', mensagemEnviada);
+
         toast({
           title: "Encaixe Criado! ⚡",
           description: mensagemEnviada 
@@ -281,19 +284,24 @@ const Appointments = () => {
             : "Encaixe criado com sucesso!",
         });
       } catch (whatsappError) {
+        console.error('Erro ao enviar WhatsApp:', whatsappError);
         toast({
-          title: "Sucesso",
+          title: "Encaixe Criado! ⚡",
           description: "Encaixe criado com sucesso!",
         });
       }
 
       setIsDialogOpen(false);
       resetForm();
-      fetchAppointments();
+      // Aguardar um pouco e forçar atualização
+      setTimeout(() => {
+        fetchAppointments();
+      }, 300);
     } catch (error) {
+      console.error('Erro ao criar encaixe:', error);
       toast({
         title: "Erro",
-        description: "Não foi possível criar o encaixe.",
+        description: error instanceof Error ? error.message : "Não foi possível criar o encaixe.",
         variant: "destructive",
       });
     }
@@ -383,7 +391,10 @@ const Appointments = () => {
 
       setIsDialogOpen(false);
       resetForm();
-      fetchAppointments();
+      // Aguardar e forçar atualização
+      setTimeout(() => {
+        fetchAppointments();
+      }, 300);
     } catch (error) {
       toast({
         title: "Erro",
@@ -433,7 +444,10 @@ const Appointments = () => {
         description: "Agendamento excluído com sucesso!",
       });
 
-      fetchAppointments();
+      // Aguardar e forçar atualização
+      setTimeout(() => {
+        fetchAppointments();
+      }, 300);
     } catch (error: any) {
       console.error("Erro ao excluir:", error);
       toast({
@@ -795,8 +809,11 @@ const Appointments = () => {
         description: "Agendamento excluído com sucesso!",
       });
 
-      fetchAppointments();
       closeViewModal();
+      // Aguardar e forçar atualização
+      setTimeout(() => {
+        fetchAppointments();
+      }, 300);
     } catch (error: any) {
       console.error("Erro ao excluir:", error);
       toast({
