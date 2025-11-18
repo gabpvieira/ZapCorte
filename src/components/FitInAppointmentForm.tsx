@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DatePicker } from "@/components/DatePicker";
 import { format, parse } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -209,11 +208,20 @@ export function FitInAppointmentForm({
 
       {/* Data */}
       <div>
-        <Label>Data do Atendimento</Label>
-        <DatePicker
-          date={selectedDate}
-          onDateChange={setSelectedDate}
-          placeholder="Selecione a data"
+        <Label htmlFor="scheduled_date">Data do Atendimento</Label>
+        <Input
+          id="scheduled_date"
+          type="date"
+          value={selectedDate ? format(selectedDate, 'yyyy-MM-dd') : ''}
+          onChange={(e) => {
+            if (e.target.value) {
+              setSelectedDate(new Date(e.target.value + 'T12:00:00'));
+            } else {
+              setSelectedDate(undefined);
+            }
+          }}
+          required
+          className="w-full"
         />
       </div>
 
