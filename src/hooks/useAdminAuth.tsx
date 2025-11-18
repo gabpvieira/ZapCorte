@@ -13,10 +13,20 @@ export function useAdminAuth() {
   const { toast } = useToast();
 
   useEffect(() => {
-    checkAdminStatus();
+    let mounted = true;
+
+    const initAuth = async () => {
+      if (mounted) {
+        await checkAdminStatus();
+      }
+    };
+
+    initAuth();
 
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        if (!mounted) return;
+        
         if (event === 'SIGNED_IN') {
           await checkAdminStatus();
         } else if (event === 'SIGNED_OUT') {
@@ -28,13 +38,23 @@ export function useAdminAuth() {
     );
 
     return () => {
+      mounted = false;
       authListener.subscription.unsubscribe();
     };
-  }, []);
+  }, [navigate]);
 
   const checkAdminStatus = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      setLoading(true);
+      const { data: { user }, error } = await supabase.auth.getUser();
+      
+      if (error) {
+        console.error('Erro ao buscar usuário:', error);
+        setIsAdmin(false);
+        setUser(null);
+        setLoading(false);
+        return;
+      }
       
       if (!user) {
         setIsAdmin(false);
@@ -45,11 +65,13 @@ export function useAdminAuth() {
 
       // Verificar se o email é o admin
       if (user.email === ADMIN_EMAIL) {
-        // Atualizar último login
-        await supabase
+        // Atualizar último login (não bloqueia a UI)
+        supabase
           .from('admin_users')
           .update({ last_login: new Date().toISOString() })
-          .eq('email', user.email);
+          .eq('email', user.email)
+          .then(() => {})
+          .catch((err) => console.error('Erro ao atualizar último login:', err));
 
         setIsAdmin(true);
         setUser(user);

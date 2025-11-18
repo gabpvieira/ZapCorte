@@ -14,11 +14,11 @@ export function AdminLayout({ children, title = 'Dashboard' }: AdminLayoutProps)
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!loading && !isAdmin && user) {
-      // Se tem usuário mas não é admin, redireciona
-      navigate('/admin/login');
+    if (!loading && !isAdmin) {
+      // Se não é admin após carregar, redireciona
+      navigate('/admin/login', { replace: true });
     }
-  }, [isAdmin, loading, navigate, user]);
+  }, [isAdmin, loading, navigate]);
 
   if (loading) {
     return (
