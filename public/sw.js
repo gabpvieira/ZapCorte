@@ -1,18 +1,47 @@
 // Service Worker para Web Push Notifications
 // ZapCorte - Sistema de Notificações Nativo
 
-const CACHE_NAME = 'zapcorte-v1';
+const CACHE_NAME = 'zapcorte-v3'; // Incrementar versão para forçar atualização
+const CACHE_VERSION = '3.0.0';
 
 // Instalação do Service Worker
 self.addEventListener('install', (event) => {
-  console.log('[SW] Service Worker instalado');
+  console.log('[SW] Service Worker instalado - Versão:', CACHE_VERSION);
+  // skipWaiting força a ativação imediata do novo service worker
   self.skipWaiting();
 });
 
 // Ativação do Service Worker
 self.addEventListener('activate', (event) => {
-  console.log('[SW] Service Worker ativado');
-  event.waitUntil(clients.claim());
+  console.log('[SW] Service Worker ativado - Versão:', CACHE_VERSION);
+  
+  event.waitUntil(
+    Promise.all([
+      // Limpar caches antigos
+      caches.keys().then((cacheNames) => {
+        return Promise.all(
+          cacheNames.map((cacheName) => {
+            if (cacheName !== CACHE_NAME) {
+              console.log('[SW] Removendo cache antigo:', cacheName);
+              return caches.delete(cacheName);
+            }
+          })
+        );
+      }),
+      // Assumir controle de todos os clientes imediatamente
+      clients.claim()
+    ])
+  );
+  
+  // Notificar todos os clientes sobre a atualização
+  clients.matchAll({ type: 'window' }).then((clients) => {
+    clients.forEach((client) => {
+      client.postMessage({
+        type: 'SW_UPDATED',
+        version: CACHE_VERSION
+      });
+    });
+  });
 });
 
 // Receber notificações push
@@ -85,4 +114,19 @@ self.addEventListener('notificationclick', (event) => {
 // Fechar notificação
 self.addEventListener('notificationclose', (event) => {
   console.log('[SW] Notificação fechada:', event);
+});
+
+// Receber mensagens do cliente
+self.addEventListener('message', (event) => {
+  console.log('[SW] Mensagem recebida:', event.data);
+  
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+  
+  if (event.data && event.data.type === 'GET_VERSION') {
+    event.ports[0].postMessage({
+      version: CACHE_VERSION
+    });
+  }
 });
