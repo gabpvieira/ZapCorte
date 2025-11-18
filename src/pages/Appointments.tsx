@@ -24,6 +24,7 @@ import { ptBR } from "date-fns/locale";
 import { enviarLembreteWhatsApp } from "@/lib/notifications";
 import { DatePicker } from "@/components/DatePicker";
 import { cn } from "@/lib/utils";
+import { FitInAppointmentForm } from "@/components/FitInAppointmentForm";
 
 interface Service {
   id: string;
@@ -89,6 +90,7 @@ const Appointments = () => {
     service_id: "",
     is_fit_in: false,
   });
+  const [isFitInMode, setIsFitInMode] = useState(false);
   const [dateFilter, setDateFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [viewMode, setViewMode] = useState<"list" | "calendar" | "recurring">("list");
@@ -197,6 +199,95 @@ const Appointments = () => {
     });
     setSelectedCustomerId("");
     setEditingAppointment(null);
+    setIsFitInMode(false);
+  };
+
+  const handleFitInSubmit = async (data: {
+    customer_name: string;
+    customer_phone: string;
+    scheduled_date: string;
+    start_time: string;
+    end_time: string;
+    service_id: string;
+  }) => {
+    if (!barbershop?.id) {
+      toast({
+        title: "Erro",
+        description: "Barbearia não encontrada.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Converter dd/MM/yyyy -> yyyy-MM-dd para compor ISO
+      const parsedDate = parse(data.scheduled_date, 'dd/MM/yyyy', new Date());
+      if (isNaN(parsedDate.getTime())) {
+        toast({
+          title: "Data inválida",
+          description: "Use o formato dd/MM/yyyy.",
+          variant: "destructive",
+        });
+        return;
+      }
+      const isoDate = format(parsedDate, 'yyyy-MM-dd');
+      
+      // Usar o horário de início como scheduled_at
+      const scheduledAt = new Date(`${isoDate}T${data.start_time}`);
+      
+      const appointmentData = {
+        customer_name: data.customer_name,
+        customer_phone: data.customer_phone,
+        scheduled_at: scheduledAt.toISOString(),
+        service_id: data.service_id,
+        barbershop_id: barbershop.id,
+        status: "confirmed" as const,
+        is_fit_in: true, // Sempre true para encaixes
+        notes: `Encaixe: ${data.start_time} - ${data.end_time}`, // Salvar horários nas observações
+      };
+
+      const { error } = await supabase
+        .from("appointments")
+        .insert([appointmentData]);
+
+      if (error) throw error;
+
+      // Enviar mensagem de confirmação via WhatsApp
+      try {
+        const serviceName = services.find(s => s.id === data.service_id)?.name || 'Serviço';
+        
+        const mensagemEnviada = await enviarLembreteWhatsApp({
+          barbershopId: barbershop.id,
+          customerName: data.customer_name,
+          customerPhone: data.customer_phone,
+          scheduledAt: scheduledAt.toISOString(),
+          serviceName,
+          tipo: 'confirmacao',
+        });
+
+        toast({
+          title: "Encaixe Criado! ⚡",
+          description: mensagemEnviada 
+            ? "Encaixe criado e confirmação enviada via WhatsApp."
+            : "Encaixe criado com sucesso!",
+        });
+      } catch (whatsappError) {
+        toast({
+          title: "Sucesso",
+          description: "Encaixe criado com sucesso!",
+        });
+      }
+
+      setIsDialogOpen(false);
+      resetForm();
+      fetchAppointments();
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível criar o encaixe.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -869,13 +960,57 @@ const Appointments = () => {
               Novo Agendamento
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
-                {editingAppointment ? "Editar Agendamento" : "Novo Agendamento"}
+                {editingAppointment ? "Editar Agendamento" : isFitInMode ? "Novo Encaixe" : "Novo Agendamento"}
               </DialogTitle>
+              <DialogDescription>
+                {isFitInMode ? "Crie um agendamento sem restrições de horário" : "Preencha os dados do agendamento"}
+              </DialogDescription>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
+
+            {/* Toggle Modo Encaixe */}
+            {!editingAppointment && (
+              <div className="relative overflow-hidden rounded-lg border-2 border-amber-500/30 bg-gradient-to-br from-zinc-900 via-zinc-900 to-amber-950/20 p-4 mb-4">
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-amber-500/5 to-transparent" />
+                <div className="relative flex items-start justify-between gap-4">
+                  <div className="flex-1 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 rounded-md bg-amber-500/10">
+                        <Zap className="h-4 w-4 text-amber-500" />
+                      </div>
+                      <Label
+                        htmlFor="fit_in_toggle"
+                        className="text-sm font-semibold text-white cursor-pointer"
+                      >
+                        Modo Encaixe
+                      </Label>
+                    </div>
+                    <p className="text-xs text-zinc-400 leading-relaxed">
+                      Ative para agendar sem restrições de horário. Você define manualmente início e fim.
+                    </p>
+                  </div>
+                  <Switch
+                    id="fit_in_toggle"
+                    checked={isFitInMode}
+                    onCheckedChange={setIsFitInMode}
+                    className="data-[state=checked]:bg-amber-500"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Formulário de Encaixe */}
+            {isFitInMode && !editingAppointment ? (
+              <FitInAppointmentForm
+                services={services}
+                customers={customers}
+                onSubmit={handleFitInSubmit}
+                onCancel={() => setIsDialogOpen(false)}
+              />
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-4">
               {/* Seletor de Cliente */}
               <div>
                 <Label htmlFor="customer_select">Cliente</Label>
@@ -1025,6 +1160,7 @@ const Appointments = () => {
                 </Button>
               </div>
             </form>
+            )}
           </DialogContent>
         </Dialog>
       }
