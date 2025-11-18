@@ -243,7 +243,6 @@ const Appointments = () => {
         barbershop_id: barbershop.id,
         status: "confirmed" as const,
         is_fit_in: true, // Sempre true para encaixes
-        notes: `Encaixe: ${data.start_time} - ${data.end_time}`, // Salvar horários nas observações
       };
 
       const { error } = await supabase
@@ -1115,37 +1114,7 @@ const Appointments = () => {
                 </Select>
               </div>
 
-              {/* Modo Encaixe */}
-              <div className="relative overflow-hidden rounded-lg border-2 border-amber-500/30 bg-gradient-to-br from-zinc-900 via-zinc-900 to-amber-950/20 p-4">
-                {/* Efeito de brilho */}
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-amber-500/5 to-transparent" />
-                
-                <div className="relative flex items-start justify-between gap-4">
-                  <div className="flex-1 space-y-2">
-                    <div className="flex items-center gap-2">
-                      <div className="p-1.5 rounded-md bg-amber-500/10">
-                        <Zap className="h-4 w-4 text-amber-500" />
-                      </div>
-                      <Label 
-                        htmlFor="is_fit_in" 
-                        className="text-sm font-semibold text-white cursor-pointer"
-                      >
-                        Modo Encaixe
-                      </Label>
-                    </div>
-                    <p className="text-xs text-zinc-400 leading-relaxed">
-                      Permite agendar em horários já ocupados. Útil para serviços rápidos ou quando você sabe que pode fazer sobreposições.
-                    </p>
-                  </div>
-                  
-                  <Switch
-                    id="is_fit_in"
-                    checked={formData.is_fit_in}
-                    onCheckedChange={(checked) => setFormData({ ...formData, is_fit_in: checked })}
-                    className="data-[state=checked]:bg-amber-500"
-                  />
-                </div>
-              </div>
+
 
               <div className="flex justify-end space-x-2">
                 <Button

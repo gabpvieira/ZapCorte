@@ -4,7 +4,7 @@ import { Calendar, Clock, User, TrendingUp, ExternalLink, AlertCircle, Eye, Squa
 import { Switch } from "@/components/ui/switch";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, parse } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useUserData } from "@/hooks/useUserData";
 import { useAuth } from "@/contexts/AuthContext";
@@ -47,6 +47,7 @@ import { getAvailableTimeSlots, createAppointment } from "@/lib/supabase-queries
 import { motion } from "framer-motion";
 import WeeklyDatePicker from "@/components/WeeklyDatePicker";
 import { DayCalendar } from "@/components/DayCalendar";
+import { FitInAppointmentForm } from "@/components/FitInAppointmentForm";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -75,6 +76,7 @@ const Dashboard = () => {
   const [timeSlots, setTimeSlots] = useState<{ time: string; available: boolean }[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [isFitIn, setIsFitIn] = useState(false);
+  const [isFitInMode, setIsFitInMode] = useState(false);
   
   // Estados para busca de clientes
   const [customers, setCustomers] = useState<any[]>([]);
@@ -322,6 +324,7 @@ const Dashboard = () => {
     setCustomerSearchTerm("");
     setTimeSlots([]);
     setIsFitIn(false);
+    setIsFitInMode(false);
   };
 
   // Buscar clientes quando o modal abre
@@ -398,6 +401,88 @@ const Dashboard = () => {
       supabase.removeChannel(channel);
     };
   }, [barbershop, selectedService, selectedDate]);
+
+  const handleFitInSubmitDashboard = async (data: {
+    customer_name: string;
+    customer_phone: string;
+    scheduled_date: string;
+    start_time: string;
+    end_time: string;
+    service_id: string;
+  }) => {
+    if (!barbershop?.id) {
+      toast({
+        title: "Erro",
+        description: "Barbearia não encontrada.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      
+      // Converter dd/MM/yyyy -> yyyy-MM-dd
+      const parsedDate = parse(data.scheduled_date, 'dd/MM/yyyy', new Date());
+      if (isNaN(parsedDate.getTime())) {
+        toast({
+          title: "Data inválida",
+          description: "Use o formato dd/MM/yyyy.",
+          variant: "destructive",
+        });
+        return;
+      }
+      const isoDate = format(parsedDate, 'yyyy-MM-dd');
+      const scheduledAt = `${isoDate}T${data.start_time}:00-03:00`;
+      
+      await createAppointment({
+        barbershop_id: barbershop.id,
+        service_id: data.service_id,
+        customer_name: data.customer_name,
+        customer_phone: data.customer_phone,
+        scheduled_at: scheduledAt,
+        status: 'confirmed',
+        is_fit_in: true
+      });
+
+      // Enviar mensagem de confirmação via WhatsApp
+      try {
+        const serviceName = services.find(s => s.id === data.service_id)?.name || 'Serviço';
+        
+        const mensagemEnviada = await enviarLembreteWhatsApp({
+          barbershopId: barbershop.id,
+          customerName: data.customer_name,
+          customerPhone: data.customer_phone,
+          scheduledAt,
+          serviceName,
+          tipo: 'confirmacao',
+        });
+
+        toast({
+          title: "Encaixe Criado! ⚡",
+          description: mensagemEnviada 
+            ? "Encaixe criado e confirmação enviada via WhatsApp."
+            : "Encaixe criado com sucesso!",
+        });
+      } catch (whatsappError) {
+        toast({
+          title: "Sucesso",
+          description: "Encaixe criado com sucesso!",
+        });
+      }
+
+      closeNewAppointmentModal();
+      refetchDashboard();
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível criar o encaixe.",
+        variant: "destructive",
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const handleNewAppointmentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -784,14 +869,53 @@ const Dashboard = () => {
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold flex items-center gap-2">
               <Plus className="h-6 w-6 text-primary" />
-              Novo Agendamento
+              {isFitInMode ? "Novo Encaixe" : "Novo Agendamento"}
             </DialogTitle>
             <DialogDescription>
-              Crie um agendamento rápido para seu cliente
+              {isFitInMode ? "Crie um agendamento sem restrições de horário" : "Crie um agendamento rápido para seu cliente"}
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleNewAppointmentSubmit} className="space-y-6">
+          {/* Toggle Modo Encaixe */}
+          <div className="relative overflow-hidden rounded-lg border-2 border-amber-500/30 bg-gradient-to-br from-zinc-900 via-zinc-900 to-amber-950/20 p-4">
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-amber-500/5 to-transparent" />
+            <div className="relative flex items-start justify-between gap-4">
+              <div className="flex-1 space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-md bg-amber-500/10">
+                    <Zap className="h-4 w-4 text-amber-500" />
+                  </div>
+                  <Label
+                    htmlFor="fit_in_toggle_dashboard"
+                    className="text-sm font-semibold text-white cursor-pointer"
+                  >
+                    Modo Encaixe
+                  </Label>
+                </div>
+                <p className="text-xs text-zinc-400 leading-relaxed">
+                  Ative para agendar sem restrições de horário. Você define manualmente início e fim.
+                </p>
+              </div>
+              <Switch
+                id="fit_in_toggle_dashboard"
+                checked={isFitInMode}
+                onCheckedChange={setIsFitInMode}
+                className="data-[state=checked]:bg-amber-500"
+              />
+            </div>
+          </div>
+
+          {/* Formulário de Encaixe */}
+          {isFitInMode ? (
+            <FitInAppointmentForm
+              services={services}
+              customers={customers}
+              onSubmit={handleFitInSubmitDashboard}
+              onCancel={closeNewAppointmentModal}
+              loading={submitting}
+            />
+          ) : (
+            <form onSubmit={handleNewAppointmentSubmit} className="space-y-6">
             {/* Informações do Cliente */}
             <div className="space-y-4">
               <div className="flex items-center gap-2 mb-3">
@@ -887,37 +1011,7 @@ const Dashboard = () => {
               </Select>
             </div>
 
-            {/* Modo Encaixe */}
-            <div className="relative overflow-hidden rounded-lg border-2 border-amber-500/30 bg-gradient-to-br from-zinc-900 via-zinc-900 to-amber-950/20 p-4">
-              {/* Efeito de brilho */}
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-amber-500/5 to-transparent" />
-              
-              <div className="relative flex items-start justify-between gap-4">
-                <div className="flex-1 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <div className="p-1.5 rounded-md bg-amber-500/10">
-                      <Zap className="h-4 w-4 text-amber-500" />
-                    </div>
-                    <Label 
-                      htmlFor="is_fit_in_dashboard" 
-                      className="text-sm font-semibold text-white cursor-pointer"
-                    >
-                      Modo Encaixe
-                    </Label>
-                  </div>
-                  <p className="text-xs text-zinc-400 leading-relaxed">
-                    Permite agendar em horários já ocupados. Útil para serviços rápidos ou quando você sabe que pode fazer sobreposições.
-                  </p>
-                </div>
-                
-                <Switch
-                  id="is_fit_in_dashboard"
-                  checked={isFitIn}
-                  onCheckedChange={(checked) => setIsFitIn(checked)}
-                  className="data-[state=checked]:bg-amber-500"
-                />
-              </div>
-            </div>
+
 
             {/* Seleção de Data */}
             {selectedService && (
@@ -1049,6 +1143,7 @@ const Dashboard = () => {
               </Button>
             </DialogFooter>
           </form>
+          )}
         </DialogContent>
       </Dialog>
 
