@@ -68,11 +68,57 @@ export function FitInAppointmentForm({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!selectedDate || !startTime || !endTime || !serviceId || !customerName || !customerPhone) {
+    console.log('FitInAppointmentForm - handleSubmit chamado');
+    console.log('Dados:', {
+      selectedDate,
+      startTime,
+      endTime,
+      serviceId,
+      customerName,
+      customerPhone
+    });
+    
+    // Validação manual com feedback
+    if (!customerName || customerName.trim() === '') {
+      alert('Por favor, preencha o nome do cliente');
+      return;
+    }
+    
+    if (!customerPhone || customerPhone.trim() === '') {
+      alert('Por favor, preencha o telefone do cliente');
+      return;
+    }
+    
+    if (!serviceId) {
+      alert('Por favor, selecione um serviço');
+      return;
+    }
+    
+    if (!selectedDate) {
+      alert('Por favor, selecione uma data');
+      return;
+    }
+    
+    if (!startTime) {
+      alert('Por favor, preencha a hora de início');
+      return;
+    }
+    
+    if (!endTime) {
+      alert('Por favor, preencha a hora de fim');
       return;
     }
 
     const formattedDate = format(selectedDate, 'dd/MM/yyyy');
+    
+    console.log('Chamando onSubmit com dados formatados:', {
+      customer_name: customerName,
+      customer_phone: customerPhone,
+      scheduled_date: formattedDate,
+      start_time: startTime,
+      end_time: endTime,
+      service_id: serviceId
+    });
     
     onSubmit({
       customer_name: customerName,

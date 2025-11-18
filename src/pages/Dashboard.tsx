@@ -410,7 +410,10 @@ const Dashboard = () => {
     end_time: string;
     service_id: string;
   }) => {
+    console.log('Dashboard - handleFitInSubmitDashboard chamado com dados:', data);
+    
     if (!barbershop?.id) {
+      console.error('Barbearia não encontrada');
       toast({
         title: "Erro",
         description: "Barbearia não encontrada.",
@@ -421,19 +424,32 @@ const Dashboard = () => {
 
     try {
       setSubmitting(true);
+      console.log('Iniciando criação de encaixe no Dashboard...');
       
       // Converter dd/MM/yyyy -> yyyy-MM-dd
       const parsedDate = parse(data.scheduled_date, 'dd/MM/yyyy', new Date());
       if (isNaN(parsedDate.getTime())) {
+        console.error('Data inválida:', data.scheduled_date);
         toast({
           title: "Data inválida",
           description: "Use o formato dd/MM/yyyy.",
           variant: "destructive",
         });
+        setSubmitting(false);
         return;
       }
       const isoDate = format(parsedDate, 'yyyy-MM-dd');
       const scheduledAt = `${isoDate}T${data.start_time}:00-03:00`;
+      
+      console.log('Dados do agendamento:', {
+        barbershop_id: barbershop.id,
+        service_id: data.service_id,
+        customer_name: data.customer_name,
+        customer_phone: data.customer_phone,
+        scheduled_at: scheduledAt,
+        status: 'confirmed',
+        is_fit_in: true
+      });
       
       await createAppointment({
         barbershop_id: barbershop.id,
@@ -444,6 +460,8 @@ const Dashboard = () => {
         status: 'confirmed',
         is_fit_in: true
       });
+      
+      console.log('Encaixe criado com sucesso');
 
       // Enviar mensagem de confirmação via WhatsApp
       try {

@@ -210,7 +210,10 @@ const Appointments = () => {
     end_time: string;
     service_id: string;
   }) => {
+    console.log('Appointments - handleFitInSubmit chamado com dados:', data);
+    
     if (!barbershop?.id) {
+      console.error('Barbearia não encontrada');
       toast({
         title: "Erro",
         description: "Barbearia não encontrada.",
@@ -220,9 +223,12 @@ const Appointments = () => {
     }
 
     try {
+      console.log('Iniciando criação de encaixe...');
+      
       // Converter dd/MM/yyyy -> yyyy-MM-dd para compor ISO
       const parsedDate = parse(data.scheduled_date, 'dd/MM/yyyy', new Date());
       if (isNaN(parsedDate.getTime())) {
+        console.error('Data inválida:', data.scheduled_date);
         toast({
           title: "Data inválida",
           description: "Use o formato dd/MM/yyyy.",
@@ -245,9 +251,13 @@ const Appointments = () => {
         is_fit_in: true, // Sempre true para encaixes
       };
 
+      console.log('Dados do agendamento:', appointmentData);
+
       const { error } = await supabase
         .from("appointments")
         .insert([appointmentData]);
+      
+      console.log('Resultado da inserção:', { error });
 
       if (error) throw error;
 
