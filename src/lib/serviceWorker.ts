@@ -55,23 +55,36 @@ export async function registerServiceWorker(config?: ServiceWorkerConfig): Promi
 
       newWorker.addEventListener('statechange', () => {
         if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-          console.log('[SW] Nova versão disponível');
+          console.log('[SW] Nova versão disponível - Atualizando automaticamente...');
           
-          // Notificar sobre atualização
+          // Atualização automática sem confirmação
           if (config?.onUpdate) {
             config.onUpdate(registration);
-          } else {
-            // Comportamento padrão: perguntar ao usuário
-            showUpdateNotification(registration);
           }
+          
+          // Forçar atualização automática
+          forceUpdate(registration);
         }
       });
     });
 
-    // Verificar atualizações periodicamente (a cada hora)
+    // Verificar atualizações periodicamente (a cada 5 minutos)
     setInterval(() => {
+      console.log('[SW] Verificando atualizações...');
       registration.update();
-    }, 60 * 60 * 1000);
+    }, 5 * 60 * 1000); // 5 minutos
+
+    // Verificar imediatamente após 10 segundos
+    setTimeout(() => {
+      registration.update();
+    }, 10000);
+
+    // Escutar mensagens do service worker
+    navigator.serviceWorker.addEventListener('message', (event) => {
+      if (event.data && event.data.type === 'SW_UPDATED') {
+        console.log('[SW] Service Worker atualizado para versão:', event.data.version);
+      }
+    });
 
     // Callback de sucesso
     if (config?.onSuccess) {
@@ -112,24 +125,49 @@ export async function unregisterServiceWorker(): Promise<boolean> {
 }
 
 /**
- * Mostra notificação de atualização disponível
+ * Força a atualização do service worker automaticamente
+ */
+function forceUpdate(registration: ServiceWorkerRegistration): void {
+  const waitingWorker = registration.waiting;
+  
+  if (waitingWorker) {
+    console.log('[SW] Forçando atualização automática...');
+    
+    // Enviar mensagem para o service worker pular a espera
+    waitingWorker.postMessage({ type: 'SKIP_WAITING' });
+    
+    // Recarregar quando o novo service worker assumir o controle
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (refreshing) return;
+      refreshing = true;
+      
+      console.log('[SW] Recarregando página com nova versão...');
+      
+      // Mostrar toast antes de recarregar (se disponível)
+      try {
+        const event = new CustomEvent('sw-update', {
+          detail: { message: 'Atualizando para nova versão...' }
+        });
+        window.dispatchEvent(event);
+      } catch (e) {
+        // Ignorar erro se toast não estiver disponível
+      }
+      
+      // Aguardar 1 segundo antes de recarregar para mostrar o toast
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    });
+  }
+}
+
+/**
+ * Mostra notificação de atualização disponível (método legado)
  */
 function showUpdateNotification(registration: ServiceWorkerRegistration): void {
-  const updateMessage = 'Nova versão do ZapCorte disponível! Recarregar agora?';
-  
-  if (confirm(updateMessage)) {
-    const waitingWorker = registration.waiting;
-    
-    if (waitingWorker) {
-      // Enviar mensagem para o service worker pular a espera
-      waitingWorker.postMessage({ type: 'SKIP_WAITING' });
-      
-      // Recarregar quando o novo service worker assumir o controle
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        window.location.reload();
-      });
-    }
-  }
+  // Agora usa atualização automática por padrão
+  forceUpdate(registration);
 }
 
 /**

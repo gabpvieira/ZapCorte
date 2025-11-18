@@ -28,12 +28,15 @@ import AuthCallback from "./pages/AuthCallback";
 import AuthVerify from "./pages/AuthVerify";
 import ResetPassword from "./pages/ResetPassword";
 import ForgotPassword from "./pages/ForgotPassword";
+import AdminLogin from "./pages/admin/AdminLogin";
+import AdminDashboard from "./pages/admin/AdminDashboard";
 
 import { useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useReminderScheduler } from "@/hooks/useReminderScheduler";
 import ScrollToTop from "@/components/ScrollToTop";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
+import { PWAUpdateNotification, PWAUpdateSuccess } from "@/components/PWAUpdateNotification";
 
 const queryClient = new QueryClient();
 
@@ -128,6 +131,10 @@ const AppContent = () => {
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/auth/verify" element={<AuthVerify />} />
         <Route path="/auth/reset-password" element={<ResetPassword />} />
+        
+        {/* Rotas Admin - Acesso Restrito */}
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin/dashboard" element={<AdminDashboard />} />
         
         {/* Rotas protegidas - precisam de autenticação */}
         <Route 
@@ -229,6 +236,9 @@ const App = () => (
       <TooltipProvider>
         <AuthProvider>
           <div className="w-full max-w-full overflow-x-hidden">
+            {/* Notificações de atualização do PWA */}
+            <PWAUpdateNotification />
+            <PWAUpdateSuccess />
             <Toaster />
             <Sonner />
             <BrowserRouter>
