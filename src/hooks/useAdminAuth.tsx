@@ -56,12 +56,6 @@ export function useAdminAuth() {
       } else {
         setIsAdmin(false);
         setUser(null);
-        toast({
-          title: 'Acesso Negado',
-          description: 'Você não tem permissão para acessar esta área.',
-          variant: 'destructive',
-        });
-        navigate('/');
       }
     } catch (error) {
       console.error('Erro ao verificar status admin:', error);

@@ -6,24 +6,68 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAdminAuth } from '@/hooks/useAdminAuth';
+import { supabase } from '@/lib/supabase';
+import { useToast } from '@/hooks/use-toast';
+
+const ADMIN_EMAIL = 'eugabrieldpv@gmail.com';
 
 export default function AdminLogin() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signIn } = useAdminAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const success = await signIn(email, password);
-      if (success) {
-        navigate('/admin/dashboard');
+      // Verificar se o email é o admin
+      if (email !== ADMIN_EMAIL) {
+        toast({
+          title: 'Acesso Negado',
+          description: 'Email não autorizado.',
+          variant: 'destructive',
+        });
+        setLoading(false);
+        return;
       }
+
+      // Fazer login
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) throw error;
+
+      if (data.user && data.user.email === ADMIN_EMAIL) {
+        // Atualizar último login
+        await supabase
+          .from('admin_users')
+          .update({ last_login: new Date().toISOString() })
+          .eq('email', email);
+
+        toast({
+          title: 'Login realizado!',
+          description: 'Bem-vindo ao painel administrativo.',
+        });
+
+        navigate('/admin/dashboard');
+      } else {
+        toast({
+          title: 'Acesso Negado',
+          description: 'Você não tem permissão para acessar esta área.',
+          variant: 'destructive',
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Erro ao fazer login',
+        description: error.message || 'Verifique suas credenciais.',
+        variant: 'destructive',
+      });
     } finally {
       setLoading(false);
     }
