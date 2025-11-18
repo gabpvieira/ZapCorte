@@ -30,6 +30,9 @@ import ResetPassword from "./pages/ResetPassword";
 import ForgotPassword from "./pages/ForgotPassword";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminRevenue from "./pages/admin/AdminRevenue";
+import AdminSettings from "./pages/admin/AdminSettings";
 
 import { useEffect } from "react";
 import { supabase } from "@/lib/supabase";
@@ -135,6 +138,9 @@ const AppContent = () => {
         {/* Rotas Admin - Acesso Restrito */}
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path="/admin/users" element={<AdminUsers />} />
+        <Route path="/admin/revenue" element={<AdminRevenue />} />
+        <Route path="/admin/settings" element={<AdminSettings />} />
         
         {/* Rotas protegidas - precisam de autenticação */}
         <Route 

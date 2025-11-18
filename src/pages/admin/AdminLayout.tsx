@@ -1,6 +1,6 @@
 import { ReactNode, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, Shield, BarChart3, Users, DollarSign } from 'lucide-react';
+import { LogOut, Shield, BarChart3, Users, DollarSign, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 
@@ -22,7 +22,7 @@ export function AdminLayout({ children, title = 'Dashboard' }: AdminLayoutProps)
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-950">
+      <div className="min-h-screen flex items-center justify-center bg-black">
         <div className="text-center">
           <div className="h-12 w-12 mx-auto border-4 border-purple-500/30 border-t-purple-500 rounded-full animate-spin" />
           <p className="mt-4 text-gray-400">Verificando permissões...</p>
@@ -36,13 +36,13 @@ export function AdminLayout({ children, title = 'Dashboard' }: AdminLayoutProps)
   }
 
   return (
-    <div className="min-h-screen bg-slate-950">
+    <div className="min-h-screen bg-black">
       {/* Header */}
-      <header className="bg-slate-900 border-b border-slate-800 sticky top-0 z-50">
+      <header className="bg-zinc-950 border-b border-zinc-900 sticky top-0 z-50 shadow-lg shadow-purple-500/5">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-green-500 rounded-lg flex items-center justify-center shadow-lg shadow-purple-500/50">
                 <Shield className="h-6 w-6 text-white" />
               </div>
               <div>
@@ -60,7 +60,7 @@ export function AdminLayout({ children, title = 'Dashboard' }: AdminLayoutProps)
                 variant="outline"
                 size="sm"
                 onClick={signOut}
-                className="border-slate-700 hover:bg-slate-800"
+                className="border-zinc-800 hover:bg-zinc-900 hover:border-purple-500 transition-all"
               >
                 <LogOut className="h-4 w-4 mr-2" />
                 Sair
@@ -71,13 +71,16 @@ export function AdminLayout({ children, title = 'Dashboard' }: AdminLayoutProps)
       </header>
 
       {/* Navigation */}
-      <nav className="bg-slate-900/50 border-b border-slate-800">
+      <nav className="bg-zinc-950/50 border-b border-zinc-900">
         <div className="container mx-auto px-4">
           <div className="flex gap-1 overflow-x-auto">
             <Button
               variant="ghost"
-              className="text-gray-400 hover:text-white hover:bg-slate-800 rounded-none border-b-2 border-transparent data-[active=true]:border-purple-500 data-[active=true]:text-white"
-              data-active={window.location.pathname === '/admin/dashboard'}
+              className={`text-gray-400 hover:text-white hover:bg-zinc-900 rounded-none border-b-2 transition-all ${
+                window.location.pathname === '/admin/dashboard'
+                  ? 'border-purple-500 text-white bg-zinc-900/50'
+                  : 'border-transparent'
+              }`}
               onClick={() => navigate('/admin/dashboard')}
             >
               <BarChart3 className="h-4 w-4 mr-2" />
@@ -85,17 +88,39 @@ export function AdminLayout({ children, title = 'Dashboard' }: AdminLayoutProps)
             </Button>
             <Button
               variant="ghost"
-              className="text-gray-400 hover:text-white hover:bg-slate-800 rounded-none border-b-2 border-transparent"
+              className={`text-gray-400 hover:text-white hover:bg-zinc-900 rounded-none border-b-2 transition-all ${
+                window.location.pathname === '/admin/users'
+                  ? 'border-green-500 text-white bg-zinc-900/50'
+                  : 'border-transparent'
+              }`}
+              onClick={() => navigate('/admin/users')}
             >
               <Users className="h-4 w-4 mr-2" />
               Usuários
             </Button>
             <Button
               variant="ghost"
-              className="text-gray-400 hover:text-white hover:bg-slate-800 rounded-none border-b-2 border-transparent"
+              className={`text-gray-400 hover:text-white hover:bg-zinc-900 rounded-none border-b-2 transition-all ${
+                window.location.pathname === '/admin/revenue'
+                  ? 'border-green-500 text-white bg-zinc-900/50'
+                  : 'border-transparent'
+              }`}
+              onClick={() => navigate('/admin/revenue')}
             >
               <DollarSign className="h-4 w-4 mr-2" />
               Receita
+            </Button>
+            <Button
+              variant="ghost"
+              className={`text-gray-400 hover:text-white hover:bg-zinc-900 rounded-none border-b-2 transition-all ${
+                window.location.pathname === '/admin/settings'
+                  ? 'border-purple-500 text-white bg-zinc-900/50'
+                  : 'border-transparent'
+              }`}
+              onClick={() => navigate('/admin/settings')}
+            >
+              <Settings className="h-4 w-4 mr-2" />
+              Configurações
             </Button>
           </div>
         </div>
@@ -107,7 +132,7 @@ export function AdminLayout({ children, title = 'Dashboard' }: AdminLayoutProps)
       </main>
 
       {/* Footer */}
-      <footer className="bg-slate-900 border-t border-slate-800 mt-12">
+      <footer className="bg-zinc-950 border-t border-zinc-900 mt-12">
         <div className="container mx-auto px-4 py-6">
           <p className="text-center text-sm text-gray-500">
             ZapCorte Admin Panel - Acesso Restrito © {new Date().getFullYear()}

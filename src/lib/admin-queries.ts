@@ -121,6 +121,124 @@ export async function getAdminAppointmentsDaily(days: number = 30) {
   return data || [];
 }
 
+// Buscar usuários com filtros avançados
+export async function getAdminUsersFiltered(filters: {
+  search?: string;
+  planType?: string;
+  status?: string;
+  startDate?: string;
+  endDate?: string;
+  limit?: number;
+}) {
+  let query = supabase
+    .from('profiles')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (filters.search) {
+    query = query.or(`email.ilike.%${filters.search}%,full_name.ilike.%${filters.search}%`);
+  }
+
+  if (filters.planType && filters.planType !== 'all') {
+    query = query.eq('plan_type', filters.planType);
+  }
+
+  if (filters.status && filters.status !== 'all') {
+    query = query.eq('subscription_status', filters.status);
+  }
+
+  if (filters.startDate) {
+    query = query.gte('created_at', filters.startDate);
+  }
+
+  if (filters.endDate) {
+    query = query.lte('created_at', filters.endDate);
+  }
+
+  if (filters.limit) {
+    query = query.limit(filters.limit);
+  }
+
+  const { data, error } = await query;
+
+  if (error) throw error;
+  return data || [];
+}
+
+// Buscar transações com filtros
+export async function getAdminTransactionsFiltered(filters: {
+  planType?: string;
+  status?: string;
+  startDate?: string;
+  endDate?: string;
+  limit?: number;
+}) {
+  let query = supabase
+    .from('payment_history')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (filters.planType && filters.planType !== 'all') {
+    query = query.eq('plan_type', filters.planType);
+  }
+
+  if (filters.status && filters.status !== 'all') {
+    query = query.eq('status', filters.status);
+  }
+
+  if (filters.startDate) {
+    query = query.gte('created_at', filters.startDate);
+  }
+
+  if (filters.endDate) {
+    query = query.lte('created_at', filters.endDate);
+  }
+
+  if (filters.limit) {
+    query = query.limit(filters.limit);
+  }
+
+  const { data, error } = await query;
+
+  if (error) throw error;
+  return data || [];
+}
+
+// Buscar métricas por período
+export async function getAdminMetricsByPeriod(startDate: string, endDate: string) {
+  const { data: users, error: usersError } = await supabase
+    .from('profiles')
+    .select('*')
+    .gte('created_at', startDate)
+    .lte('created_at', endDate);
+
+  const { data: appointments, error: appointmentsError } = await supabase
+    .from('appointments')
+    .select('*')
+    .gte('created_at', startDate)
+    .lte('created_at', endDate);
+
+  const { data: transactions, error: transactionsError } = await supabase
+    .from('payment_history')
+    .select('*')
+    .gte('created_at', startDate)
+    .lte('created_at', endDate)
+    .eq('status', 'completed');
+
+  if (usersError || appointmentsError || transactionsError) {
+    throw usersError || appointmentsError || transactionsError;
+  }
+
+  const totalRevenue = transactions?.reduce((sum, t) => sum + (t.amount || 0), 0) || 0;
+
+  return {
+    newUsers: users?.length || 0,
+    newAppointments: appointments?.length || 0,
+    totalRevenue,
+    transactions: transactions?.length || 0,
+  };
+}
+
 // Buscar todos os dados do dashboard de uma vez
 export async function getAdminDashboardData() {
   const [

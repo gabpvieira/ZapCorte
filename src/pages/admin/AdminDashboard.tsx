@@ -64,9 +64,9 @@ export default function AdminDashboard() {
       <AdminLayout title="Dashboard">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {[...Array(8)].map((_, i) => (
-            <Card key={i} className="bg-slate-900 border-slate-800 animate-pulse">
+            <Card key={i} className="bg-zinc-950 border-zinc-900 animate-pulse">
               <CardContent className="p-6">
-                <div className="h-20 bg-slate-800 rounded" />
+                <div className="h-20 bg-zinc-900 rounded" />
               </CardContent>
             </Card>
           ))}
@@ -194,7 +194,7 @@ export default function AdminDashboard() {
         {/* Gráficos */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Gráfico de Crescimento de Usuários */}
-          <Card className="bg-slate-900 border-slate-800">
+          <Card className="bg-zinc-950 border-zinc-900 shadow-lg shadow-purple-500/5">
             <CardHeader>
               <CardTitle className="text-white">Crescimento de Usuários (30 dias)</CardTitle>
             </CardHeader>
@@ -221,7 +221,7 @@ export default function AdminDashboard() {
           </Card>
 
           {/* Gráfico de Distribuição de Planos */}
-          <Card className="bg-slate-900 border-slate-800">
+          <Card className="bg-zinc-950 border-zinc-900 shadow-lg shadow-green-500/5">
             <CardHeader>
               <CardTitle className="text-white">Distribuição de Planos</CardTitle>
             </CardHeader>
@@ -256,7 +256,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Gráfico de Agendamentos */}
-        <Card className="bg-slate-900 border-slate-800">
+        <Card className="bg-zinc-950 border-zinc-900 shadow-lg shadow-purple-500/5">
           <CardHeader>
             <CardTitle className="text-white">Agendamentos (30 dias)</CardTitle>
           </CardHeader>
@@ -285,7 +285,7 @@ export default function AdminDashboard() {
         {/* Tabelas */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Últimos Usuários */}
-          <Card className="bg-slate-900 border-slate-800">
+          <Card className="bg-zinc-950 border-zinc-900 shadow-lg shadow-purple-500/5">
             <CardHeader>
               <CardTitle className="text-white">Últimos Usuários</CardTitle>
             </CardHeader>
@@ -294,7 +294,7 @@ export default function AdminDashboard() {
                 {recentUsers.slice(0, 5).map((user: any) => (
                   <div
                     key={user.id}
-                    className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg"
+                    className="flex items-center justify-between p-3 bg-zinc-900/50 rounded-lg hover:bg-zinc-900 transition-colors"
                   >
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-white truncate">
@@ -322,7 +322,7 @@ export default function AdminDashboard() {
           </Card>
 
           {/* Top Barbearias */}
-          <Card className="bg-slate-900 border-slate-800">
+          <Card className="bg-zinc-950 border-zinc-900 shadow-lg shadow-green-500/5">
             <CardHeader>
               <CardTitle className="text-white">Top Barbearias</CardTitle>
             </CardHeader>
@@ -331,7 +331,7 @@ export default function AdminDashboard() {
                 {topBarbershops.slice(0, 5).map((barbershop: any, index: number) => (
                   <div
                     key={barbershop.id}
-                    className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg"
+                    className="flex items-center justify-between p-3 bg-zinc-900/50 rounded-lg hover:bg-zinc-900 transition-colors"
                   >
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                       <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center text-white font-bold text-sm">
@@ -372,7 +372,7 @@ function MetricCard({ title, value, subtitle, icon: Icon, color }: MetricCardPro
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <Card className="bg-slate-900 border-slate-800 hover:border-slate-700 transition-colors">
+      <Card className="bg-zinc-950 border-zinc-900 hover:border-purple-500/50 transition-all shadow-lg hover:shadow-purple-500/20">
         <CardContent className="p-6">
           <div className="flex items-start justify-between">
             <div className="flex-1">

@@ -74,16 +74,20 @@ export default function AdminLogin() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-black p-4 relative overflow-hidden">
+      {/* Background Effects */}
+      <div className="absolute inset-0 bg-gradient-to-br from-purple-600/10 via-black to-green-600/10" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.1),transparent_50%)]" />
+      
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="w-full max-w-md"
+        className="w-full max-w-md relative z-10"
       >
-        <Card className="border-2 border-purple-500/20 bg-slate-900/50 backdrop-blur-xl">
+        <Card className="border-2 border-purple-500/30 bg-zinc-950/90 backdrop-blur-xl shadow-2xl shadow-purple-500/20">
           <CardHeader className="space-y-4 text-center">
-            <div className="mx-auto w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center">
+            <div className="mx-auto w-16 h-16 bg-gradient-to-br from-purple-600 to-green-500 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/50">
               <Shield className="h-8 w-8 text-white" />
             </div>
             <div>
@@ -110,7 +114,7 @@ export default function AdminLogin() {
                     placeholder="admin@zapcorte.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10 bg-slate-800/50 border-slate-700 text-white placeholder:text-gray-500"
+                    className="pl-10 bg-zinc-900/50 border-zinc-800 text-white placeholder:text-gray-500 focus:border-purple-500 focus:ring-purple-500/20"
                     required
                     disabled={loading}
                   />
@@ -129,7 +133,7 @@ export default function AdminLogin() {
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10 bg-slate-800/50 border-slate-700 text-white placeholder:text-gray-500"
+                    className="pl-10 bg-zinc-900/50 border-zinc-800 text-white placeholder:text-gray-500 focus:border-purple-500 focus:ring-purple-500/20"
                     required
                     disabled={loading}
                   />
@@ -138,7 +142,7 @@ export default function AdminLogin() {
 
               <Button
                 type="submit"
-                className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold"
+                className="w-full bg-gradient-to-r from-purple-600 to-green-500 hover:from-purple-700 hover:to-green-600 text-white font-semibold shadow-lg shadow-purple-500/30 transition-all"
                 disabled={loading}
               >
                 {loading ? (
