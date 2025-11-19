@@ -68,7 +68,11 @@
 
   <body>
     <div id="root"></div>
+    <!-- Cache Buster - Roda ANTES de tudo -->
+    <script src="/cache-buster.js"></script>
+    <!-- Helper manual para limpar cache -->
     <script src="/clear-cache.js"></script>
+    <!-- App principal -->
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
