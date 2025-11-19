@@ -689,6 +689,25 @@ const Dashboard = () => {
       }
     >
       <div className="space-y-6 md:space-y-8">
+        {/* Banner Grupo de Clientes */}
+        <motion.a
+          href="https://chat.whatsapp.com/HqObbcQZfwn9voifcWlAHV"
+          target="_blank"
+          rel="noopener noreferrer"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          className="block w-full rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer"
+        >
+          <img 
+            src="/banner-grupo-clientes.png" 
+            alt="Entre no Grupo de Clientes ZapCorte no WhatsApp" 
+            className="w-full h-auto"
+          />
+        </motion.a>
+
         {/* Atalhos Rápidos Premium */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}

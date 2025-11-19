@@ -51,79 +51,129 @@ const HomeNew = () => {
 
   const testimonials = [
     {
-      name: "Carlos Silva",
-      role: "Barbearia Premium",
-      text: "Triplicou meus agendamentos em 2 meses. Sistema muito fácil de usar!",
-      rating: 5
+      name: "Marcos Vinícius",
+      role: "Vinícius Barber",
+      text: "Tava no vermelho, brother. Depois do ZapCorte? Faturamento dobrou em 6 meses. Contratei mais um barbeiro e já tô de olho num ponto maior. Melhor investimento que fiz!",
+      rating: 5,
+      highlight: "Faturamento dobrou em 6 meses"
     },
     {
-      name: "João Santos",
-      role: "Cortes Modernos",
-      text: "Os lembretes automáticos reduziram 90% das faltas. Recomendo!",
-      rating: 5
+      name: "Rafael Santana",
+      role: "Barbearia do Rafa",
+      text: "WhatsApp não parava NEM NO DOMINGO. Minha mina já tava pistola kkkkk. Com o ZapCorte, cliente marca sozinho e eu só corto. Voltei a ter paz. Agenda lotada sem estresse!",
+      rating: 5,
+      highlight: "Agenda lotada sem estresse"
     },
     {
-      name: "Pedro Lima",
-      role: "Estilo & Barba",
-      text: "Profissionalizou minha barbearia. Agora tenho controle total!",
-      rating: 5
+      name: "Bruno Costa",
+      role: "BH Barbearia",
+      text: "Queria que minha barbearia fosse vista como TOP. Caderno em papel não passa profissionalismo. Depois do sistema, clientes elogiam demais! Cobro mais caro e eles pagam de boa. Vale muito!",
+      rating: 5,
+      highlight: "Cobro mais caro e eles pagam"
+    },
+    {
+      name: "Thiago Alves",
+      role: "TA Barbearia",
+      text: "Comecei sozinho num cantinho. Hoje tenho 5 barbeiros e vou abrir a segunda unidade! ZapCorte me deu dados pra crescer certo. Em 3 meses já tinha 40% mais cliente. Sem volta!",
+      rating: 5,
+      highlight: "40% mais clientes em 3 meses"
+    },
+    {
+      name: "Felipe Rocha",
+      role: "Rocha's Barber",
+      text: "Antes: 5 faltas por semana = prejuízo. Depois: ZERO faltas! Lembretes automáticos funcionam demais. Economizo 2h por dia e ganho mais. Sistema se paga sozinho, mano!",
+      rating: 5,
+      highlight: "ZERO faltas com lembretes"
     }
   ];
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0C0C0C] via-[#0C0C0C] to-[#18181B] text-white overflow-x-hidden">
 
-      {/* Floating Header */}
+      {/* Modern Floating Header */}
       <motion.header 
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
           isScrolled 
-            ? 'bg-[#0C0C0C]/90 backdrop-blur-xl border-b border-[#27272A]/50 shadow-2xl' 
+            ? 'bg-black/80 backdrop-blur-2xl border-b border-[#24C36B]/10 shadow-[0_8px_32px_rgba(36,195,107,0.1)]' 
             : 'bg-transparent'
         }`}
         initial={{ y: -100 }}
         animate={{ y: 0 }}
-        transition={{ duration: 0.6 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <Link to="/" className="flex items-center gap-2">
-              <img src={logotipo} alt="ZapCorte" className="h-8 w-8 rounded-lg" />
-              <span className="text-xl font-bold">ZapCorte</span>
+          <div className="flex items-center justify-between h-20">
+            {/* Logo com efeito hover */}
+            <Link to="/" className="flex items-center gap-3 group">
+              <motion.div
+                whileHover={{ rotate: 360, scale: 1.1 }}
+                transition={{ duration: 0.6 }}
+                className="relative"
+              >
+                <div className="absolute inset-0 bg-[#24C36B]/20 rounded-xl blur-lg group-hover:bg-[#24C36B]/40 transition-all" />
+                <img src={logotipo} alt="ZapCorte" className="h-10 w-10 rounded-xl relative z-10" />
+              </motion.div>
+              <div className="flex flex-col">
+                <span className="text-2xl font-bold tracking-tight">
+                  Zap<span className="text-[#24C36B]">Corte</span>
+                </span>
+                <span className="text-[10px] text-gray-400 -mt-1">Agendamento Inteligente</span>
+              </div>
             </Link>
 
-            <nav className="hidden lg:flex items-center space-x-8">
-              <button onClick={() => scrollToSection('funcionalidades')} className="text-gray-300 hover:text-[#24C36B] transition-colors">
-                Funcionalidades
-              </button>
-              <button onClick={() => scrollToSection('beneficios')} className="text-gray-300 hover:text-[#24C36B] transition-colors">
-                Benefícios
-              </button>
-              <button onClick={() => scrollToSection('planos')} className="text-gray-300 hover:text-[#24C36B] transition-colors">
-                Planos
-              </button>
-              <button onClick={() => scrollToSection('depoimentos')} className="text-gray-300 hover:text-[#24C36B] transition-colors">
-                Depoimentos
-              </button>
+            {/* Navigation - Desktop */}
+            <nav className="hidden lg:flex items-center space-x-1">
+              {[
+                { id: 'funcionalidades', label: 'Funcionalidades' },
+                { id: 'beneficios', label: 'Benefícios' },
+                { id: 'planos', label: 'Planos' },
+                { id: 'depoimentos', label: 'Depoimentos' }
+              ].map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => scrollToSection(item.id)}
+                  className="relative px-4 py-2 text-gray-300 hover:text-white transition-colors group"
+                >
+                  <span className="relative z-10">{item.label}</span>
+                  <motion.div
+                    className="absolute inset-0 bg-[#24C36B]/10 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                    whileHover={{ scale: 1.05 }}
+                  />
+                </button>
+              ))}
             </nav>
 
-            <div className="hidden md:flex items-center space-x-4">
-              <Button variant="ghost" className="text-gray-300 hover:text-white" asChild>
-                <Link to="/login">
-                  <LogIn className="w-4 h-4 mr-2" />
-                  Entrar
+            {/* CTA Buttons - Desktop */}
+            <div className="hidden md:flex items-center gap-3">
+              <Button 
+                variant="ghost" 
+                className="text-gray-300 hover:text-white hover:bg-white/5 border border-transparent hover:border-[#24C36B]/20 transition-all" 
+                asChild
+              >
+                <Link to="/login" className="flex items-center gap-2">
+                  <LogIn className="w-4 h-4" />
+                  <span>Entrar</span>
                 </Link>
               </Button>
-              <Button className="bg-[#24C36B] hover:bg-[#1ea557] text-black font-semibold" asChild>
-                <Link to="/register">Começar Grátis</Link>
+              <Button 
+                className="bg-gradient-to-r from-[#24C36B] to-[#1ea557] hover:from-[#1ea557] hover:to-[#24C36B] text-black font-semibold shadow-lg shadow-[#24C36B]/25 hover:shadow-[#24C36B]/40 transition-all" 
+                asChild
+              >
+                <Link to="/register" className="flex items-center gap-2">
+                  <Zap className="w-4 h-4" />
+                  <span>Começar Grátis</span>
+                </Link>
               </Button>
             </div>
 
-            <button 
-              className="md:hidden p-2 rounded-lg hover:bg-[#27272A] transition-colors relative z-[60]" 
+            {/* Mobile Menu Button */}
+            <motion.button 
+              className="md:hidden p-2.5 rounded-xl hover:bg-[#24C36B]/10 border border-[#24C36B]/20 transition-all relative z-[60]" 
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              whileTap={{ scale: 0.95 }}
             >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
+              {mobileMenuOpen ? <X className="w-6 h-6 text-[#24C36B]" /> : <Menu className="w-6 h-6 text-[#24C36B]" />}
+            </motion.button>
           </div>
         </div>
       </motion.header>
@@ -258,8 +308,8 @@ const HomeNew = () => {
           />
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 relative z-10">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 relative z-10 overflow-visible">
+          <div className="grid lg:grid-cols-2 gap-12 items-center overflow-visible">
             {/* Content */}
             <motion.div
               initial={{ opacity: 0, y: 30 }}
@@ -267,16 +317,6 @@ const HomeNew = () => {
               transition={{ duration: 0.8 }}
               className="text-center lg:text-left space-y-8"
             >
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-[#24C36B]/10 border border-[#24C36B]/20 rounded-full"
-              >
-                <Zap className="w-4 h-4 text-[#24C36B]" />
-                <span className="text-sm text-[#24C36B] font-medium">Mais de 500 barbeiros confiam</span>
-              </motion.div>
-
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight">
                 Transforme sua barbearia com{" "}
                 <span className="text-[#24C36B] relative">
@@ -318,61 +358,135 @@ const HomeNew = () => {
                 </Button>
               </div>
 
-              {/* Trust Indicators */}
-              <div className="flex flex-wrap items-center gap-6 pt-4">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-[#24C36B]" />
-                  <span className="text-sm text-gray-300">Sem cartão de crédito</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-[#24C36B]" />
-                  <span className="text-sm text-gray-300">Configuração em 5 minutos</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-[#24C36B]" />
-                  <span className="text-sm text-gray-300">Suporte em português</span>
-                </div>
+              {/* Trust Indicators - Redesenhado */}
+              <div className="flex flex-wrap items-center gap-4 pt-6">
+                <motion.div 
+                  className="flex items-center gap-2 px-4 py-2 bg-[#24C36B]/5 border border-[#24C36B]/20 rounded-full"
+                  whileHover={{ scale: 1.05, borderColor: "rgba(36, 195, 107, 0.4)" }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <CheckCircle className="w-4 h-4 text-[#24C36B]" />
+                  <span className="text-sm text-gray-200 font-medium">Sem cartão de crédito</span>
+                </motion.div>
+                <motion.div 
+                  className="flex items-center gap-2 px-4 py-2 bg-[#24C36B]/5 border border-[#24C36B]/20 rounded-full"
+                  whileHover={{ scale: 1.05, borderColor: "rgba(36, 195, 107, 0.4)" }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <Clock className="w-4 h-4 text-[#24C36B]" />
+                  <span className="text-sm text-gray-200 font-medium">Configuração em 5 minutos</span>
+                </motion.div>
+                <motion.div 
+                  className="flex items-center gap-2 px-4 py-2 bg-[#24C36B]/5 border border-[#24C36B]/20 rounded-full"
+                  whileHover={{ scale: 1.05, borderColor: "rgba(36, 195, 107, 0.4)" }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <Shield className="w-4 h-4 text-[#24C36B]" />
+                  <span className="text-sm text-gray-200 font-medium">Dados 100% seguros</span>
+                </motion.div>
               </div>
             </motion.div>
 
-            {/* Interactive Demo */}
+            {/* Interactive Demo - Novo Layout Premium - Com overflow-visible */}
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.8, delay: 0.4 }}
-              className="relative"
+              className="relative lg:pl-8 overflow-visible"
+              style={{ padding: '3rem' }}
             >
-              {/* Imagem do mockup */}
+              {/* Glow Effect Background */}
+              <div className="absolute inset-0 bg-gradient-to-br from-[#24C36B]/20 via-transparent to-transparent blur-3xl -z-10" />
+              
+              {/* Main Image Container - Com espaço para elementos flutuantes */}
               <motion.div
-                className="relative"
-                animate={{ y: [0, -10, 0] }}
-                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                className="relative overflow-visible"
+                animate={{ y: [0, -15, 0] }}
+                transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
               >
-                <div className="rounded-3xl overflow-hidden shadow-2xl">
+                {/* Decorative Border - Ajustado para não ser cortado */}
+                <div className="absolute -inset-8 bg-gradient-to-r from-[#24C36B]/20 via-[#24C36B]/10 to-transparent rounded-3xl blur-2xl -z-10" />
+                
+                {/* Image with 3D Effect - Overflow visible para não cortar brilho */}
+                <div className="relative rounded-3xl shadow-2xl shadow-[#24C36B]/20 border border-[#24C36B]/10 overflow-visible">
+                  <div className="absolute inset-0 bg-gradient-to-tr from-[#24C36B]/5 to-transparent rounded-3xl" />
                   <img 
                     src="/mockup-mozeli.webp" 
                     alt="Dashboard ZapCorte - Sistema de Agendamento" 
-                    className="w-full h-auto"
+                    className="w-full h-auto relative z-10 transform hover:scale-105 transition-transform duration-700 rounded-3xl"
                   />
                 </div>
+
+                {/* Floating Elements Redesenhados - Com z-index correto */}
+                <motion.div
+                  className="absolute -top-6 -right-6 bg-gradient-to-br from-[#24C36B] to-[#1ea557] text-black px-6 py-3 rounded-2xl shadow-2xl shadow-[#24C36B]/40 backdrop-blur-sm border border-[#24C36B]/20 z-20"
+                  animate={{ 
+                    y: [0, -8, 0],
+                    rotate: [0, 2, 0]
+                  }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                >
+                  <div className="flex items-center gap-2">
+                    <TrendingUp className="w-5 h-5" />
+                    <div>
+                      <div className="text-xs font-medium opacity-80">Crescimento</div>
+                      <div className="text-lg font-bold">+40%</div>
+                    </div>
+                  </div>
+                </motion.div>
+
+                <motion.div
+                  className="absolute -bottom-6 -left-6 bg-white text-black px-6 py-3 rounded-2xl shadow-2xl backdrop-blur-sm border border-gray-200 z-20"
+                  animate={{ 
+                    y: [0, 8, 0],
+                    rotate: [0, -2, 0]
+                  }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+                >
+                  <div className="flex items-center gap-2">
+                    <Phone className="w-5 h-5 text-[#24C36B]" />
+                    <div>
+                      <div className="text-xs font-medium text-gray-600">Menos ligações</div>
+                      <div className="text-lg font-bold text-[#24C36B]">-80%</div>
+                    </div>
+                  </div>
+                </motion.div>
+
+                {/* Novo Badge - Clientes Satisfeitos - Oculto em mobile */}
+                <motion.div
+                  className="hidden lg:block absolute top-1/2 -right-8 bg-black/80 backdrop-blur-xl text-white px-4 py-3 rounded-2xl shadow-2xl border border-[#24C36B]/30 z-20"
+                  animate={{ 
+                    x: [0, 5, 0],
+                  }}
+                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="flex -space-x-2">
+                      <div className="w-6 h-6 rounded-full bg-[#24C36B] border-2 border-black" />
+                      <div className="w-6 h-6 rounded-full bg-[#1ea557] border-2 border-black" />
+                      <div className="w-6 h-6 rounded-full bg-[#24C36B] border-2 border-black" />
+                    </div>
+                    <div>
+                      <div className="text-xs text-gray-400">Barbeiros ativos</div>
+                      <div className="text-sm font-bold text-[#24C36B]">500+</div>
+                    </div>
+                  </div>
+                </motion.div>
               </motion.div>
 
-              {/* Floating Stats */}
-              <motion.div
-                className="absolute -top-4 -right-4 bg-[#24C36B] text-black px-4 py-2 rounded-xl shadow-lg z-50"
-                animate={{ y: [0, -5, 0] }}
-                transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
-              >
-                <div className="text-sm font-semibold">+40% agendamentos</div>
-              </motion.div>
-
-              <motion.div
-                className="absolute -bottom-4 -left-4 bg-white text-black px-4 py-2 rounded-xl shadow-lg z-50"
-                animate={{ y: [0, 5, 0] }}
-                transition={{ duration: 2, repeat: Infinity, delay: 1 }}
-              >
-                <div className="text-sm font-semibold">-80% ligações</div>
-              </motion.div>
+              {/* Decorative Dots Pattern */}
+              <div className="absolute -bottom-8 -right-8 w-32 h-32 opacity-20">
+                <div className="grid grid-cols-4 gap-2">
+                  {[...Array(16)].map((_, i) => (
+                    <motion.div
+                      key={i}
+                      className="w-2 h-2 rounded-full bg-[#24C36B]"
+                      animate={{ opacity: [0.2, 0.8, 0.2] }}
+                      transition={{ duration: 2, repeat: Infinity, delay: i * 0.1 }}
+                    />
+                  ))}
+                </div>
+              </div>
             </motion.div>
           </div>
         </div>
@@ -949,55 +1063,107 @@ const HomeNew = () => {
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section id="depoimentos" className="py-20 bg-[#18181B]/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* Testimonials - Redesenhado com Layout Moderno */}
+      <section id="depoimentos" className="py-24 bg-gradient-to-b from-[#0C0C0C] via-[#18181B] to-[#0C0C0C] relative overflow-hidden">
+        {/* Background Effects */}
+        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-5" />
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#24C36B]/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-[#24C36B]/10 rounded-full blur-3xl" />
+        
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h2 className="text-4xl font-bold mb-4">O que barbeiros dizem sobre nós</h2>
-            <p className="text-xl text-gray-300">Depoimentos reais de quem já transformou seu negócio</p>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-[#24C36B]/10 border border-[#24C36B]/20 rounded-full mb-6"
+            >
+              <Star className="w-4 h-4 text-[#24C36B] fill-[#24C36B]" />
+              <span className="text-sm text-[#24C36B] font-semibold">Avaliação 4.9 ⭐⭐⭐⭐⭐</span>
+            </motion.div>
+            <h2 className="text-4xl sm:text-5xl font-bold mb-4">
+              Barbeiros <span className="text-[#24C36B]">reais</span>, resultados <span className="text-[#24C36B]">reais</span>
+            </h2>
+            <p className="text-xl text-gray-300 max-w-2xl mx-auto">
+              Veja como o ZapCorte está transformando barbearias em todo Brasil
+            </p>
           </motion.div>
 
-          <div className="max-w-4xl mx-auto">
-            <motion.div
-              key={currentTestimonial}
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -50 }}
-              transition={{ duration: 0.5 }}
-            >
-              <Card className="bg-gradient-to-br from-[#18181B] to-[#0C0C0C] border-[#27272A]">
-                <CardContent className="p-12 text-center">
-                  <div className="flex justify-center mb-6">
-                    {[...Array(testimonials[currentTestimonial].rating)].map((_, i) => (
-                      <Star key={i} className="w-6 h-6 text-yellow-400 fill-yellow-400" />
-                    ))}
-                  </div>
-                  <p className="text-2xl text-gray-300 mb-8 italic">"{testimonials[currentTestimonial].text}"</p>
-                  <div>
-                    <p className="text-xl font-semibold">{testimonials[currentTestimonial].name}</p>
-                    <p className="text-gray-400">{testimonials[currentTestimonial].role}</p>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
+          {/* Grid de Depoimentos - 2 colunas em desktop */}
+          <div className="grid md:grid-cols-2 gap-6 lg:gap-8 max-w-6xl mx-auto">
+            {testimonials.map((testimonial, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1, duration: 0.5 }}
+                whileHover={{ y: -8, transition: { duration: 0.2 } }}
+              >
+                <Card className="bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] border-[#24C36B]/20 hover:border-[#24C36B]/50 transition-all duration-300 h-full shadow-xl hover:shadow-2xl hover:shadow-[#24C36B]/20">
+                  <CardContent className="p-6 sm:p-8 flex flex-col h-full">
+                    {/* Stars */}
+                    <div className="flex gap-1 mb-4">
+                      {[...Array(testimonial.rating)].map((_, i) => (
+                        <Star key={i} className="w-5 h-5 text-[#24C36B] fill-[#24C36B]" />
+                      ))}
+                    </div>
 
-            <div className="flex justify-center gap-2 mt-8">
-              {testimonials.map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setCurrentTestimonial(i)}
-                  className={`w-3 h-3 rounded-full transition-all ${
-                    i === currentTestimonial ? 'bg-[#24C36B] w-8' : 'bg-gray-600'
-                  }`}
-                />
-              ))}
-            </div>
+                    {/* Highlight Badge */}
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#24C36B]/10 border border-[#24C36B]/30 rounded-full mb-4 self-start">
+                      <Zap className="w-3 h-3 text-[#24C36B]" />
+                      <span className="text-xs font-bold text-[#24C36B]">{testimonial.highlight}</span>
+                    </div>
+
+                    {/* Depoimento */}
+                    <p className="text-gray-200 text-base sm:text-lg leading-relaxed mb-6 flex-grow">
+                      {testimonial.text}
+                    </p>
+
+                    {/* Author */}
+                    <div className="flex items-center gap-4 pt-4 border-t border-[#24C36B]/10">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#24C36B] to-[#1ea557] flex items-center justify-center text-black font-bold text-lg shadow-lg">
+                        {testimonial.name.charAt(0)}
+                      </div>
+                      <div>
+                        <p className="font-bold text-white">{testimonial.name}</p>
+                        <p className="text-sm text-gray-400">{testimonial.role}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
           </div>
+
+          {/* CTA Bottom */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.6 }}
+            className="text-center mt-16"
+          >
+            <p className="text-gray-300 text-lg mb-6">
+              Junte-se a <span className="text-[#24C36B] font-bold">centenas de barbeiros</span> que já transformaram seus negócios
+            </p>
+            <Button 
+              size="lg" 
+              className="bg-gradient-to-r from-[#24C36B] to-[#1ea557] hover:from-[#1ea557] hover:to-[#24C36B] text-black font-bold px-8 py-6 text-lg rounded-xl shadow-lg shadow-[#24C36B]/30 hover:shadow-[#24C36B]/50 transition-all group" 
+              asChild
+            >
+              <Link to="/register">
+                Experimentar Grátis
+                <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </Button>
+          </motion.div>
         </div>
       </section>
 
@@ -1017,7 +1183,7 @@ const HomeNew = () => {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto overflow-visible">
             {[
               {
-                name: "Freemium",
+                name: "Grátis",
                 price: "0",
                 period: "/mês",
                 description: "Perfeito para começar",

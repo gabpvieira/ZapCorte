@@ -1,0 +1,650 @@
+# PROMPT COMPLETO PARA REDESIGN ZAPCORTE - INSPIRADO NO EASY.BUILDER
+
+## CONTEXTO DO PROJETO
+
+Você precisa criar uma landing page moderna, de alta conversão e visualmente impactante para o **ZapCorte** - um sistema de agendamento online para barbearias. A página deve ser inspirada no estilo visual ousado do Easy.Builder: fundo escuro, verde néon vibrante, animações fluidas, glassmorphism e elementos modernos.
+
+---
+
+## ESPECIFICAÇÕES GERAIS
+
+### Tecnologia
+- Use HTML5, CSS3 puro e JavaScript vanilla
+- Design mobile-first e totalmente responsivo
+- Animações suaves usando CSS transitions, transforms e Intersection Observer API
+- Performance otimizada com lazy loading e animações apenas com transform/opacity
+
+### Paleta de Cores (MANTER)
+- **Verde néon principal**: #00FF00 (cor marca do ZapCorte)
+- **Backgrounds**: Preto puro (#000000) e tons escuros (#0a0a0a, #111111, #1a1a1a)
+- **Textos**: Branco puro e variações com opacidade (90%, 70%, 50%)
+- **Efeitos**: Glow verde néon, glassmorphism sutil, gradientes radiais
+
+### Tipografia
+- Fonte moderna sans-serif (Inter, Poppins ou similar)
+- Títulos grandes e bold
+- Corpo de texto com line-height confortável (1.6-1.8)
+- Destaque de palavras-chave em verde néon
+
+---
+
+## ESTRUTURA DA PÁGINA
+
+### 1. HEADER/NAVEGAÇÃO
+
+**Elementos:**
+- Logo à esquerda: ícone de tesoura (✂️) + "Zap" em branco + "Corte" em verde
+- Menu de navegação centralizado: Solução, Funcionalidades, Depoimentos, Preços
+- Botão CTA à direita: "Começar Grátis" com fundo verde néon
+- Menu hamburger para mobile
+
+**Comportamento:**
+- Inicialmente transparente
+- Ao rolar 50px: fundo escuro com backdrop blur e sombra sutil
+- Navegação smooth scroll
+- Logo com animação de hover (ícone gira 360°)
+
+---
+
+### 2. HERO SECTION (Seção Principal)
+
+**Background Animado:**
+- Grid de linhas diagonais sutis em movimento lento
+- 2-3 orbs de gradiente verde que pulsam suavemente
+- Formas geométricas flutuando em diferentes velocidades
+
+**Conteúdo (centralizado):**
+
+**Badge animado no topo:**
+"✨ Usado por +500 barbeiros em todo Brasil"
+- Fundo glassmorphism, borda verde sutil, fade-in ao carregar
+
+**Título principal gigante:**
+"Transforme sua barbearia com **agendamento online**"
+- "agendamento online" em verde néon com gradiente animado
+- Animação: fade-in-up escalonado
+
+**Subtítulo:**
+"Acabe com cadernos bagunçados, clientes que não aparecem e telefone tocando no meio do corte. Profissionalize seu negócio em minutos, não em meses."
+- Tom direto, destacando dores reais
+- Cor cinza claro (70% opacidade)
+
+**Estatísticas em linha (3 colunas):**
+1. "500+" | "Barbeiros ativos"
+2. "160k+" | "Agendamentos/mês"  
+3. "4.9 ⭐⭐⭐⭐⭐" | "Avaliação média"
+- Números grandes com counter animation (contam de 0 até o valor)
+- Divisores verticais sutis entre cada stat
+
+**CTA Principal:**
+Botão grande: "⚡ Começar Teste Grátis →"
+- Fundo verde néon com glow intenso pulsante
+- Hover: aumenta glow e escala ligeiramente
+- Abaixo: "✓ 7 dias grátis • ✓ Sem cartão • ✓ Cancele quando quiser"
+
+**Mockup do App:**
+- Imagem de smartphones mostrando o app
+- Efeito de flutuação suave (floating animation)
+- Glow verde atrás da imagem
+- Hover: aumenta ligeiramente e intensifica glow
+
+**Scroll Indicator no rodapé:**
+- Ícone de mouse animado com rodinha descendo
+- Texto: "Role para descobrir"
+
+---
+
+### 3. SEÇÃO DE PROBLEMAS
+
+**Header centralizado:**
+Label pequeno: "❌ Situações familiares?"
+Título: "Cansado de **perder dinheiro** com desorganização?"
+- "perder dinheiro" em verde néon
+Subtítulo: "Esses problemas estão custando muito mais do que você imagina"
+
+**Grid de 4 Cards de Problemas:**
+
+Cada card com:
+- Ícone grande centralizado no topo (📞 📔 👻 💰)
+- Fundo glassmorphism com borda sutil
+- Título do problema em negrito
+- Descrição detalhada da dor
+- Box destacado: "💸 Prejuízo estimado: R$ XXX-XXX/mês"
+- Animação: fade-in-up ao entrar no viewport (cada um com delay progressivo)
+- Hover: borda verde acende, card sobe levemente
+
+**Problemas específicos:**
+
+1. **"Telefone não para de tocar"** 📞
+Prejuízo: R$ 800-1.500/mês
+Dor: Atende no meio do corte, perde foco, perde novos clientes
+
+2. **"Agenda no caderno vira bagunça"** 📔
+Prejuízo: R$ 600-1.200/mês
+Dor: Rasuras, horários sobrepostos, marca dois clientes no mesmo horário
+
+3. **"Clientes que não aparecem"** 👻
+Prejuízo: R$ 1.000-2.000/mês
+Dor: Horário bloqueado vazio, perda de tempo e dinheiro
+
+4. **"Não sabe quanto fatura"** 💰
+Prejuízo: R$ 500-1.000/mês
+Dor: Sem controle financeiro, imposto de renda vira pesadelo
+
+**Box de Impacto Total (destaque):**
+Fundo mais escuro com borda verde brilhante
+"Somando tudo isso..."
+Número gigante: "R$ 2.900 - 5.700/mês"
+Texto: "Você está **perdendo** entre R$ 35 mil e R$ 68 mil por ano por falta de organização"
+Botão: "Quero Resolver Isso Agora →"
+
+---
+
+### 4. SEÇÃO SOLUÇÃO (Split Screen)
+
+**Layout 50/50:**
+Esquerda: Mockup grande da interface
+Direita: Conteúdo explicativo
+
+**Lado esquerdo:**
+- Screenshot do sistema em perspectiva 3D
+- Glow verde grande atrás
+- 3 cards flutuantes sobre a imagem com mini-features:
+  - "✓ Agenda online 24/7"
+  - "✓ Lembretes automáticos"
+  - "✓ Pagamento integrado"
+- Parallax suave ao scroll
+
+**Lado direito:**
+Label: "✨ A Solução Completa"
+Título: "**ZapCorte** é o sistema que sua barbearia precisa"
+Descrição: "Não é só um 'app de agendamento'. É uma plataforma completa que organiza, automatiza e profissionaliza todo o seu negócio."
+
+**Lista de 4 Benefícios Principais:**
+Cada item com:
+- Ícone grande à esquerda
+- Título em negrito
+- Descrição detalhada
+
+1. 📱 **Agendamento Online 24/7**
+"Clientes agendam sozinhos pelo celular. Você nunca mais atende telefone pra marcar."
+
+2. 💬 **Lembretes Automáticos no WhatsApp**
+"Sistema envia lembretes 1 dia e 2 horas antes. Reduz faltas em até 80%."
+
+3. 💰 **Gestão Financeira Integrada**
+"Controle de receitas, despesas, comissões. Relatórios automáticos todo mês."
+
+4. 👥 **Cadastro Inteligente de Clientes**
+"Histórico completo: serviços, preferências, última visita. Atendimento personalizado."
+
+Botão: "Quero Ser Mais Produtivo →"
+
+---
+
+### 5. COMO FUNCIONA (3 Passos)
+
+**Background diferente**: tom de preto ligeiramente mais claro que as seções vizinhas
+
+**Título centralizado:**
+"Como funciona na prática?"
+Subtítulo: "Configure em minutos e comece a usar hoje mesmo"
+
+**3 Cards Horizontais Numerados:**
+
+**Passo 1: "Cadastre sua barbearia"** 🏪
+- Badge grande: "1"
+- Ícone de loja
+- "Leva 5 minutos. Adicione serviços, preços, horários de funcionamento e pronto."
+- Micro-mockup ou ícone ilustrativo
+
+**Passo 2: "Configure os lembretes"** ⚙️
+- Badge grande: "2"
+- Ícone de engrenagem
+- "O sistema já vem pré-configurado. Só ajustar mensagens do WhatsApp se quiser."
+- Micro-mockup ou ícone ilustrativo
+
+**Passo 3: "Compartilhe seu link"** 🔗
+- Badge grande: "3"
+- Ícone de link/compartilhar
+- "Envie seu link personalizado pros clientes. Eles agendam sozinhos, 24/7."
+- Micro-mockup ou ícone ilustrativo
+
+Cada card com animação de entrada escalonada quando visível.
+
+Botão centralizado abaixo: "Começar Agora - É Grátis →"
+
+---
+
+### 6. FUNCIONALIDADES DETALHADAS
+
+**Background**: grid sutil animado
+
+**Header:**
+"Tudo que sua barbearia precisa em um só lugar"
+
+**Grid 2x4 de Funcionalidades:**
+
+Cada card compacto com:
+- Ícone em verde néon
+- Título da funcionalidade
+- Breve descrição (1-2 linhas)
+- Hover: borda acende, ícone anima
+
+**8 Funcionalidades:**
+
+1. ⏰ **Agendamento 24/7**
+"Clientes agendam online a qualquer hora"
+
+2. 💬 **Lembretes Automáticos**
+"WhatsApp integrado, reduz faltas em 80%"
+
+3. 💳 **Gestão Financeira**
+"Controle completo de receitas e despesas"
+
+4. 👤 **Cadastro de Clientes**
+"Histórico e preferências automatizados"
+
+5. 👨‍💼 **Múltiplos Barbeiros**
+"Gerencie toda sua equipe em um lugar"
+
+6. 📊 **Relatórios Inteligentes**
+"Dashboards com insights do seu negócio"
+
+7. ⭐ **Avaliações**
+"Colete feedback e melhore constantemente"
+
+8. 🎨 **Personalização**
+"Logo, cores, domínio próprio"
+
+---
+
+### 7. DEPOIMENTOS
+
+**Background escuro com partículas flutuantes sutis**
+
+**Header:**
+"O que barbeiros dizem sobre o ZapCorte"
+Subtítulo: "Resultados reais de quem já transformou o negócio"
+
+**3 Cards de Depoimento (carousel ou grid):**
+
+Cada card grande com:
+- Foto do barbeiro (circular com borda verde)
+- 5 estrelas em verde
+- Texto do depoimento em destaque (aspas grandes)
+- Nome do barbeiro
+- Cidade/bairro
+- Selo: "Cliente há X meses"
+
+**Depoimento 1:**
+Foto + Nome: "Pedro Silva"
+Local: "Barbearia Reis - São Paulo/SP"
+⭐⭐⭐⭐⭐
+"Antes eu perdia uns 5-6 clientes por semana que não apareciam. Hoje com os lembretes do ZapCorte isso caiu pra quase zero. Já pagou sozinho nos primeiros 15 dias."
+
+**Depoimento 2:**
+Foto + Nome: "Carlos Mendes"  
+Local: "Barba & Estilo - Rio de Janeiro/RJ"
+⭐⭐⭐⭐⭐
+"Parei de atender telefone no meio do corte. Meus clientes adoraram agendar online. Profissionalizou demais meu negócio, parece que sou um salão grande."
+
+**Depoimento 3:**
+Foto + Nome: "Rafael Costa"
+Local: "Barbearia Tradicional - Belo Horizonte/MG"
+⭐⭐⭐⭐⭐
+"O relatório financeiro salvou minha vida. Agora sei exatamente quanto faturei, quanto gastei, quanto cada barbeiro produziu. Coisa de profissional."
+
+**Indicador de navegação** (se carousel)
+Badge abaixo: "+500 barbeiros confiam no ZapCorte"
+
+---
+
+### 8. COMPARAÇÃO (Antes x Depois)
+
+**Split screen vertical:**
+
+**Lado esquerdo (SEM ZapCorte):** ❌
+Fundo levemente avermelhado/escuro
+Título: "Sem o ZapCorte"
+
+Lista com X vermelho:
+- ❌ Telefone tocando o dia todo
+- ❌ Caderno cheio de rasuras
+- ❌ Clientes faltando sem avisar
+- ❌ Sem controle financeiro
+- ❌ Horas perdidas organizando
+- ❌ Imagem amadora
+- ❌ Perdendo R$ 2-5k/mês
+
+**Lado direito (COM ZapCorte):** ✅
+Fundo com glow verde sutil
+Título: "Com o ZapCorte"
+
+Lista com check verde:
+- ✅ Agendamento automático 24/7
+- ✅ Agenda digital organizada
+- ✅ 80% menos faltas
+- ✅ Relatórios automáticos
+- ✅ Foca no que importa: cortar
+- ✅ Profissionalismo total
+- ✅ Faturando R$ 2-5k a mais
+
+Botão centralizado abaixo: "Quero Esse Resultado →"
+
+---
+
+### 9. PREÇOS
+
+**Background com partículas e glow verde difuso**
+
+**Header:**
+"Planos que cabem no seu bolso"
+Subtítulo: "Comece grátis. Cresça no seu ritmo."
+
+**3 Cards de Planos (Grid 1x3):**
+
+**Plano 1: GRATUITO**
+- Fundo: glassmorphism sutil
+- Badge: "Para começar"
+- Preço: "R$ 0/mês"
+- Texto: "Grátis para sempre"
+
+Recursos incluídos:
+- ✅ Até 30 agendamentos/mês
+- ✅ 1 profissional
+- ✅ Lembretes básicos
+- ✅ Cadastro de clientes
+- ❌ Relatórios avançados
+- ❌ Suporte prioritário
+- ❌ Integração pagamento
+
+Botão: "Começar Grátis"
+
+**Plano 2: PREMIUM** ⭐ MAIS POPULAR
+- Fundo: borda verde brilhante + glow
+- Badge: "⭐ Mais Escolhido"
+- Preço grande: "R$ 49,90/mês"
+- Ou: "R$ 39,90/mês no anual (economize R$ 120)"
+
+Recursos incluídos:
+- ✅ Agendamentos ilimitados
+- ✅ Profissionais ilimitados
+- ✅ Lembretes automáticos WhatsApp
+- ✅ Gestão financeira completa
+- ✅ Relatórios e dashboard
+- ✅ Suporte prioritário
+- ✅ Domínio personalizado
+- ✅ Integração de pagamento
+
+Botão verde brilhante: "Testar 7 Dias Grátis"
+Texto abaixo: "Sem cartão de crédito"
+
+**Plano 3: ENTERPRISE**
+- Fundo: glassmorphism
+- Badge: "Para redes"
+- Preço: "Personalizado"
+- Texto: "Sob consulta"
+
+Recursos:
+- ✅ Tudo do Premium
+- ✅ Múltiplas unidades
+- ✅ API personalizada
+- ✅ Onboarding dedicado
+- ✅ Suporte 24/7
+- ✅ Treinamento da equipe
+
+Botão: "Falar com Consultor"
+
+**Box de Garantia abaixo dos planos:**
+Ícone de escudo + "Garantia de 7 dias - Se não gostar, devolvemos 100% do seu dinheiro"
+
+---
+
+### 10. FAQ (Perguntas Frequentes)
+
+**Background mais claro que outras seções**
+
+**Header:**
+"Perguntas Frequentes"
+Subtítulo: "Tudo que você precisa saber antes de começar"
+
+**Accordion de 8 perguntas:**
+
+Cada item com:
+- Pergunta em negrito com ícone + ao lado
+- Ao clicar: expande com animação suave, + vira -, resposta aparece
+- Hover: fundo levemente mais claro
+
+**Perguntas:**
+
+**1. Como funciona o teste grátis?**
+"Você tem 7 dias para testar todas as funcionalidades Premium sem pagar nada. Não pedimos cartão de crédito. Se gostar, aí sim você escolhe um plano."
+
+**2. Preciso ter site próprio?**
+"Não! O ZapCorte cria automaticamente uma página personalizada para sua barbearia com seu link exclusivo. Você só compartilha esse link com os clientes."
+
+**3. Meus clientes precisam baixar app?**
+"Não. Seus clientes agendam direto pelo navegador do celular, sem instalar nada. Só você usa nosso app/sistema para gerenciar."
+
+**4. Como funcionam os lembretes?**
+"O sistema envia automaticamente mensagens via WhatsApp 24h antes e 2h antes do horário marcado. Você personaliza as mensagens."
+
+**5. Posso usar com múltiplos barbeiros?**
+"Sim! No plano Premium você adiciona quantos profissionais quiser, cada um com sua agenda individual."
+
+**6. E se eu quiser cancelar?**
+"Pode cancelar quando quiser, sem multa ou burocracia. Seus dados ficam salvos por 30 dias caso mude de ideia."
+
+**7. Tem suporte em português?**
+"Sim! Suporte 100% em português por chat, email e WhatsApp. No plano Premium o suporte é prioritário."
+
+**8. Como funciona a integração de pagamento?**
+"Integramos com Mercado Pago e Pix. O cliente pode pagar online ao agendar ou você marca como 'pago no local'."
+
+Botão centralizado: "Ainda tem dúvidas? Fale Conosco"
+
+---
+
+### 11. CTA FINAL (Call-to-Action de Fechamento)
+
+**Background com gradient verde intenso vindo de baixo + partículas**
+
+**Conteúdo centralizado:**
+
+Badge: "🚀 Pronto para crescer?"
+
+Título gigante:
+"Transforme sua barbearia em **3 minutos**"
+- "3 minutos" em verde ultra brilhante
+
+Subtítulo:
+"Junte-se a mais de 500 barbeiros que já profissionalizaram seus negócios e aumentaram o faturamento com o ZapCorte."
+
+**Dois botões lado a lado:**
+
+Botão principal: "Começar Teste Grátis Agora"
+- Verde néon gigante com glow máximo
+
+Botão secundário: "Agendar Demonstração"
+- Outline verde, fundo transparente
+
+Texto abaixo centralizado:
+"✓ Sem cartão de crédito • ✓ 7 dias grátis • ✓ Suporte em português"
+
+**Mini-grid de logos/selos:**
+- "Pagamento seguro" 
+- "Dados protegidos"
+- "Suporte 24/7"
+- "Aprovado por 500+ barbeiros"
+
+---
+
+### 12. FOOTER
+
+**Background preto sólido com linha verde sutil no topo**
+
+**Layout em 4 colunas:**
+
+**Coluna 1: Logo e descrição**
+- Logo ZapCorte
+- Texto: "O sistema de agendamento online completo para barbearias modernas."
+- Ícones de redes sociais (Instagram, Facebook, WhatsApp)
+
+**Coluna 2: Produto**
+- Funcionalidades
+- Preços
+- Depoimentos
+- Comparação
+
+**Coluna 3: Empresa**
+- Sobre nós
+- Blog
+- Central de Ajuda
+- Contato
+
+**Coluna 4: Legal**
+- Termos de Uso
+- Política de Privacidade
+- LGPD
+- Status do Sistema
+
+**Rodapé final (copyright):**
+"© 2024 ZapCorte. Todos os direitos reservados."
+"Desenvolvido com ❤️ para barbeiros brasileiros"
+
+---
+
+## ANIMAÇÕES E INTERAÇÕES ESPECIAIS
+
+### Animações Globais:
+1. **Fade-in-up**: Elementos entram de baixo para cima com fade ao ficarem visíveis (Intersection Observer)
+2. **Counter animation**: Números contam de 0 até valor final
+3. **Floating**: Mockups e elementos flutuam suavemente (translate Y loop)
+4. **Glow pulse**: Efeito de brilho verde pulsando em botões e elementos
+5. **Parallax sutil**: Elementos movem em velocidades diferentes no scroll
+6. **Hover scale**: Elementos aumentam 5% ao hover
+7. **Hover glow**: Bordas verdes acendem ao hover
+
+### Elementos Decorativos em Movimento:
+- Grid lines com translate infinito
+- Gradient orbs com scale + opacity pulse
+- Partículas flutuando em backgrounds
+- Formas geométricas com rotação lenta
+
+### Micro-interações:
+- Botões: hover aumenta glow + scale
+- Cards: hover sobe card + acende borda
+- Links: underline animado ao hover
+- Ícones: rotação ou bounce ao hover
+- Inputs: borda verde acende ao focus
+
+---
+
+## RESPONSIVIDADE
+
+### Breakpoints:
+- **Mobile**: 375px - 767px (layout 1 coluna, texto menor, botões full-width)
+- **Tablet**: 768px - 1023px (layout 2 colunas em algumas seções)
+- **Desktop**: 1024px - 1439px (layout 3 colunas, espaçamentos padrão)
+- **Large Desktop**: 1440px+ (container com max-width, espaçamentos generosos)
+
+### Ajustes Mobile:
+- Hero: título menor, stats em coluna
+- Cards de problema: 1 coluna
+- Split screens: viram colunas (visual no topo)
+- Preços: cards em coluna com scroll horizontal opcional
+- Mockups: versões otimizadas menores
+- Menu: hamburger com slide-in lateral
+
+---
+
+## COPYWRITING - TOM E VOZ
+
+### Princípios:
+- **Direto e objetivo**: Sem enrolação, vai direto ao ponto
+- **Conversacional**: Fala como pessoa real, não como empresa fria
+- **Focado em benefício**: Sempre responde "o que eu ganho com isso?"
+- **Urgência sutil**: Mostra o custo de não agir, mas sem pressão agressiva
+- **Prova social**: Números reais, depoimentos verdadeiros
+- **Brasileiro**: Linguagem local, exemplos do dia a dia de barbeiros BR
+
+### Evitar:
+- ❌ Jargão técnico desnecessário
+- ❌ Palavras vazias tipo "revolucionário", "inovador" sem contexto
+- ❌ Textos longos demais
+- ❌ Promessas impossíveis
+- ❌ Tom corporativo frio
+
+### Preferir:
+- ✅ Números concretos
+- ✅ Exemplos práticos
+- ✅ Benefícios específicos
+- ✅ Conversão de problemas em soluções
+- ✅ CTAs claros e diretos
+
+---
+
+## CHECKLIST FINAL
+
+Antes de entregar, garantir que:
+
+**Design:**
+- [ ] Verde néon (#00FF00) usado consistentemente
+- [ ] Fundo preto/escuro em todas as seções
+- [ ] Glassmorphism aplicado em cards
+- [ ] Glow verde em CTAs principais
+- [ ] Mockups com efeito 3D e floating
+- [ ] Grid/partículas animadas em backgrounds
+- [ ] Ícones consistentes e legíveis
+
+**Animações:**
+- [ ] Fade-in-up em elementos ao scroll
+- [ ] Counter animation nos números
+- [ ] Hover states em todos os elementos clicáveis
+- [ ] Floating em mockups
+- [ ] Smooth scroll na navegação
+- [ ] Loading states em botões
+
+**Conteúdo:**
+- [ ] Todas as 12 seções presentes
+- [ ] Textos revisados e sem lorem ipsum
+- [ ] CTAs claros em todas as seções
+- [ ] Números e estatísticas atualizados
+- [ ] Depoimentos completos com fotos
+
+**Responsividade:**
+- [ ] Layout mobile-first funcionando
+- [ ] Breakpoints implementados
+- [ ] Textos legíveis em mobile
+- [ ] Botões acessíveis em telas pequenas
+- [ ] Imagens otimizadas para mobile
+
+**Performance:**
+- [ ] Lazy loading de imagens
+- [ ] Animações otimizadas (transform/opacity)
+- [ ] CSS minificado
+- [ ] JavaScript otimizado
+- [ ] Fontes carregadas eficientemente
+
+**Acessibilidade:**
+- [ ] Alt text em imagens
+- [ ] Contraste adequado
+- [ ] Navegação por teclado funcional
+- [ ] ARIA labels onde necessário
+- [ ] Foco visível em elementos interativos
+
+---
+
+## RESULTADO ESPERADO
+
+Uma landing page moderna, profissional e de alta conversão que:
+- Captura a atenção imediatamente com design impactante
+- Comunica claramente o valor do produto
+- Guia o visitante naturalmente até o CTA
+- Converte visitantes em usuários de teste gratuito
+- Representa bem a marca ZapCorte com identidade visual forte
+- Funciona perfeitamente em todos os dispositivos
+- Carrega rápido e anima suavemente
+
+**Meta de conversão:** 5-8% de visitantes em cadastros de teste grátis.
