@@ -1,8 +1,8 @@
 // Service Worker para Web Push Notifications
 // ZapCorte - Sistema de Notificações Nativo
 
-const CACHE_NAME = 'zapcorte-v3'; // Incrementar versão para forçar atualização
-const CACHE_VERSION = '3.0.0';
+const CACHE_NAME = 'zapcorte-v4'; // Incrementar versão para forçar atualização
+const CACHE_VERSION = '4.0.0';
 
 // Instalação do Service Worker
 self.addEventListener('install', (event) => {
@@ -116,6 +116,54 @@ self.addEventListener('notificationclose', (event) => {
   console.log('[SW] Notificação fechada:', event);
 });
 
+// Estratégia de fetch - Network First para JS/CSS, Cache First para assets
+self.addEventListener('fetch', (event) => {
+  const { request } = event;
+  const url = new URL(request.url);
+  
+  // Ignorar requisições não-GET
+  if (request.method !== 'GET') return;
+  
+  // Ignorar requisições para APIs externas
+  if (!url.origin.includes(self.location.origin)) return;
+  
+  // Network First para arquivos JS, CSS e HTML (sempre buscar versão mais recente)
+  if (request.url.match(/\.(js|css|html)$/)) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          // Clonar a resposta antes de cachear
+          const responseToCache = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(request, responseToCache);
+          });
+          return response;
+        })
+        .catch(() => {
+          // Se falhar, tentar buscar do cache
+          return caches.match(request);
+        })
+    );
+    return;
+  }
+  
+  // Cache First para imagens e outros assets
+  event.respondWith(
+    caches.match(request).then((cachedResponse) => {
+      if (cachedResponse) {
+        return cachedResponse;
+      }
+      return fetch(request).then((response) => {
+        const responseToCache = response.clone();
+        caches.open(CACHE_NAME).then((cache) => {
+          cache.put(request, responseToCache);
+        });
+        return response;
+      });
+    })
+  );
+});
+
 // Receber mensagens do cliente
 self.addEventListener('message', (event) => {
   console.log('[SW] Mensagem recebida:', event.data);
@@ -128,5 +176,21 @@ self.addEventListener('message', (event) => {
     event.ports[0].postMessage({
       version: CACHE_VERSION
     });
+  }
+  
+  // Limpar todo o cache quando solicitado
+  if (event.data && event.data.type === 'CLEAR_CACHE') {
+    event.waitUntil(
+      caches.keys().then((cacheNames) => {
+        return Promise.all(
+          cacheNames.map((cacheName) => {
+            console.log('[SW] Limpando cache:', cacheName);
+            return caches.delete(cacheName);
+          })
+        );
+      }).then(() => {
+        event.ports[0].postMessage({ success: true });
+      })
+    );
   }
 });

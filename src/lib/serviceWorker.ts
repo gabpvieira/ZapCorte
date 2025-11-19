@@ -37,6 +37,22 @@ export async function registerServiceWorker(config?: ServiceWorkerConfig): Promi
 
     console.log('[SW] Registrando Service Worker...');
 
+    // Limpar service workers antigos primeiro
+    const registrations = await navigator.serviceWorker.getRegistrations();
+    for (const registration of registrations) {
+      await registration.unregister();
+      console.log('[SW] Service Worker antigo removido');
+    }
+
+    // Limpar todos os caches antigos
+    if ('caches' in window) {
+      const cacheNames = await caches.keys();
+      for (const cacheName of cacheNames) {
+        await caches.delete(cacheName);
+        console.log('[SW] Cache antigo removido:', cacheName);
+      }
+    }
+
     // Registrar o service worker
     const registration = await navigator.serviceWorker.register('/sw.js', {
       scope: '/',

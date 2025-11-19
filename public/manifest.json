@@ -3,7 +3,7 @@
   "name": "ZapCorte - Agendamentos de Barbearia",
   "short_name": "ZapCorte",
   "description": "Sistema completo de agendamentos para barbearias com notificações em tempo real",
-  "start_url": "/",
+  "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",
   "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
