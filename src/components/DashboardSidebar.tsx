@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
@@ -13,11 +13,15 @@ import {
   User,
   MessageCircle,
   Users,
-  Bell
+  Bell,
+  UserCog,
+  BarChart3
 } from "lucide-react";
 import logotipo from "@/assets/zapcorte-icon.png";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUserData } from "@/hooks/useUserData";
 import { cn } from "@/lib/utils";
 
 interface SidebarItem {
@@ -88,6 +92,51 @@ export const DashboardSidebar = ({ className }: DashboardSidebarProps) => {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const location = useLocation();
   const { signOut, user } = useAuth();
+  const { barbershop } = useUserData();
+  
+  // Adicionar itens PRO dinamicamente e renomear labels se for Plano PRO
+  const menuItems = useMemo(() => {
+    let items = [...sidebarItems];
+    
+    // Se for Plano PRO, remover "Meus" dos labels
+    if (barbershop?.plan_type === 'pro') {
+      items = items.map(item => {
+        if (item.id === 'services') {
+          return { ...item, label: 'Serviços' };
+        }
+        if (item.id === 'appointments') {
+          return { ...item, label: 'Agendamentos' };
+        }
+        if (item.id === 'customers') {
+          return { ...item, label: 'Clientes' };
+        }
+        return item;
+      });
+      
+      // Inserir "Barbeiros" e "Relatórios" após "Clientes"
+      const customersIndex = items.findIndex(item => item.id === 'customers');
+      if (customersIndex !== -1) {
+        items.splice(customersIndex + 1, 0, 
+          {
+            id: "barbers",
+            label: "Barbeiros",
+            icon: UserCog,
+            href: "/dashboard/barbers",
+            badge: "PRO"
+          },
+          {
+            id: "reports",
+            label: "Relatórios",
+            icon: BarChart3,
+            href: "/dashboard/reports",
+            badge: "PRO"
+          }
+        );
+      }
+    }
+    
+    return items;
+  }, [barbershop?.plan_type]);
 
   const isActive = (href: string) => {
     if (href === "/dashboard") {
@@ -171,8 +220,8 @@ export const DashboardSidebar = ({ className }: DashboardSidebarProps) => {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-2">
-        {sidebarItems.map((item) => {
+      <nav className="flex-1 overflow-y-auto p-4 space-y-2 scrollbar-hide">
+        {menuItems.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.href);
           

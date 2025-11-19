@@ -53,6 +53,40 @@ export interface Barbershop {
   created_at: string
 }
 
+export interface Barber {
+  id: string
+  barbershop_id: string
+  name: string
+  email?: string
+  phone?: string
+  photo_url?: string
+  bio?: string
+  specialties?: string[]
+  is_active: boolean
+  display_order: number
+  created_at: string
+  updated_at: string
+}
+
+export interface BarberAvailability {
+  id: string
+  barber_id: string
+  day_of_week: number
+  start_time: string
+  end_time: string
+  is_active: boolean
+  created_at: string
+}
+
+export interface BarberService {
+  id: string
+  barber_id: string
+  service_id: string
+  is_available: boolean
+  custom_duration?: number
+  created_at: string
+}
+
 export interface Service {
   id: string
   barbershop_id: string
@@ -79,6 +113,7 @@ export interface Appointment {
   id: string
   barbershop_id: string
   service_id: string
+  barber_id?: string
   customer_name: string
   customer_phone: string
   scheduled_at: string

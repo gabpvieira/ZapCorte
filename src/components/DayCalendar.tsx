@@ -13,6 +13,7 @@ interface Appointment {
   status: "pending" | "confirmed" | "cancelled";
   service_name?: string;
   service_duration?: number;
+  barber_name?: string;
 }
 
 interface DayCalendarProps {
@@ -20,6 +21,7 @@ interface DayCalendarProps {
   onAppointmentClick: (appointment: Appointment) => void;
   onTimeSlotClick?: (time: string) => void;
   onDateChange?: (date: Date) => void;
+  showBarber?: boolean;
 }
 
 const HOURS = Array.from({ length: 14 }, (_, i) => i + 8); // 8h às 21h
@@ -27,7 +29,7 @@ const HOUR_HEIGHT = 80; // Altura base por hora
 const MIN_CARD_HEIGHT = 44; // Altura mínima reduzida
 const CARD_SPACING = 4; // Espaçamento entre cards
 
-export function DayCalendar({ appointments, onAppointmentClick, onTimeSlotClick, onDateChange }: DayCalendarProps) {
+export function DayCalendar({ appointments, onAppointmentClick, onTimeSlotClick, onDateChange, showBarber = false }: DayCalendarProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
 
@@ -313,6 +315,17 @@ export function DayCalendar({ appointments, onAppointmentClick, onTimeSlotClick,
                         colors.text
                       )}>
                         {appointment.service_name}
+                      </div>
+                    )}
+
+                    {/* Linha 3: Barbeiro (apenas se showBarber for true) */}
+                    {showBarber && appointment.barber_name && (
+                      <div className={cn(
+                        "text-[10px] leading-tight truncate opacity-75 flex items-center gap-1",
+                        colors.text
+                      )}>
+                        <span className="opacity-60">👤</span>
+                        {appointment.barber_name}
                       </div>
                     )}
                   </div>

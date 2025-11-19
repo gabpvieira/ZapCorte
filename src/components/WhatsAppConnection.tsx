@@ -551,6 +551,7 @@ Nos vemos em breve! ✂️`
                     <Badge variant="outline" className="text-xs">{'{data}'}</Badge>
                     <Badge variant="outline" className="text-xs">{'{hora}'}</Badge>
                     <Badge variant="outline" className="text-xs">{'{servico}'}</Badge>
+                    <Badge variant="outline" className="text-xs">{'{barbeiro}'}</Badge>
                   </div>
                 </div>
                 <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20">
@@ -563,7 +564,8 @@ Nos vemos em breve! ✂️`
                       .replace(/{nome}/g, 'João')
                       .replace(/{data}/g, '15/11/2024')
                       .replace(/{hora}/g, '14:30')
-                      .replace(/{servico}/g, 'Corte + Barba') || 
+                      .replace(/{servico}/g, 'Corte + Barba')
+                      .replace(/{barbeiro}/g, 'Carlos Silva') || 
                       'Digite uma mensagem...'}
                   </div>
                 </div>
@@ -592,6 +594,7 @@ Nos vemos em breve! ✂️`
                     <Badge variant="outline" className="text-xs">{'{data}'}</Badge>
                     <Badge variant="outline" className="text-xs">{'{hora}'}</Badge>
                     <Badge variant="outline" className="text-xs">{'{servico}'}</Badge>
+                    <Badge variant="outline" className="text-xs">{'{barbeiro}'}</Badge>
                   </div>
                 </div>
                 <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/20">
@@ -604,7 +607,8 @@ Nos vemos em breve! ✂️`
                       .replace(/{nome}/g, 'João')
                       .replace(/{data}/g, '15/11/2024')
                       .replace(/{hora}/g, '14:30')
-                      .replace(/{servico}/g, 'Corte + Barba') || 
+                      .replace(/{servico}/g, 'Corte + Barba')
+                      .replace(/{barbeiro}/g, 'Carlos Silva') || 
                       'Digite uma mensagem...'}
                   </div>
                 </div>
@@ -672,6 +676,7 @@ Nos vemos em breve! ✂️`
                         <Badge variant="outline" className="text-xs">{'{data}'}</Badge>
                         <Badge variant="outline" className="text-xs">{'{hora}'}</Badge>
                         <Badge variant="outline" className="text-xs">{'{servico}'}</Badge>
+                        <Badge variant="outline" className="text-xs">{'{barbeiro}'}</Badge>
                       </div>
                       <p className="text-xs text-muted-foreground">
                         💡 Use emojis e quebras de linha livremente
@@ -689,7 +694,8 @@ Nos vemos em breve! ✂️`
                           .replace(/{nome}/g, 'João')
                           .replace(/{data}/g, '15/11/2024')
                           .replace(/{hora}/g, '14:30')
-                          .replace(/{servico}/g, 'Corte + Barba') || 
+                          .replace(/{servico}/g, 'Corte + Barba')
+                          .replace(/{barbeiro}/g, 'Carlos Silva') || 
                           'Digite uma mensagem...'}
                       </div>
                     </div>

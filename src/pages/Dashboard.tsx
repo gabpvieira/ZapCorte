@@ -8,6 +8,7 @@ import { format, parseISO, parse } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useUserData } from "@/hooks/useUserData";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePlanLimits } from "@/hooks/usePlanLimits";
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { useDashboardData } from "@/hooks/useDashboardData";
@@ -47,13 +48,16 @@ import { getAvailableTimeSlots, createAppointment } from "@/lib/supabase-queries
 import { motion } from "framer-motion";
 import WeeklyDatePicker from "@/components/WeeklyDatePicker";
 import { DayCalendar } from "@/components/DayCalendar";
+import { MultiBarberCalendar } from "@/components/MultiBarberCalendar";
 import { FitInAppointmentForm } from "@/components/FitInAppointmentForm";
+import { NewAppointmentModal } from "@/components/NewAppointmentModal";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { profile, barbershop, services, loading: userLoading, error: userError, refetch: refetchUser } = useUserData();
   const { stats, todayAppointments, loading: dashboardLoading, error: dashboardError, refetch: refetchDashboard } = useDashboardData(barbershop?.id);
+  const planLimits = usePlanLimits(barbershop);
   
   const { toast } = useToast();
   
@@ -66,22 +70,8 @@ const Dashboard = () => {
   const [editDate, setEditDate] = useState<string>("");
   const [editTime, setEditTime] = useState<string>("");
   
-  // Estados para novo agendamento
+  // Estado para modal de novo agendamento
   const [newAppointmentOpen, setNewAppointmentOpen] = useState(false);
-  const [selectedService, setSelectedService] = useState<string | null>(null);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [selectedTime, setSelectedTime] = useState<string | null>(null);
-  const [customerName, setCustomerName] = useState("");
-  const [customerPhone, setCustomerPhone] = useState("");
-  const [timeSlots, setTimeSlots] = useState<{ time: string; available: boolean }[]>([]);
-  const [submitting, setSubmitting] = useState(false);
-  const [isFitIn, setIsFitIn] = useState(false);
-  const [isFitInMode, setIsFitInMode] = useState(false);
-  
-  // Estados para busca de clientes
-  const [customers, setCustomers] = useState<any[]>([]);
-  const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
-  const [customerSearchTerm, setCustomerSearchTerm] = useState("");
   
   // Estados para calendário
   const [calendarDate, setCalendarDate] = useState(new Date());
@@ -104,7 +94,8 @@ const Dashboard = () => {
           .from("appointments")
           .select(`
             *,
-            services (name, duration)
+            services (name, duration),
+            barbers (id, name)
           `)
           .eq("barbershop_id", barbershop.id)
           .gte("scheduled_at", startOfDay.toISOString())
@@ -117,7 +108,9 @@ const Dashboard = () => {
           setCalendarAppointments(data?.map(apt => ({
             ...apt,
             service_name: apt.services?.name,
-            service_duration: apt.services?.duration
+            service_duration: apt.services?.duration,
+            barber_id: apt.barbers?.id,
+            barber_name: apt.barbers?.name
           })) || []);
         }
       } catch (error) {
@@ -307,24 +300,9 @@ const Dashboard = () => {
     }
   };
 
-  // Funções para novo agendamento
+  // Função para abrir modal de novo agendamento
   const openNewAppointmentModal = () => {
     setNewAppointmentOpen(true);
-    setSelectedDate(new Date());
-  };
-
-  const closeNewAppointmentModal = () => {
-    setNewAppointmentOpen(false);
-    setSelectedService(null);
-    setSelectedDate(null);
-    setSelectedTime(null);
-    setCustomerName("");
-    setCustomerPhone("");
-    setSelectedCustomerId("");
-    setCustomerSearchTerm("");
-    setTimeSlots([]);
-    setIsFitIn(false);
-    setIsFitInMode(false);
   };
 
   // Buscar clientes quando o modal abre
@@ -348,6 +326,38 @@ const Dashboard = () => {
 
     fetchCustomers();
   }, [barbershop?.id, newAppointmentOpen]);
+
+  // Buscar barbeiros quando o modal abre (PRO feature)
+  useEffect(() => {
+    const fetchBarbers = async () => {
+      if (!barbershop?.id || !newAppointmentOpen || !planLimits.features.multipleBarbers) return;
+      
+      setLoadingBarbers(true);
+      try {
+        const { data, error } = await supabase
+          .from('barbers')
+          .select('id, name, photo_url, specialties, is_active')
+          .eq('barbershop_id', barbershop.id)
+          .eq('is_active', true)
+          .order('display_order', { ascending: true });
+
+        if (error) throw error;
+        setBarbers(data || []);
+        
+        // Se houver apenas um barbeiro, selecionar automaticamente
+        if (data && data.length === 1) {
+          setSelectedBarberId(data[0].id);
+        }
+      } catch (error) {
+        console.error('Erro ao buscar barbeiros:', error);
+        setBarbers([]);
+      } finally {
+        setLoadingBarbers(false);
+      }
+    };
+
+    fetchBarbers();
+  }, [barbershop?.id, newAppointmentOpen, planLimits.features.multipleBarbers]);
 
   // Carregar horários disponíveis quando serviço ou data mudam
   useEffect(() => {
@@ -441,6 +451,27 @@ const Dashboard = () => {
       const isoDate = format(parsedDate, 'yyyy-MM-dd');
       const scheduledAt = `${isoDate}T${data.start_time}:00-03:00`;
       
+      // Determinar o barbeiro a ser atribuído
+      let finalBarberId = selectedBarberId;
+      
+      // Se "Qualquer Barbeiro" foi selecionado e é plano PRO, encontrar o melhor barbeiro
+      if (!selectedBarberId && planLimits.features.multipleBarbers) {
+        const serviceDuration = services.find(s => s.id === data.service_id)?.duration || 30;
+        const { findBestAvailableBarber } = await import('@/lib/barber-scheduler');
+        
+        const bestBarberId = await findBestAvailableBarber(
+          barbershop.id,
+          data.service_id,
+          scheduledAt,
+          serviceDuration
+        );
+        
+        if (bestBarberId) {
+          finalBarberId = bestBarberId;
+          console.log('[Dashboard FitIn] Barbeiro automaticamente atribuído:', bestBarberId);
+        }
+      }
+      
       console.log('Dados do agendamento:', {
         barbershop_id: barbershop.id,
         service_id: data.service_id,
@@ -448,7 +479,8 @@ const Dashboard = () => {
         customer_phone: data.customer_phone,
         scheduled_at: scheduledAt,
         status: 'confirmed',
-        is_fit_in: true
+        is_fit_in: true,
+        barber_id: finalBarberId
       });
       
       await createAppointment({
@@ -458,7 +490,8 @@ const Dashboard = () => {
         customer_phone: data.customer_phone,
         scheduled_at: scheduledAt,
         status: 'confirmed',
-        is_fit_in: true
+        is_fit_in: true,
+        ...(finalBarberId && { barber_id: finalBarberId })
       });
       
       console.log('Encaixe criado com sucesso');
@@ -523,6 +556,29 @@ const Dashboard = () => {
       const dateString = format(selectedDate, 'yyyy-MM-dd');
       const scheduledAt = `${dateString}T${selectedTime}:00-03:00`;
       
+      // Determinar o barbeiro a ser atribuído
+      let finalBarberId = selectedBarberId;
+      
+      // Se "Qualquer Barbeiro" foi selecionado (none) e é plano PRO, encontrar o melhor barbeiro
+      if (!selectedBarberId && planLimits.features.multipleBarbers) {
+        const serviceDuration = services.find(s => s.id === selectedService)?.duration || 30;
+        const { findBestAvailableBarber } = await import('@/lib/barber-scheduler');
+        
+        const bestBarberId = await findBestAvailableBarber(
+          barbershop.id,
+          selectedService,
+          scheduledAt,
+          serviceDuration
+        );
+        
+        if (bestBarberId) {
+          finalBarberId = bestBarberId;
+          console.log('[Dashboard] Barbeiro automaticamente atribuído:', bestBarberId);
+        } else {
+          console.log('[Dashboard] Nenhum barbeiro disponível encontrado, criando sem barbeiro específico');
+        }
+      }
+      
       await createAppointment({
         barbershop_id: barbershop.id,
         service_id: selectedService,
@@ -530,7 +586,8 @@ const Dashboard = () => {
         customer_phone: customerPhone,
         scheduled_at: scheduledAt,
         status: 'confirmed',
-        is_fit_in: isFitIn
+        is_fit_in: isFitIn,
+        ...(finalBarberId && { barber_id: finalBarberId })
       });
 
       // Enviar mensagem de confirmação via WhatsApp
@@ -689,7 +746,7 @@ const Dashboard = () => {
       }
     >
       <div className="space-y-6 md:space-y-8">
-        {/* Banner Grupo de Clientes */}
+        {/* Banner Grupo de Clientes - Responsivo */}
         <motion.a
           href="https://chat.whatsapp.com/HqObbcQZfwn9voifcWlAHV"
           target="_blank"
@@ -701,10 +758,17 @@ const Dashboard = () => {
           whileTap={{ scale: 0.98 }}
           className="block w-full rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer"
         >
+          {/* Banner Mobile */}
           <img 
             src="/banner-grupo-clientes.png" 
             alt="Entre no Grupo de Clientes ZapCorte no WhatsApp" 
-            className="w-full h-auto"
+            className="w-full h-auto md:hidden"
+          />
+          {/* Banner Desktop */}
+          <img 
+            src="/midia/banner-grupo-desktop.png" 
+            alt="Entre no Grupo de Clientes ZapCorte no WhatsApp" 
+            className="w-full h-auto hidden md:block"
           />
         </motion.a>
 
@@ -840,31 +904,64 @@ const Dashboard = () => {
         <Card className="border-2">
           <CardContent className="p-0">
             <div className="h-[700px]">
-              <DayCalendar
-                appointments={calendarAppointments.map(apt => ({
-                  id: apt.id,
-                  customer_name: apt.customer_name,
-                  customer_phone: apt.customer_phone,
-                  scheduled_at: apt.scheduled_at,
-                  status: apt.status as "pending" | "confirmed" | "cancelled",
-                  service_name: apt.service_name,
-                  service_duration: apt.service_duration
-                }))}
-                onAppointmentClick={(appointment) => {
-                  const fullAppointment = calendarAppointments.find(apt => apt.id === appointment.id);
-                  if (fullAppointment) {
-                    openViewModal(fullAppointment);
-                  }
-                }}
-                onTimeSlotClick={(time) => {
-                  setSelectedDate(calendarDate);
-                  setSelectedTime(time);
-                  setNewAppointmentOpen(true);
-                }}
-                onDateChange={(date) => {
-                  setCalendarDate(date);
-                }}
-              />
+              {planLimits.features.multipleBarbers ? (
+                <MultiBarberCalendar
+                  appointments={calendarAppointments.map(apt => ({
+                    id: apt.id,
+                    customer_name: apt.customer_name,
+                    customer_phone: apt.customer_phone,
+                    scheduled_at: apt.scheduled_at,
+                    status: apt.status as "pending" | "confirmed" | "cancelled",
+                    service_name: apt.service_name,
+                    service_duration: apt.service_duration,
+                    barber_id: apt.barber_id,
+                    barber_name: apt.barber_name
+                  }))}
+                  barbershopId={barbershop.id}
+                  onAppointmentClick={(appointment) => {
+                    const fullAppointment = calendarAppointments.find(apt => apt.id === appointment.id);
+                    if (fullAppointment) {
+                      openViewModal(fullAppointment);
+                    }
+                  }}
+                  onTimeSlotClick={(time, barberId) => {
+                    setSelectedDate(calendarDate);
+                    setSelectedTime(time);
+                    setNewAppointmentOpen(true);
+                  }}
+                  onDateChange={(date) => {
+                    setCalendarDate(date);
+                  }}
+                />
+              ) : (
+                <DayCalendar
+                  appointments={calendarAppointments.map(apt => ({
+                    id: apt.id,
+                    customer_name: apt.customer_name,
+                    customer_phone: apt.customer_phone,
+                    scheduled_at: apt.scheduled_at,
+                    status: apt.status as "pending" | "confirmed" | "cancelled",
+                    service_name: apt.service_name,
+                    service_duration: apt.service_duration,
+                    barber_name: apt.barber_name
+                  }))}
+                  showBarber={false}
+                  onAppointmentClick={(appointment) => {
+                    const fullAppointment = calendarAppointments.find(apt => apt.id === appointment.id);
+                    if (fullAppointment) {
+                      openViewModal(fullAppointment);
+                    }
+                  }}
+                  onTimeSlotClick={(time) => {
+                    setSelectedDate(calendarDate);
+                    setSelectedTime(time);
+                    setNewAppointmentOpen(true);
+                  }}
+                  onDateChange={(date) => {
+                    setCalendarDate(date);
+                  }}
+                />
+              )}
             </div>
           </CardContent>
         </Card>
@@ -1054,7 +1151,93 @@ const Dashboard = () => {
               </Select>
             </div>
 
-
+            {/* Seleção de Barbeiro (PRO Feature) */}
+            {planLimits.features.multipleBarbers && selectedService && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="space-y-3"
+              >
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-1 bg-purple-500 rounded-full" />
+                  <h3 className="text-lg font-semibold flex items-center gap-2">
+                    Escolha o Barbeiro
+                    <Badge variant="secondary" className="text-xs bg-purple-500/10 text-purple-500 border-purple-500/20">
+                      PRO
+                    </Badge>
+                  </h3>
+                </div>
+                
+                {loadingBarbers ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                  </div>
+                ) : barbers.length === 0 ? (
+                  <div className="text-center py-8 px-4 rounded-xl bg-muted/30 border border-dashed border-border">
+                    <User className="h-10 w-10 mx-auto mb-2 text-muted-foreground/50" />
+                    <p className="text-sm text-muted-foreground">
+                      Nenhum barbeiro cadastrado ainda.
+                    </p>
+                    <Button
+                      type="button"
+                      variant="link"
+                      size="sm"
+                      onClick={() => navigate('/barbers')}
+                      className="mt-2"
+                    >
+                      Cadastrar Barbeiros
+                    </Button>
+                  </div>
+                ) : (
+                  <Select 
+                    value={selectedBarberId || "none"} 
+                    onValueChange={(value) => setSelectedBarberId(value === "none" ? null : value)}
+                  >
+                    <SelectTrigger className="h-auto min-h-[60px]">
+                      <SelectValue placeholder="Selecione um barbeiro (opcional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">
+                        <div className="flex items-center gap-3 py-2">
+                          <div className="h-10 w-10 rounded-full bg-gradient-to-br from-purple-500/20 to-blue-500/20 flex items-center justify-center border-2 border-purple-500/30">
+                            <User className="h-5 w-5 text-purple-500" />
+                          </div>
+                          <div className="flex flex-col items-start">
+                            <span className="font-medium">Atribuição Automática</span>
+                            <span className="text-xs text-muted-foreground">Sistema escolhe o melhor barbeiro</span>
+                          </div>
+                        </div>
+                      </SelectItem>
+                      {barbers.map((barber) => (
+                        <SelectItem key={barber.id} value={barber.id}>
+                          <div className="flex items-center gap-3 py-2">
+                            {barber.photo_url ? (
+                              <img
+                                src={barber.photo_url}
+                                alt={barber.name}
+                                className="h-10 w-10 rounded-full object-cover"
+                              />
+                            ) : (
+                              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                <User className="h-5 w-5 text-primary" />
+                              </div>
+                            )}
+                            <div className="flex flex-col items-start">
+                              <span className="font-medium">{barber.name}</span>
+                              {barber.specialties && barber.specialties.length > 0 && (
+                                <span className="text-xs text-muted-foreground">
+                                  {barber.specialties.slice(0, 2).join(', ')}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </motion.div>
+            )}
 
             {/* Seleção de Data */}
             {selectedService && (
@@ -1330,6 +1513,16 @@ const Dashboard = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Modal de Novo Agendamento */}
+      <NewAppointmentModal
+        open={newAppointmentOpen}
+        onOpenChange={setNewAppointmentOpen}
+        barbershopId={barbershop?.id || ""}
+        services={services}
+        onSuccess={refetchDashboard}
+        isPro={planLimits.features.multipleBarbers}
+      />
     </DashboardLayout>
   );
 };

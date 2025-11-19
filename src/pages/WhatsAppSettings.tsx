@@ -6,10 +6,18 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MessageCircle, Zap, CheckCircle, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
+import { useUserData } from '@/hooks/useUserData';
 
 const WhatsAppSettings: React.FC = () => {
   const { user } = useAuth();
+  const { barbershop } = useUserData();
   const barbershopId = (user as any)?.barbershop_id;
+  
+  // Debug: verificar dados da barbearia
+  React.useEffect(() => {
+    console.log('[WhatsAppSettings] barbershop:', barbershop);
+    console.log('[WhatsAppSettings] plan_type:', barbershop?.plan_type);
+  }, [barbershop]);
   
   return (
     <DashboardLayout
@@ -28,13 +36,16 @@ const WhatsAppSettings: React.FC = () => {
         </motion.div>
 
         {/* NOVA SEÇÃO: Personalização de Mensagens */}
-        {barbershopId && (
+        {barbershopId && barbershop && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.3 }}
           >
-            <MessageCustomizer barbershopId={barbershopId} />
+            <MessageCustomizer 
+              barbershopId={barbershopId} 
+              planType={barbershop.plan_type}
+            />
           </motion.div>
         )}
 

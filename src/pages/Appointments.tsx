@@ -17,6 +17,7 @@ import { DayCalendar } from "@/components/DayCalendar";
 import { useToast } from "@/hooks/use-toast";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { useUserData } from "@/hooks/useUserData";
+import { usePlanLimits } from "@/hooks/usePlanLimits";
 import { supabase } from "@/lib/supabase";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { format, parseISO, parse, isPast, isToday, addDays, startOfDay, endOfDay } from "date-fns";
@@ -25,12 +26,20 @@ import { enviarLembreteWhatsApp } from "@/lib/notifications";
 import { DatePicker } from "@/components/DatePicker";
 import { cn } from "@/lib/utils";
 import { FitInAppointmentForm } from "@/components/FitInAppointmentForm";
+import { NewAppointmentModal } from "@/components/NewAppointmentModal";
 
 interface Service {
   id: string;
   name: string;
   price: number;
   duration: number;
+}
+
+interface Barber {
+  id: string;
+  name: string;
+  email?: string;
+  phone?: string;
 }
 
 interface Appointment {
@@ -41,8 +50,10 @@ interface Appointment {
   status: "pending" | "confirmed" | "cancelled";
   service_id: string;
   barbershop_id: string;
+  barber_id?: string;
   created_at: string;
   service?: Service;
+  barber?: Barber;
   is_fit_in?: boolean;
   notes?: string;
 }
@@ -95,6 +106,11 @@ const Appointments = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [viewMode, setViewMode] = useState<"list" | "calendar" | "recurring">("list");
   
+  // Estados para barbeiros (PRO feature)
+  const [barbers, setBarbers] = useState<Barber[]>([]);
+  const [selectedBarberId, setSelectedBarberId] = useState<string>("");
+  const [loadingBarbers, setLoadingBarbers] = useState(false);
+  
   // Estados para modal de visualização e ações
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [viewModalOpen, setViewModalOpen] = useState(false);
@@ -111,17 +127,21 @@ const Appointments = () => {
 
   const { toast } = useToast();
   const { barbershop } = useUserData();
+  const planLimits = usePlanLimits(barbershop);
 
   useEffect(() => {
     if (barbershop?.id) {
       fetchAppointments();
       fetchServices();
       fetchCustomers();
+      if (planLimits.features.multipleBarbers) {
+        fetchBarbers();
+      }
     } else if (barbershop === null) {
       // Se barbershop é null (não undefined), significa que já foi carregado mas não existe
       setLoading(false);
     }
-  }, [barbershop?.id, barbershop]);
+  }, [barbershop?.id, barbershop, planLimits.features.multipleBarbers]);
 
   // Fallback: evitar loading infinito
   useEffect(() => {
@@ -163,6 +183,28 @@ const Appointments = () => {
     }
   };
 
+  const fetchBarbers = async () => {
+    if (!planLimits.features.multipleBarbers) return;
+    
+    setLoadingBarbers(true);
+    try {
+      const { data, error } = await supabase
+        .from("barbers")
+        .select("id, name, email, phone")
+        .eq("barbershop_id", barbershop?.id)
+        .eq("is_active", true)
+        .order("display_order", { ascending: true });
+
+      if (error) throw error;
+      setBarbers(data || []);
+    } catch (error) {
+      console.error("Erro ao buscar barbeiros:", error);
+      setBarbers([]);
+    } finally {
+      setLoadingBarbers(false);
+    }
+  };
+
   const fetchAppointments = async () => {
     try {
       setLoading(true);
@@ -170,7 +212,8 @@ const Appointments = () => {
         .from("appointments")
         .select(`
           *,
-          service:services(id, name, price, duration)
+          service:services(id, name, price, duration),
+          barber:barbers(id, name, email, phone)
         `)
         .eq("barbershop_id", barbershop?.id)
         .order("scheduled_at", { ascending: true });
@@ -198,6 +241,7 @@ const Appointments = () => {
       is_fit_in: false,
     });
     setSelectedCustomerId("");
+    setSelectedBarberId("");
     setEditingAppointment(null);
     setIsFitInMode(false);
   };
@@ -241,6 +285,28 @@ const Appointments = () => {
       // Usar o horário de início como scheduled_at
       const scheduledAt = new Date(`${isoDate}T${data.start_time}`);
       
+      // Determinar o barbeiro a ser atribuído
+      let finalBarberId = selectedBarberId;
+      
+      // Se "Qualquer Barbeiro" foi selecionado e é plano PRO, encontrar o melhor barbeiro
+      if (!selectedBarberId && planLimits.features.multipleBarbers) {
+        const service = services.find(s => s.id === data.service_id);
+        const serviceDuration = service?.duration || 30;
+        const { findBestAvailableBarber } = await import('@/lib/barber-scheduler');
+        
+        const bestBarberId = await findBestAvailableBarber(
+          barbershop.id,
+          data.service_id,
+          scheduledAt.toISOString(),
+          serviceDuration
+        );
+        
+        if (bestBarberId) {
+          finalBarberId = bestBarberId;
+          console.log('[Appointments FitIn] Barbeiro automaticamente atribuído:', bestBarberId);
+        }
+      }
+      
       const appointmentData = {
         customer_name: data.customer_name,
         customer_phone: data.customer_phone,
@@ -249,6 +315,7 @@ const Appointments = () => {
         barbershop_id: barbershop.id,
         status: "confirmed" as const,
         is_fit_in: true, // Sempre true para encaixes
+        ...(finalBarberId && { barber_id: finalBarberId })
       };
 
       console.log('Dados do agendamento:', appointmentData);
@@ -553,7 +620,7 @@ const Appointments = () => {
   const getStatusInfo = (status: string) => {
     switch (status) {
       case 'pending':
-        return { label: 'Pendente', variant: 'warning' as const };
+        return { label: 'Pendente', variant: 'secondary' as const };
       case 'confirmed':
         return { label: 'Confirmado', variant: 'default' as const };
       case 'cancelled':
@@ -730,6 +797,7 @@ const Appointments = () => {
         scheduledAt: appointment.scheduled_at,
         serviceName: appointment.service?.name || 'Serviço',
         tipo: 'confirmacao',
+        appointmentId: appointment.id, // ✅ Passar o ID do agendamento para buscar o barbeiro
       });
 
       toast({
@@ -945,8 +1013,7 @@ const Appointments = () => {
       opacity: 1, 
       y: 0,
       transition: {
-        duration: 0.3,
-        ease: "easeOut"
+        duration: 0.3
       }
     }
   };
@@ -1348,6 +1415,16 @@ const Appointments = () => {
                           <span className="font-semibold text-primary whitespace-nowrap ml-2">R$ {appointment.service.price.toFixed(2)}</span>
                         </div>
                       )}
+
+                      {/* Barber Info - Apenas para PRO */}
+                      {planLimits.features.multipleBarbers && appointment.barber && (
+                        <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground bg-blue-50 dark:bg-blue-900/20 rounded px-2 py-1.5 mb-2">
+                          <User className="h-3 w-3 text-blue-600 dark:text-blue-400" />
+                          <span className="font-medium text-blue-700 dark:text-blue-300">
+                            Barbeiro: {appointment.barber.name}
+                          </span>
+                        </div>
+                      )}
                     </div>
 
                     {/* DESKTOP: Layout Horizontal Ultra-Compacto */}
@@ -1393,6 +1470,16 @@ const Appointments = () => {
                         <div className="flex items-center gap-2 text-xs bg-muted/30 rounded px-2 py-1 min-w-[140px]">
                           <span className="font-medium truncate">{appointment.service.name}</span>
                           <span className="font-semibold text-primary whitespace-nowrap">R$ {appointment.service.price.toFixed(2)}</span>
+                        </div>
+                      )}
+
+                      {/* Barbeiro - Apenas para PRO */}
+                      {planLimits.features.multipleBarbers && appointment.barber && (
+                        <div className="flex items-center gap-1.5 text-xs bg-blue-50 dark:bg-blue-900/20 rounded px-2 py-1 min-w-[120px]">
+                          <User className="h-3 w-3 text-blue-600 dark:text-blue-400" />
+                          <span className="font-medium text-blue-700 dark:text-blue-300 truncate">
+                            {appointment.barber.name}
+                          </span>
                         </div>
                       )}
 
@@ -1666,8 +1753,10 @@ const Appointments = () => {
                   scheduled_at: apt.scheduled_at,
                   status: apt.status,
                   service_name: apt.service?.name,
-                  service_duration: apt.service?.duration
+                  service_duration: apt.service?.duration,
+                  barber_name: apt.barber?.name
                 }))}
+                showBarber={planLimits.features.multipleBarbers}
                 onAppointmentClick={(appointment) => {
                   const fullAppointment = filteredAppointments.find(apt => apt.id === appointment.id);
                   if (fullAppointment) {
@@ -1732,6 +1821,24 @@ const Appointments = () => {
                     <label className="text-xs text-muted-foreground">Serviço</label>
                     <p className="font-semibold">{selectedAppointment.service.name}</p>
                     <p className="text-sm text-primary font-semibold">R$ {selectedAppointment.service.price.toFixed(2)}</p>
+                  </div>
+                )}
+
+                {/* Barbeiro - Apenas para PRO */}
+                {planLimits.features.multipleBarbers && selectedAppointment.barber && (
+                  <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 border border-blue-200 dark:border-blue-800">
+                    <label className="text-xs text-muted-foreground">Barbeiro Responsável</label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <div className="h-8 w-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-semibold text-sm">
+                        {selectedAppointment.barber.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="font-semibold text-blue-900 dark:text-blue-100">{selectedAppointment.barber.name}</p>
+                        {selectedAppointment.barber.phone && (
+                          <p className="text-xs text-blue-700 dark:text-blue-300">{selectedAppointment.barber.phone}</p>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
@@ -1971,6 +2078,16 @@ const Appointments = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Modal de Novo Agendamento */}
+      <NewAppointmentModal
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        barbershopId={barbershop?.id || ""}
+        services={services}
+        onSuccess={fetchAppointments}
+        isPro={planLimits.features.multipleBarbers}
+      />
     </DashboardLayout>
   );
 };

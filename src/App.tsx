@@ -33,6 +33,8 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminRevenue from "./pages/admin/AdminRevenue";
 import AdminSettings from "./pages/admin/AdminSettings";
+import Barbers from "./pages/Barbers";
+import Reports from "./pages/Reports";
 
 import { useEffect } from "react";
 import { supabase } from "@/lib/supabase";
@@ -204,6 +206,22 @@ const AppContent = () => {
           element={
             <ProtectedRoute>
               <Plan />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/dashboard/barbers" 
+          element={
+            <ProtectedRoute>
+              <Barbers />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/dashboard/reports" 
+          element={
+            <ProtectedRoute>
+              <Reports />
             </ProtectedRoute>
           } 
         />

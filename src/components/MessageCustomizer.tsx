@@ -11,12 +11,25 @@ import { motion } from 'framer-motion';
 
 interface MessageCustomizerProps {
   barbershopId: string;
+  planType?: string;
 }
 
-const MessageCustomizer = ({ barbershopId }: MessageCustomizerProps) => {
+const MessageCustomizer = ({ barbershopId, planType }: MessageCustomizerProps) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  
+  // Verificar se é plano PRO
+  const isPro = planType === 'pro';
+  
+  // Debug: verificar plano
+  useEffect(() => {
+    console.log('=== MessageCustomizer Debug ===');
+    console.log('planType recebido:', planType);
+    console.log('isPro calculado:', isPro);
+    console.log('Tipo de planType:', typeof planType);
+    console.log('================================');
+  }, [planType, isPro]);
 
   // Mensagens
   const [confirmationMessage, setConfirmationMessage] = useState('');
@@ -29,37 +42,41 @@ const MessageCustomizer = ({ barbershopId }: MessageCustomizerProps) => {
 
 Seu agendamento foi confirmado com sucesso!
 
+👤 Barbeiro: {{barbeiro}}
 📅 Data: {{data}}
 🕐 Horário: {{hora}}
 ✂️ Serviço: {{servico}}
 🏪 Local: {{barbearia}}
 
-Nos vemos em breve! 😊`,
+{{barbeiro}} te espera! Nos vemos em breve! 💈`,
     
     reschedule: `Olá {{primeiro_nome}}! 🔄
 
 Seu agendamento foi reagendado:
 
+👤 Barbeiro: {{barbeiro}}
 📅 Nova Data: {{data}}
 🕐 Novo Horário: {{hora}}
 ✂️ Serviço: {{servico}}
 
-Qualquer dúvida, estamos à disposição!`,
+{{barbeiro}} te espera no novo horário! 💈`,
     
     reminder: `Olá {{primeiro_nome}}! ⏰
 
 Lembrete: você tem um agendamento hoje!
 
+👤 Com: {{barbeiro}}
 🕐 Horário: {{hora}}
 ✂️ Serviço: {{servico}}
 🏪 Local: {{barbearia}}
 
-Nos vemos em breve! ✂️`
+{{barbeiro}} está te esperando! ✂️`
   };
 
   // Dados fictícios para preview
   const previewData = {
     primeiro_nome: 'João',
+    barbeiro: 'Carlos Silva',
     servico: 'Corte + Barba',
     data: '15/11/2024',
     hora: '14:30',
@@ -125,6 +142,7 @@ Nos vemos em breve! ✂️`
   const formatPreview = (message: string) => {
     return message
       .replace(/{{primeiro_nome}}/g, previewData.primeiro_nome)
+      .replace(/{{barbeiro}}/g, previewData.barbeiro)
       .replace(/{{servico}}/g, previewData.servico)
       .replace(/{{data}}/g, previewData.data)
       .replace(/{{hora}}/g, previewData.hora)
@@ -157,18 +175,37 @@ Nos vemos em breve! ✂️`
     });
   };
 
-  const VariableButton = ({ variable, label }: { variable: string; label: string }) => (
-    <Button
-      type="button"
-      variant="outline"
-      size="sm"
-      onClick={() => copyVariable(variable)}
-      className="text-xs hover:bg-primary/10 hover:border-primary/50 transition-all"
-    >
-      <Copy className="h-3 w-3 mr-1" />
-      {label}
-    </Button>
-  );
+  const VariableButton = ({ 
+    variable, 
+    label, 
+    isPro: isProVar 
+  }: { 
+    variable: string; 
+    label: string; 
+    isPro?: boolean 
+  }) => {
+    const showProBadge = isProVar && isPro;
+    
+    return (
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={() => copyVariable(variable)}
+        className={`text-xs hover:bg-primary/10 hover:border-primary/50 transition-all ${
+          showProBadge ? 'border-amber-500/50 bg-amber-500/5 font-semibold' : ''
+        }`}
+      >
+        <Copy className="h-3 w-3 mr-1" />
+        {label}
+        {showProBadge && (
+          <span className="ml-1.5 text-[10px] bg-gradient-to-r from-amber-500 to-orange-500 text-white px-2 py-0.5 rounded-full font-bold shadow-sm">
+            PRO
+          </span>
+        )}
+      </Button>
+    );
+  };
 
   const MessageEditor = ({
     title,
@@ -212,20 +249,46 @@ Nos vemos em breve! ✂️`
       </div>
 
       {/* Variables */}
-      <div className="space-y-2">
+      <div className="space-y-3">
         <Label className="text-sm font-medium flex items-center gap-2">
           <Sparkles className="h-4 w-4 text-primary" />
           Variáveis disponíveis (clique para copiar)
         </Label>
+        
+        {/* Badges de variáveis */}
         <div className="flex flex-wrap gap-2">
-          <VariableButton variable="primeiro_nome" label="Nome" />
-          <VariableButton variable="servico" label="Serviço" />
-          <VariableButton variable="data" label="Data" />
-          <VariableButton variable="hora" label="Hora" />
-          <VariableButton variable="barbearia" label="Barbearia" />
+          <VariableButton variable="primeiro_nome" label="Nome" isPro={false} />
+          <VariableButton variable="data" label="Data" isPro={false} />
+          <VariableButton variable="hora" label="Hora" isPro={false} />
+          <VariableButton variable="servico" label="Serviço" isPro={false} />
+          <VariableButton variable="barbeiro" label="Barbeiro" isPro={true} />
+          <VariableButton variable="barbearia" label="Barbearia" isPro={false} />
         </div>
+        
+        {/* Explicação sobre variável barbeiro */}
+        {isPro ? (
+          <div className="p-3 rounded-lg bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20">
+            <p className="text-xs text-amber-900 dark:text-amber-100 flex items-start gap-2">
+              <span className="text-base shrink-0">👑</span>
+              <span>
+                <strong>Recurso PRO Ativo:</strong> A variável {'{{barbeiro}}'} mostrará o nome do profissional específico que atenderá o cliente. Perfeito para barbearias com múltiplos barbeiros!
+              </span>
+            </p>
+          </div>
+        ) : (
+          <div className="p-3 rounded-lg bg-muted/50 border border-border">
+            <p className="text-xs text-muted-foreground flex items-start gap-2">
+              <span className="text-base shrink-0">ℹ️</span>
+              <span>
+                A variável {'{{barbeiro}}'} mostrará "Qualquer barbeiro disponível" no plano atual. 
+                <strong className="text-foreground"> Faça upgrade para PRO</strong> para mostrar o nome específico de cada barbeiro.
+              </span>
+            </p>
+          </div>
+        )}
+        
         <p className="text-xs text-muted-foreground">
-          💡 Cole as variáveis na mensagem usando Ctrl+V
+          💡 Cole as variáveis na mensagem usando Ctrl+V ou clicando nos botões acima
         </p>
       </div>
 

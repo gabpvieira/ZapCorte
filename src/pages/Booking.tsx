@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -8,11 +8,13 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Calendar, Clock, ArrowLeft, Zap, Bell, Shield, CheckCircle2, ExternalLink, Sparkles } from "lucide-react";
 import { getBarbershopBySlug, getBarbershopServices, createAppointment, getAvailableTimeSlots } from "@/lib/supabase-queries";
+import { getAvailableBarbersForService, getAvailableTimeSlotsForBarber } from "@/lib/barbers-queries";
 import { supabase } from "@/lib/supabase";
 import { notificarNovoAgendamento } from '@/lib/notifications';
 import "@/styles/booking-premium.css";
-import type { Barbershop, Service } from "@/lib/supabase";
+import type { Barbershop, Service, Barber } from "@/lib/supabase";
 import WeeklyDatePicker from "@/components/WeeklyDatePicker";
+import { BarberSelector } from "@/components/BarberSelector";
 import { format } from "date-fns";
 
 const Booking = () => {
@@ -29,6 +31,12 @@ const Booking = () => {
   const [timeSlots, setTimeSlots] = useState<{ time: string; available: boolean }[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  
+  // Estados para múltiplos barbeiros (Plano PRO)
+  const [availableBarbers, setAvailableBarbers] = useState<any[]>([]);
+  const [selectedBarberId, setSelectedBarberId] = useState<string | null>(null);
+  const [loadingBarbers, setLoadingBarbers] = useState(false);
+  const [hasPlanPro, setHasPlanPro] = useState(false);
 
   // Exibir apenas o horário inicial conforme requisito
   const formatSlotLabel = (startTime: string) => startTime;
@@ -52,6 +60,10 @@ const Booking = () => {
         }
         
         setBarbershop(barbershopData);
+        
+        // Verificar se a barbearia tem Plano PRO
+        const isPro = barbershopData.plan_type === 'pro';
+        setHasPlanPro(isPro);
         
         const services = await getBarbershopServices(barbershopData.id);
         const foundService = services.find(s => s.id === serviceId);
@@ -85,13 +97,56 @@ const Booking = () => {
     loadData();
   }, [slug, serviceId, navigate, toast]);
 
+  // Carregar barbeiros disponíveis (apenas para Plano PRO)
+  useEffect(() => {
+    const loadBarbers = async () => {
+      if (!barbershop || !service || !selectedDate || !hasPlanPro) return;
+      
+      try {
+        setLoadingBarbers(true);
+        const dateString = format(selectedDate, 'yyyy-MM-dd');
+        const barbers = await getAvailableBarbersForService(
+          barbershop.id,
+          service.id,
+          dateString
+        );
+        setAvailableBarbers(barbers);
+        
+        // Se não houver barbeiro selecionado e houver barbeiros disponíveis, não selecionar automaticamente
+        // Deixar o usuário escolher
+      } catch (error) {
+        console.error('Erro ao carregar barbeiros:', error);
+        setAvailableBarbers([]);
+      } finally {
+        setLoadingBarbers(false);
+      }
+    };
+
+    loadBarbers();
+  }, [barbershop, service, selectedDate, hasPlanPro]);
+
+  // Carregar horários disponíveis
   useEffect(() => {
     const loadTimeSlots = async () => {
       if (!barbershop || !service || !selectedDate) return;
       
       try {
         const dateString = format(selectedDate, 'yyyy-MM-dd');
-        const slots = await getAvailableTimeSlots(barbershop.id, service.id, dateString);
+        
+        let slots: { time: string; available: boolean }[];
+        
+        // Se tem Plano PRO e um barbeiro foi selecionado, buscar horários específicos
+        if (hasPlanPro && selectedBarberId) {
+          slots = await getAvailableTimeSlotsForBarber(
+            barbershop.id,
+            selectedBarberId,
+            service.id,
+            dateString
+          );
+        } else {
+          // Caso contrário, buscar horários gerais da barbearia
+          slots = await getAvailableTimeSlots(barbershop.id, service.id, dateString);
+        }
         
         // Verificar se a data selecionada é hoje
         const today = new Date();
@@ -124,14 +179,14 @@ const Booking = () => {
           setTimeSlots(slots);
         }
         
-        setSelectedTime(null); // Reset selected time when date changes
+        setSelectedTime(null); // Reset selected time when date or barber changes
       } catch (error) {
         setTimeSlots([]);
       }
     };
 
     loadTimeSlots();
-  }, [barbershop, service, selectedDate]);
+  }, [barbershop, service, selectedDate, hasPlanPro, selectedBarberId]);
 
   // Atualização em tempo real: quando a tabela de appointments muda, recalcular horários
   useEffect(() => {
@@ -141,7 +196,19 @@ const Booking = () => {
 
     const refreshSlots = async () => {
       try {
-        const slots = await getAvailableTimeSlots(barbershop.id, service.id, dateString);
+        let slots: { time: string; available: boolean }[];
+        
+        if (hasPlanPro && selectedBarberId) {
+          slots = await getAvailableTimeSlotsForBarber(
+            barbershop.id,
+            selectedBarberId,
+            service.id,
+            dateString
+          );
+        } else {
+          slots = await getAvailableTimeSlots(barbershop.id, service.id, dateString);
+        }
+        
         setTimeSlots(slots);
       } catch (error) {
         // Erro silenciado
@@ -166,7 +233,7 @@ const Booking = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [barbershop, service, selectedDate]);
+  }, [barbershop, service, selectedDate, hasPlanPro, selectedBarberId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -187,9 +254,10 @@ const Booking = () => {
       const dateString = format(selectedDate, 'yyyy-MM-dd');
       const scheduledAt = `${dateString}T${selectedTime}:00-03:00`;
       
-      await createAppointment({
+      const newAppointment = await createAppointment({
         barbershop_id: barbershop.id,
         service_id: service.id,
+        barber_id: selectedBarberId || undefined, // Incluir barbeiro se selecionado
         customer_name: customerName,
         customer_phone: customerPhone,
         scheduled_at: scheduledAt,
@@ -232,6 +300,7 @@ const Booking = () => {
           scheduledAt,
           customerPhone,
           serviceName: service.name,
+          appointmentId: newAppointment?.id, // Passar o ID do agendamento criado
         });
         
         if (notificacaoEnviada) {
@@ -421,6 +490,22 @@ const Booking = () => {
                       />
                     </div>
                   </motion.div>
+
+                  {/* Barber Selector - Apenas para Plano PRO */}
+                  {hasPlanPro && selectedDate && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.25 }}
+                    >
+                      <BarberSelector
+                        barbers={availableBarbers}
+                        selectedBarberId={selectedBarberId}
+                        onSelectBarber={setSelectedBarberId}
+                        loading={loadingBarbers}
+                      />
+                    </motion.div>
+                  )}
 
                   {/* Time Slots */}
                   <motion.div
