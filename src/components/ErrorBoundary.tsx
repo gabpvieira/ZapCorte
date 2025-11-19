@@ -10,30 +10,41 @@ type State = {
   hasError: boolean;
   error?: Error;
   info?: React.ErrorInfo;
+  isClearing: boolean;
 };
 
 class ErrorBoundary extends React.Component<Props, State> {
-  state: State = { hasError: false };
+  state: State = { hasError: false, isClearing: false };
+  private clearAttempted = false;
 
   static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error };
+    return { hasError: true, error, isClearing: false };
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
     this.setState({ info });
     console.error("[ErrorBoundary] Render error:", error, info);
     
-    // Se o erro for relacionado a variáveis não definidas, limpar cache
-    if (error.message.includes("Can't find variable") || 
-        error.message.includes("is not defined") ||
-        error.message.includes("undefined")) {
+    // Verificar se já tentou limpar (evitar loop)
+    const alreadyCleared = sessionStorage.getItem('cache_cleared');
+    
+    // Se o erro for relacionado a variáveis não definidas e ainda não limpou
+    if (!alreadyCleared && !this.clearAttempted &&
+        (error.message.includes("Can't find variable") || 
+         error.message.includes("is not defined") ||
+         error.message.includes("undefined"))) {
       console.warn("[ErrorBoundary] Detectado erro de variável não definida - limpando cache...");
+      this.clearAttempted = true;
+      this.setState({ isClearing: true });
       this.clearCacheAndReload();
     }
   }
 
   async clearCacheAndReload() {
     try {
+      // Marcar que já tentou limpar
+      sessionStorage.setItem('cache_cleared', 'true');
+      
       // Limpar service workers
       if ('serviceWorker' in navigator) {
         const registrations = await navigator.serviceWorker.getRegistrations();
@@ -50,12 +61,22 @@ class ErrorBoundary extends React.Component<Props, State> {
         }
       }
       
-      // Aguardar um pouco e recarregar
+      // Limpar localStorage e sessionStorage (exceto a flag)
+      const cacheFlag = sessionStorage.getItem('cache_cleared');
+      localStorage.clear();
+      sessionStorage.clear();
+      if (cacheFlag) sessionStorage.setItem('cache_cleared', cacheFlag);
+      
+      // Aguardar e recarregar com hard refresh
       setTimeout(() => {
-        window.location.reload();
-      }, 1000);
+        window.location.href = window.location.href.split('?')[0] + '?t=' + Date.now();
+      }, 2000);
     } catch (e) {
       console.error("[ErrorBoundary] Erro ao limpar cache:", e);
+      // Se falhar, tentar reload simples
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
     }
   }
 
@@ -70,62 +91,139 @@ class ErrorBoundary extends React.Component<Props, State> {
         <div style={{
           minHeight: "100vh",
           display: "flex",
+          flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          background: "#0b0b0b",
+          background: "#0A0A0A",
           color: "#fff",
-          fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', 'Noto Sans', 'Fira Sans', 'Droid Sans', Arial, sans-serif",
+          fontFamily: "'Poppins', system-ui, -apple-system, sans-serif",
           padding: "20px"
         }}>
-          <div style={{ maxWidth: 640, width: "100%" }}>
-            <div style={{ 
-              background: "#1e1e1e", 
-              borderRadius: 12, 
-              padding: 24,
-              border: "1px solid #333"
-            }}>
-              <h1 style={{ fontSize: 22, marginBottom: 8, color: "#8B5CF6" }}>
-                {isVariableError ? "🔄 Atualizando aplicativo..." : "Ocorreu um erro"}
-              </h1>
-              <p style={{ opacity: 0.8, marginBottom: 16, lineHeight: 1.5 }}>
-                {isVariableError 
-                  ? "Detectamos uma versão antiga em cache. Estamos limpando e recarregando automaticamente..."
-                  : "Verifique o console do navegador para detalhes."}
-              </p>
-              {this.state.error && !isVariableError && (
-                <pre style={{
-                  background: "#0b0b0b",
-                  border: "1px solid #333",
-                  borderRadius: 8,
-                  padding: 12,
-                  whiteSpace: "pre-wrap",
-                  fontSize: 12,
-                  overflow: "auto"
+          {/* Logo ZapCorte */}
+          <div style={{ marginBottom: "32px", textAlign: "center" }}>
+            <img 
+              src="/iconePWA.png" 
+              alt="ZapCorte" 
+              style={{ 
+                width: "80px", 
+                height: "80px",
+                borderRadius: "20px",
+                boxShadow: "0 8px 32px rgba(139, 92, 246, 0.3)"
+              }} 
+            />
+          </div>
+
+          <div style={{ maxWidth: 400, width: "100%", textAlign: "center" }}>
+            {this.state.isClearing || isVariableError ? (
+              <>
+                <h1 style={{ 
+                  fontSize: 24, 
+                  marginBottom: 12, 
+                  color: "#8B5CF6",
+                  fontWeight: 600
                 }}>
-                  {String(this.state.error?.message || this.state.error)}
-                </pre>
-              )}
-              {isVariableError && (
+                  Atualizando aplicativo...
+                </h1>
+                <p style={{ 
+                  opacity: 0.7, 
+                  marginBottom: 24, 
+                  lineHeight: 1.6,
+                  fontSize: 14,
+                  color: "#A1A1AA"
+                }}>
+                  Detectamos uma versão antiga em cache. Estamos limpando e recarregando automaticamente...
+                </p>
+                
+                {/* Loading spinner com estilo ZapCorte */}
                 <div style={{
-                  marginTop: 16,
-                  padding: 12,
-                  background: "#8B5CF6",
-                  borderRadius: 8,
-                  textAlign: "center"
+                  marginTop: 24,
+                  padding: 24,
+                  background: "linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)",
+                  borderRadius: 16,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center"
                 }}>
                   <div style={{
-                    width: 24,
-                    height: 24,
-                    border: "3px solid #fff",
-                    borderTopColor: "transparent",
+                    width: 40,
+                    height: 40,
+                    border: "4px solid rgba(255, 255, 255, 0.2)",
+                    borderTopColor: "#fff",
                     borderRadius: "50%",
-                    margin: "0 auto",
                     animation: "spin 1s linear infinite"
                   }}></div>
                 </div>
-              )}
-            </div>
+                
+                <p style={{
+                  marginTop: 16,
+                  fontSize: 12,
+                  color: "#71717A",
+                  fontStyle: "italic"
+                }}>
+                  Aguarde alguns segundos...
+                </p>
+              </>
+            ) : (
+              <>
+                <h1 style={{ 
+                  fontSize: 24, 
+                  marginBottom: 12, 
+                  color: "#EF4444",
+                  fontWeight: 600
+                }}>
+                  Ocorreu um erro
+                </h1>
+                <p style={{ 
+                  opacity: 0.7, 
+                  marginBottom: 16, 
+                  lineHeight: 1.6,
+                  fontSize: 14,
+                  color: "#A1A1AA"
+                }}>
+                  Algo deu errado. Por favor, tente recarregar o aplicativo.
+                </p>
+                {this.state.error && (
+                  <div style={{
+                    background: "#18181B",
+                    border: "1px solid #27272A",
+                    borderRadius: 12,
+                    padding: 16,
+                    marginTop: 16,
+                    textAlign: "left"
+                  }}>
+                    <pre style={{
+                      whiteSpace: "pre-wrap",
+                      fontSize: 11,
+                      overflow: "auto",
+                      color: "#EF4444",
+                      margin: 0,
+                      fontFamily: "monospace"
+                    }}>
+                      {String(this.state.error?.message || this.state.error)}
+                    </pre>
+                  </div>
+                )}
+                <button
+                  onClick={() => window.location.reload()}
+                  style={{
+                    marginTop: 24,
+                    padding: "12px 24px",
+                    background: "#8B5CF6",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: 8,
+                    fontSize: 14,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    width: "100%"
+                  }}
+                >
+                  Recarregar Aplicativo
+                </button>
+              </>
+            )}
           </div>
+          
           <style>{`
             @keyframes spin {
               to { transform: rotate(360deg); }

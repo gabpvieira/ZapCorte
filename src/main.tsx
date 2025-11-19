@@ -5,8 +5,37 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { installGlobalDebug, showErrorOverlay } from "./lib/debug";
 import { registerServiceWorker } from "./lib/serviceWorker";
 
-function bootstrap() {
+async function bootstrap() {
   installGlobalDebug();
+
+  // Verificar se precisa limpar cache (apenas uma vez)
+  const needsCacheClear = sessionStorage.getItem('needs_cache_clear');
+  if (needsCacheClear === 'true') {
+    console.log('[Bootstrap] Limpando cache conforme solicitado...');
+    sessionStorage.removeItem('needs_cache_clear');
+    
+    try {
+      // Limpar service workers
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (const registration of registrations) {
+          await registration.unregister();
+        }
+      }
+      
+      // Limpar caches
+      if ('caches' in window) {
+        const cacheNames = await caches.keys();
+        for (const cacheName of cacheNames) {
+          await caches.delete(cacheName);
+        }
+      }
+      
+      console.log('[Bootstrap] Cache limpo com sucesso');
+    } catch (e) {
+      console.error('[Bootstrap] Erro ao limpar cache:', e);
+    }
+  }
 
   // Registrar Service Worker para PWA
   registerServiceWorker({
