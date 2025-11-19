@@ -1,3 +1,4 @@
+import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -70,12 +71,25 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 const AppContent = () => {
   const location = useLocation();
   const { user, loading } = useAuth();
+  const [forceRender, setForceRender] = React.useState(false);
   
   // Inicializar o scheduler de lembretes
   useReminderScheduler();
   
   // Show navbar only on landing page (home)
   const isHomePage = location.pathname === "/";
+
+  // Timeout de segurança - força renderização após 5 segundos
+  React.useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (loading) {
+        console.warn('[App] Loading timeout - forçando renderização');
+        setForceRender(true);
+      }
+    }, 5000);
+    
+    return () => clearTimeout(timeout);
+  }, [loading]);
 
   // Registrar Service Worker para notificações
   useEffect(() => {
@@ -95,24 +109,35 @@ const AppContent = () => {
         <Route 
           path="/" 
           element={
-            loading ? (
-              <div className="flex items-center justify-center min-h-screen bg-background">
-                <div className="text-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-                  <p className="text-muted-foreground">Carregando...</p>
-                </div>
-              </div>
-            ) : (() => {
+            (() => {
               // Detectar se está rodando como PWA
               const isPWA = window.matchMedia('(display-mode: standalone)').matches || 
                            (window.navigator as any).standalone === true;
               
-              // Se for PWA, redirecionar para dashboard/login
+              // Se for PWA
               if (isPWA) {
+                // Se ainda está carregando e não forçou render, mostrar loading
+                if (loading && !forceRender) {
+                  return (
+                    <div className="flex items-center justify-center min-h-screen bg-background">
+                      <div className="text-center">
+                        <img 
+                          src="/iconePWA.png" 
+                          alt="ZapCorte" 
+                          className="w-20 h-20 mx-auto mb-4 rounded-2xl"
+                        />
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                        <p className="text-muted-foreground">Carregando...</p>
+                      </div>
+                    </div>
+                  );
+                }
+                // Se terminou de carregar ou forçou render, redirecionar
+                // Se forçou render e ainda não tem user, vai para login
                 return user ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />;
               }
               
-              // Se for web normal, mostrar landing page
+              // Se for web normal, mostrar landing page (sem loading)
               return <Home />;
             })()
           } 
