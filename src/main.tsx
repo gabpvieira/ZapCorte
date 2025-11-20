@@ -4,22 +4,25 @@ import "./index.css";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { installGlobalDebug, showErrorOverlay } from "./lib/debug";
 import { registerServiceWorker } from "./lib/serviceWorker";
+import "./lib/safari-fixes"; // Aplicar correções do Safari
 
 function bootstrap() {
   installGlobalDebug();
 
-  // Registrar Service Worker para PWA
-  registerServiceWorker({
-    onSuccess: (registration) => {
-      console.log('✅ PWA pronto para uso offline');
-    },
-    onUpdate: (registration) => {
-      console.log('🔄 Nova versão disponível');
-    },
-    onError: (error) => {
-      console.error('❌ Erro no Service Worker:', error);
-    }
-  });
+  // Registrar Service Worker para PWA (não bloqueia renderização)
+  setTimeout(() => {
+    registerServiceWorker({
+      onSuccess: (registration) => {
+        console.log('✅ PWA pronto para uso offline');
+      },
+      onUpdate: (registration) => {
+        console.log('🔄 Nova versão disponível');
+      },
+      onError: (error) => {
+        console.error('❌ Erro no Service Worker:', error);
+      }
+    });
+  }, 1000);
 
   try {
     const rootEl = document.getElementById("root");

@@ -88,7 +88,13 @@ const HomeNew = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0C0C0C] via-[#0C0C0C] to-[#18181B] text-white overflow-x-hidden">
+    <div 
+      className="min-h-screen bg-gradient-to-b from-[#0C0C0C] via-[#0C0C0C] to-[#18181B] text-white overflow-x-hidden"
+      style={{ 
+        backgroundColor: '#0C0C0C',
+        minHeight: '100vh'
+      }}
+    >
 
       {/* Modern Floating Header */}
       <motion.header 
@@ -97,6 +103,11 @@ const HomeNew = () => {
             ? 'bg-black/80 backdrop-blur-2xl border-b border-[#24C36B]/10 shadow-[0_8px_32px_rgba(36,195,107,0.1)]' 
             : 'bg-transparent'
         }`}
+        style={isScrolled ? { 
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          WebkitBackdropFilter: 'blur(40px)',
+          backdropFilter: 'blur(40px)'
+        } : undefined}
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}

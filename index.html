@@ -16,6 +16,21 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Safari Font Loading Fix -->
+    <style>
+      /* Garantir que a página tenha background mesmo antes do CSS carregar */
+      html, body {
+        background-color: #0C0C0C !important;
+        color: #ffffff;
+        margin: 0;
+        padding: 0;
+      }
+      #root {
+        min-height: 100vh;
+        background-color: #0C0C0C;
+      }
+    </style>
 
     <!-- Open Graph / Facebook / WhatsApp -->
     <meta property="og:type" content="website" />
@@ -61,12 +76,16 @@
     <meta name="application-name" content="ZapCorte" />
     <meta name="msapplication-TileColor" content="#8B5CF6" />
     <meta name="msapplication-TileImage" content="/zapcorte-icon.png" />
-    <meta name="theme-color" content="#8B5CF6" />
+    <meta name="theme-color" content="#0C0C0C" />
     <meta name="color-scheme" content="dark light" />
+    
+    <!-- Safari Specific Meta Tags -->
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
 
   </head>
 
-  <body>
+  <body style="background-color: #0C0C0C; margin: 0; padding: 0;">
     <div id="root"></div>
     <!-- Cache Buster - Roda ANTES de tudo -->
     <script src="/cache-buster.js"></script>
