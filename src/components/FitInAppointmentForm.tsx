@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Calendar, Clock } from "lucide-react";
+import { Calendar, Clock, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -223,14 +223,59 @@ export function FitInAppointmentForm({
         <div>
           <Label htmlFor="barber_id">Barbeiro (Opcional)</Label>
           <Select value={selectedBarberId || "auto"} onValueChange={(value) => setSelectedBarberId(value === "auto" ? "" : value)}>
-            <SelectTrigger>
-              <SelectValue placeholder="Atribuição automática" />
+            <SelectTrigger className="h-auto min-h-[48px] w-full">
+              <div className="flex items-center gap-2 py-1 w-full overflow-hidden">
+                {selectedBarberId && selectedBarberId !== "auto" ? (
+                  <>
+                    {barbers.find(b => b.id === selectedBarberId)?.photo_url ? (
+                      <img
+                        src={barbers.find(b => b.id === selectedBarberId)?.photo_url}
+                        alt={barbers.find(b => b.id === selectedBarberId)?.name}
+                        className="h-8 w-8 rounded-full object-cover flex-shrink-0"
+                      />
+                    ) : (
+                      <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <span className="text-xs font-semibold text-primary">
+                          {barbers.find(b => b.id === selectedBarberId)?.name.charAt(0)}
+                        </span>
+                      </div>
+                    )}
+                    <span className="font-medium text-sm truncate flex-1">
+                      {barbers.find(b => b.id === selectedBarberId)?.name}
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-sm truncate flex-1">Atribuição Automática</span>
+                )}
+              </div>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="auto">Atribuição Automática</SelectItem>
+              <SelectItem value="auto">
+                <div className="flex items-center gap-2 py-1">
+                  <div className="h-8 w-8 rounded-full bg-gradient-to-br from-purple-500/20 to-blue-500/20 flex items-center justify-center border-2 border-purple-500/30 flex-shrink-0">
+                    <span className="text-xs font-semibold text-purple-500">A</span>
+                  </div>
+                  <span className="font-medium">Atribuição Automática</span>
+                </div>
+              </SelectItem>
               {barbers.map((barber) => (
                 <SelectItem key={barber.id} value={barber.id}>
-                  {barber.name}
+                  <div className="flex items-center gap-2 py-1">
+                    {barber.photo_url ? (
+                      <img
+                        src={barber.photo_url}
+                        alt={barber.name}
+                        className="h-8 w-8 rounded-full object-cover flex-shrink-0"
+                      />
+                    ) : (
+                      <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <span className="text-xs font-semibold text-primary">
+                          {barber.name.charAt(0)}
+                        </span>
+                      </div>
+                    )}
+                    <span className="font-medium">{barber.name}</span>
+                  </div>
                 </SelectItem>
               ))}
             </SelectContent>

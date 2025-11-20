@@ -10,12 +10,17 @@
  * - PATCH: Correções de bugs
  */
 
-export const APP_VERSION = '2.4.1';
+export const APP_VERSION = '2.4.2';
 export const APP_NAME = 'ZapCorte';
 export const BUILD_DATE = new Date().toISOString();
 
 // Changelog - Últimas atualizações
 export const CHANGELOG = {
+  '2.4.2': [
+    'Correção: Nome do barbeiro aparecia como null no WhatsApp',
+    'Melhoria: Atribuição automática agora mostra nome correto',
+    'Correção: appointmentId agora é passado corretamente'
+  ],
   '2.4.1': [
     'Correção: Horários após intervalo de almoço no Plano PRO',
     'Correção: Dados do barbeiro não carregavam no modal de edição',

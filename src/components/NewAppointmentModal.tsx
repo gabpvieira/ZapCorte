@@ -277,7 +277,7 @@ export function NewAppointmentModal({
         }
       }
       
-      await createAppointment({
+      const newAppointment = await createAppointment({
         barbershop_id: barbershopId,
         service_id: data.service_id,
         customer_name: data.customer_name,
@@ -299,6 +299,7 @@ export function NewAppointmentModal({
           scheduledAt,
           serviceName,
           tipo: 'confirmacao',
+          appointmentId: newAppointment?.id,
         });
 
         toast({
@@ -363,7 +364,7 @@ export function NewAppointmentModal({
         }
       }
       
-      await createAppointment({
+      const newAppointment = await createAppointment({
         barbershop_id: barbershopId,
         service_id: selectedService,
         customer_name: customerName,
@@ -385,6 +386,7 @@ export function NewAppointmentModal({
           scheduledAt,
           serviceName,
           tipo: 'confirmacao',
+          appointmentId: newAppointment?.id,
         });
 
         toast({
@@ -595,16 +597,55 @@ export function NewAppointmentModal({
                     value={selectedBarberId || "none"} 
                     onValueChange={(value) => setSelectedBarberId(value === "none" ? null : value)}
                   >
-                    <SelectTrigger className="h-auto min-h-[60px]">
-                      <SelectValue placeholder="Selecione um barbeiro (opcional)" />
+                    <SelectTrigger className="h-auto min-h-[60px] w-full">
+                      <div className="flex items-center gap-2 sm:gap-3 py-1 w-full overflow-hidden">
+                        {selectedBarberId ? (
+                          <>
+                            {barbers.find(b => b.id === selectedBarberId)?.photo_url ? (
+                              <img
+                                src={barbers.find(b => b.id === selectedBarberId)?.photo_url}
+                                alt={barbers.find(b => b.id === selectedBarberId)?.name}
+                                className="h-8 w-8 sm:h-10 sm:w-10 rounded-full object-cover flex-shrink-0"
+                              />
+                            ) : (
+                              <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                <User className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                              </div>
+                            )}
+                            <div className="flex flex-col items-start min-w-0 flex-1">
+                              <span className="font-medium text-sm sm:text-base truncate w-full">
+                                {barbers.find(b => b.id === selectedBarberId)?.name}
+                              </span>
+                              {barbers.find(b => b.id === selectedBarberId)?.specialties && 
+                               barbers.find(b => b.id === selectedBarberId)!.specialties!.length > 0 && (
+                                <span className="text-xs text-muted-foreground truncate w-full">
+                                  {barbers.find(b => b.id === selectedBarberId)!.specialties!.slice(0, 2).join(', ')}
+                                </span>
+                              )}
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-gradient-to-br from-purple-500/20 to-blue-500/20 flex items-center justify-center border-2 border-purple-500/30 flex-shrink-0">
+                              <User className="h-4 w-4 sm:h-5 sm:w-5 text-purple-500" />
+                            </div>
+                            <div className="flex flex-col items-start min-w-0 flex-1">
+                              <span className="font-medium text-sm sm:text-base truncate w-full">Atribuição Automática</span>
+                              <span className="text-xs text-muted-foreground truncate w-full hidden sm:block">
+                                Sistema escolhe o melhor barbeiro
+                              </span>
+                            </div>
+                          </>
+                        )}
+                      </div>
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">
                         <div className="flex items-center gap-3 py-2">
-                          <div className="h-10 w-10 rounded-full bg-gradient-to-br from-purple-500/20 to-blue-500/20 flex items-center justify-center border-2 border-purple-500/30">
+                          <div className="h-10 w-10 rounded-full bg-gradient-to-br from-purple-500/20 to-blue-500/20 flex items-center justify-center border-2 border-purple-500/30 flex-shrink-0">
                             <User className="h-5 w-5 text-purple-500" />
                           </div>
-                          <div className="flex flex-col items-start">
+                          <div className="flex flex-col items-start min-w-0">
                             <span className="font-medium">Atribuição Automática</span>
                             <span className="text-xs text-muted-foreground">Sistema escolhe o melhor barbeiro</span>
                           </div>
@@ -617,14 +658,14 @@ export function NewAppointmentModal({
                               <img
                                 src={barber.photo_url}
                                 alt={barber.name}
-                                className="h-10 w-10 rounded-full object-cover"
+                                className="h-10 w-10 rounded-full object-cover flex-shrink-0"
                               />
                             ) : (
-                              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                                 <User className="h-5 w-5 text-primary" />
                               </div>
                             )}
-                            <div className="flex flex-col items-start">
+                            <div className="flex flex-col items-start min-w-0">
                               <span className="font-medium">{barber.name}</span>
                               {barber.specialties && barber.specialties.length > 0 && (
                                 <span className="text-xs text-muted-foreground">
