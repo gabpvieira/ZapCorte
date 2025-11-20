@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
@@ -93,21 +93,6 @@ export const DashboardSidebar = ({ className }: DashboardSidebarProps) => {
   const location = useLocation();
   const { signOut, user } = useAuth();
   const { barbershop } = useUserData();
-  
-  // Bloquear scroll quando sidebar mobile estiver aberto
-  useEffect(() => {
-    if (isMobileOpen) {
-      document.body.style.overflow = 'hidden';
-      document.body.style.height = '100vh';
-    } else {
-      document.body.style.overflow = '';
-      document.body.style.height = '';
-    }
-    return () => {
-      document.body.style.overflow = '';
-      document.body.style.height = '';
-    };
-  }, [isMobileOpen]);
   
   // Adicionar itens PRO dinamicamente e renomear labels se for Plano PRO
   const menuItems = useMemo(() => {
@@ -314,7 +299,7 @@ export const DashboardSidebar = ({ className }: DashboardSidebarProps) => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed top-0 left-0 right-0 bottom-0 w-screen h-screen z-40 bg-black/50 md:hidden"
+              className="fixed inset-0 z-40 bg-black/50 md:hidden"
               onClick={() => setIsMobileOpen(false)}
             />
             
@@ -324,7 +309,7 @@ export const DashboardSidebar = ({ className }: DashboardSidebarProps) => {
               animate="open"
               exit="closed"
               variants={sidebarVariants}
-              className="fixed top-0 left-0 bottom-0 z-50 w-64 h-screen max-h-screen md:hidden"
+              className="fixed inset-y-0 left-0 z-50 w-64 md:hidden"
             >
               <SidebarContent />
             </motion.aside>

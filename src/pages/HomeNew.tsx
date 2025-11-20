@@ -21,13 +21,9 @@ const HomeNew = () => {
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
   const heroRef = useRef(null);
   
-  // Detectar Safari
-  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-  
-  // Desabilitar animações complexas no Safari para evitar problemas
   const { scrollYProgress } = useScroll();
-  const opacity = isSafari ? undefined : useTransform(scrollYProgress, [0, 0.2], [1, 0]);
-  const scale = isSafari ? undefined : useTransform(scrollYProgress, [0, 0.2], [1, 0.95]);
+  const opacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
+  const scale = useTransform(scrollYProgress, [0, 0.2], [1, 0.95]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -36,21 +32,6 @@ const HomeNew = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
-  // Prevenir scroll do body quando menu mobile estiver aberto
-  useEffect(() => {
-    if (mobileMenuOpen) {
-      document.body.style.overflow = 'hidden';
-      document.body.style.height = '100vh';
-    } else {
-      document.body.style.overflow = '';
-      document.body.style.height = '';
-    }
-    return () => {
-      document.body.style.overflow = '';
-      document.body.style.height = '';
-    };
-  }, [mobileMenuOpen]);
 
   // Auto-rotate testimonials
   useEffect(() => {
@@ -107,13 +88,7 @@ const HomeNew = () => {
   ];
 
   return (
-    <div 
-      className="min-h-screen bg-gradient-to-b from-[#0C0C0C] via-[#0C0C0C] to-[#18181B] text-white overflow-x-hidden"
-      style={{ 
-        backgroundColor: '#0C0C0C',
-        minHeight: '100vh'
-      }}
-    >
+    <div className="min-h-screen bg-gradient-to-b from-[#0C0C0C] via-[#0C0C0C] to-[#18181B] text-white overflow-x-hidden">
 
       {/* Modern Floating Header */}
       <motion.header 
@@ -122,11 +97,6 @@ const HomeNew = () => {
             ? 'bg-black/80 backdrop-blur-2xl border-b border-[#24C36B]/10 shadow-[0_8px_32px_rgba(36,195,107,0.1)]' 
             : 'bg-transparent'
         }`}
-        style={isScrolled ? { 
-          backgroundColor: 'rgba(0, 0, 0, 0.8)',
-          WebkitBackdropFilter: 'blur(40px)',
-          backdropFilter: 'blur(40px)'
-        } : undefined}
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
@@ -217,7 +187,7 @@ const HomeNew = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed top-0 left-0 right-0 bottom-0 w-screen h-screen bg-black/60 backdrop-blur-sm z-40 md:hidden"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
             onClick={() => setMobileMenuOpen(false)}
           />
           
@@ -227,9 +197,9 @@ const HomeNew = () => {
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="fixed top-0 right-0 w-[85%] max-w-sm bg-[#0C0C0C] z-50 md:hidden shadow-2xl h-screen max-h-screen"
+            className="fixed top-0 right-0 bottom-0 w-[85%] max-w-sm bg-[#0C0C0C] z-50 md:hidden shadow-2xl"
           >
-            <div className="flex flex-col h-full max-h-screen">
+            <div className="flex flex-col h-full">
               {/* Header do Menu */}
               <div className="flex items-center justify-between p-6 border-b border-[#27272A]">
                 <div className="flex items-center gap-2">
