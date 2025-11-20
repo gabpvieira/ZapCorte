@@ -1199,39 +1199,44 @@ const HomeNew = () => {
                 highlighted: false
               },
               {
-                name: "Premium",
+                name: "Starter",
                 price: "49,90",
                 oldPrice: "97,00",
                 period: "/mês",
-                description: "Mais popular entre barbeiros",
+                description: "Ideal para barbeiros autônomos",
                 features: [
-                  "Tudo do Freemium",
+                  "1 profissional",
+                  "Agendamentos ilimitados",
+                  "Serviços ilimitados",
                   "WhatsApp integrado",
                   "Mensagens automáticas",
                   "Gestão de clientes",
                   "Lembretes automáticos",
-                  "Suporte prioritário",
-                  "Sem anúncios"
+                  "Suporte prioritário"
                 ],
-                cta: "Assinar Premium",
-                highlighted: true
+                cta: "Assinar Starter",
+                highlighted: true,
+                paymentLink: "https://pay.cakto.com.br/3th8tvh"
               },
               {
                 name: "Pro",
-                price: "69,90",
+                price: "99,90",
                 period: "/mês",
-                description: "Para barbearias maiores",
+                description: "Para barbearias com equipe",
                 features: [
-                  "Tudo do Premium",
-                  "Múltiplos profissionais",
-                  "Relatórios avançados",
-                  "API personalizada",
-                  "Integrações avançadas",
+                  "Tudo do Starter",
+                  "Até 10 barbeiros",
+                  "Agenda individual por barbeiro",
+                  "Cliente escolhe o barbeiro",
+                  "Horários personalizados",
+                  "Relatórios por profissional",
+                  "WhatsApp centralizado",
                   "Suporte VIP 24/7"
                 ],
-                cta: "Em Breve",
+                cta: "Assinar Pro",
                 highlighted: false,
-                comingSoon: true
+                comingSoon: false,
+                paymentLink: "https://pay.cakto.com.br/9jk3ref"
               }
             ].map((plan, i) => (
               <motion.div
@@ -1295,10 +1300,12 @@ const HomeNew = () => {
                           : 'bg-transparent border-2 border-[#24C36B] text-[#24C36B] hover:bg-[#24C36B] hover:text-black'
                       }`}
                       disabled={plan.comingSoon}
-                      asChild={!plan.comingSoon}
+                      asChild={!plan.comingSoon && !plan.paymentLink}
                     >
                       {plan.comingSoon ? (
                         <span>{plan.cta}</span>
+                      ) : plan.paymentLink ? (
+                        <a href={plan.paymentLink} target="_blank" rel="noopener noreferrer">{plan.cta}</a>
                       ) : (
                         <Link to="/register">{plan.cta}</Link>
                       )}

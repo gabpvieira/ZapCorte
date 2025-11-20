@@ -59,9 +59,9 @@ const Barbershop = () => {
     loadBarbershopData();
   }, [slug]);
 
-  const handleBooking = (serviceId: string) => {
-    setSelectedService(serviceId);
-    navigate(`/booking/${slug}/${serviceId}`);
+  const handleBooking = (serviceSlug: string) => {
+    setSelectedService(serviceSlug);
+    navigate(`/booking/${slug}/${serviceSlug}`);
   };
 
   if (loading) {
@@ -365,7 +365,7 @@ const Barbershop = () => {
                       <Button
                         className="w-full h-9 sm:h-12 lg:h-8 text-xs sm:text-base lg:text-xs font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all hover:scale-[1.02] group"
                         size="lg"
-                        onClick={() => handleBooking(service.id)}
+                        onClick={() => handleBooking(service.slug)}
                       >
                         <span className="group-hover:scale-110 transition-transform inline-block">
                           Agendar Agora
@@ -572,52 +572,44 @@ const Barbershop = () => {
         </section>
       </motion.div>
 
-      {/* Footer Premium */}
+      {/* Footer Sutil */}
       <motion.footer 
-        className="relative border-t border-border/50 py-12 sm:py-16 mt-20 overflow-hidden w-full"
+        className="relative border-t border-border/50 py-8 sm:py-10 mt-20 w-full"
         variants={itemVariants}
       >
-        <div className="absolute inset-0 bg-gradient-to-t from-primary/5 to-transparent" />
         <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10 max-w-7xl">
-          {/* CTA Principal */}
+          {/* CTA Sutil */}
           <motion.div 
-            className="mb-8 sm:mb-10"
+            className="mb-4"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <div className="inline-flex items-center gap-2 mb-3 sm:mb-4">
-              <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-primary animate-pulse" />
-              <p className="text-xs sm:text-sm font-medium text-muted-foreground">
-                Quer um sistema como este para sua barbearia?
-              </p>
-              <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-primary animate-pulse" />
-            </div>
+            <p className="text-xs sm:text-sm text-muted-foreground mb-2">
+              Quer um sistema como este para sua barbearia?
+            </p>
             <a
               href="https://www.zapcorte.com.br"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-4 rounded-xl sm:rounded-2xl bg-gradient-to-r from-primary via-primary to-primary/80 text-primary-foreground font-semibold text-sm sm:text-base shadow-xl shadow-primary/30 hover:shadow-2xl hover:shadow-primary/40 transition-all hover:scale-105 group"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary/80 transition-colors group"
             >
               <span>Conhecer o ZapCorte</span>
-              <ExternalLink className="h-4 w-4 sm:h-5 sm:w-5 group-hover:translate-x-1 transition-transform" />
+              <ExternalLink className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
             </a>
           </motion.div>
 
           {/* Branding */}
-          <div className="mb-4 sm:mb-6">
-            <p className="text-sm sm:text-base font-medium text-foreground mb-2">
-              Powered by ZapCorte
-            </p>
-            <p className="text-xs sm:text-sm text-muted-foreground">
-              Sistema de Agendamento Premium
+          <div className="mb-3">
+            <p className="text-xs text-muted-foreground">
+              Powered by ZapCorte • Sistema de Agendamento Premium
             </p>
           </div>
           
           {/* Tagline */}
-          <div className="flex items-center justify-center gap-2 text-xs sm:text-sm text-muted-foreground">
+          <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
             <span>Feito com</span>
-            <span className="text-red-500 animate-pulse">❤️</span>
+            <span className="text-red-500">❤️</span>
             <span>para profissionais</span>
           </div>
         </div>

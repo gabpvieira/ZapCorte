@@ -148,7 +148,7 @@ const AppContent = () => {
         
         {/* Rotas públicas - não precisam de autenticação */}
         <Route path="/barbershop/:slug" element={<Barbershop />} />
-        <Route path="/booking/:slug/:serviceId" element={<Booking />} />
+        <Route path="/booking/:slug/:serviceSlug" element={<Booking />} />
         <Route path="/my-appointments" element={<MyAppointments />} />
         <Route path="/login" element={user ? <Navigate to="/dashboard" replace /> : <Login />} />
         <Route path="/register" element={user ? <Navigate to="/dashboard" replace /> : <Register />} />

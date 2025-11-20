@@ -7,8 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Calendar, Clock, ArrowLeft, Zap, Bell, Shield, CheckCircle2, ExternalLink, Sparkles } from "lucide-react";
-import { getBarbershopBySlug, getBarbershopServices, createAppointment, getAvailableTimeSlots } from "@/lib/supabase-queries";
-import { getAvailableBarbersForService, getAvailableTimeSlotsForBarber } from "@/lib/barbers-queries";
+import { getBarbershopBySlug, getBarbershopServices, createAppointment, getAvailableTimeSlotsV2, getServiceBySlug } from "@/lib/supabase-queries";
+import { getAvailableBarbersForService } from "@/lib/barbers-queries";
 import { supabase } from "@/lib/supabase";
 import { notificarNovoAgendamento } from '@/lib/notifications';
 import "@/styles/booking-premium.css";
@@ -18,7 +18,7 @@ import { BarberSelector } from "@/components/BarberSelector";
 import { format } from "date-fns";
 
 const Booking = () => {
-  const { slug, serviceId } = useParams<{ slug: string; serviceId: string }>();
+  const { slug, serviceSlug } = useParams<{ slug: string; serviceSlug: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -43,7 +43,7 @@ const Booking = () => {
 
   useEffect(() => {
     const loadData = async () => {
-      if (!slug || !serviceId) return;
+      if (!slug || !serviceSlug) return;
       
       try {
         setLoading(true);
@@ -65,8 +65,25 @@ const Booking = () => {
         const isPro = barbershopData.plan_type === 'pro';
         setHasPlanPro(isPro);
         
-        const services = await getBarbershopServices(barbershopData.id);
-        const foundService = services.find(s => s.id === serviceId);
+        // Buscar serviço por slug (único globalmente)
+        let foundService: Service | null = null;
+        
+        // Verificar se é um UUID (compatibilidade com URLs antigas)
+        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(serviceSlug);
+        
+        if (isUUID) {
+          // Buscar por ID (compatibilidade)
+          const services = await getBarbershopServices(barbershopData.id);
+          foundService = services.find(s => s.id === serviceSlug) || null;
+        } else {
+          // Buscar por slug (novo formato)
+          foundService = await getServiceBySlug(serviceSlug);
+          
+          // Verificar se o serviço pertence a esta barbearia
+          if (foundService && foundService.barbershop_id !== barbershopData.id) {
+            foundService = null;
+          }
+        }
         
         if (!foundService) {
           toast({
@@ -95,7 +112,7 @@ const Booking = () => {
     };
 
     loadData();
-  }, [slug, serviceId, navigate, toast]);
+  }, [slug, serviceSlug, navigate, toast]);
 
   // Carregar barbeiros disponíveis (apenas para Plano PRO)
   useEffect(() => {
@@ -133,54 +150,20 @@ const Booking = () => {
       try {
         const dateString = format(selectedDate, 'yyyy-MM-dd');
         
-        let slots: { time: string; available: boolean }[];
+        // ✅ USAR getAvailableTimeSlotsV2 que decide automaticamente qual lógica usar
+        // Se Plano PRO + barberId: usa horários do barbeiro
+        // Caso contrário: usa horários da barbearia
+        const slots = await getAvailableTimeSlotsV2(
+          barbershop.id,
+          service.id,
+          dateString,
+          selectedBarberId || undefined // Passar barberId se selecionado
+        );
         
-        // Se tem Plano PRO e um barbeiro foi selecionado, buscar horários específicos
-        if (hasPlanPro && selectedBarberId) {
-          slots = await getAvailableTimeSlotsForBarber(
-            barbershop.id,
-            selectedBarberId,
-            service.id,
-            dateString
-          );
-        } else {
-          // Caso contrário, buscar horários gerais da barbearia
-          slots = await getAvailableTimeSlots(barbershop.id, service.id, dateString);
-        }
-        
-        // Verificar se a data selecionada é hoje
-        const today = new Date();
-        const isToday = selectedDate.toDateString() === today.toDateString();
-        
-        if (isToday) {
-          // Filtrar horários que já passaram
-          const now = new Date();
-          const currentHour = now.getHours();
-          const currentMinute = now.getMinutes();
-          
-          const filteredSlots = slots.map(slot => {
-            // Extrair hora e minuto do slot (formato: "HH:mm")
-            const [slotHour, slotMinute] = slot.time.split(':').map(Number);
-            
-            // Verificar se o horário já passou
-            const slotTime = slotHour * 60 + slotMinute;
-            const currentTime = currentHour * 60 + currentMinute;
-            
-            // Se o horário já passou, marcar como indisponível
-            if (slotTime <= currentTime) {
-              return { ...slot, available: false };
-            }
-            
-            return slot;
-          });
-          
-          setTimeSlots(filteredSlots);
-        } else {
-          setTimeSlots(slots);
-        }
-        
+        setTimeSlots(slots);
         setSelectedTime(null); // Reset selected time when date or barber changes
       } catch (error) {
+        console.error('Erro ao carregar horários:', error);
         setTimeSlots([]);
       }
     };
@@ -196,22 +179,17 @@ const Booking = () => {
 
     const refreshSlots = async () => {
       try {
-        let slots: { time: string; available: boolean }[];
-        
-        if (hasPlanPro && selectedBarberId) {
-          slots = await getAvailableTimeSlotsForBarber(
-            barbershop.id,
-            selectedBarberId,
-            service.id,
-            dateString
-          );
-        } else {
-          slots = await getAvailableTimeSlots(barbershop.id, service.id, dateString);
-        }
+        // ✅ USAR getAvailableTimeSlotsV2 para atualização em tempo real
+        const slots = await getAvailableTimeSlotsV2(
+          barbershop.id,
+          service.id,
+          dateString,
+          selectedBarberId || undefined
+        );
         
         setTimeSlots(slots);
       } catch (error) {
-        // Erro silenciado
+        console.error('Erro ao atualizar horários:', error);
       }
     };
 
@@ -692,52 +670,44 @@ const Booking = () => {
           ))}
         </motion.div>
 
-        {/* Footer Premium com CTA */}
+        {/* Footer Sutil */}
         <motion.footer 
-          className="relative border-t border-border/50 py-12 sm:py-16 mt-16 sm:mt-20 overflow-hidden"
+          className="relative border-t border-border/50 py-8 sm:py-10 mt-16 sm:mt-20"
           variants={itemVariants}
         >
-          <div className="absolute inset-0 bg-gradient-to-t from-primary/5 to-transparent" />
           <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10 max-w-4xl">
-            {/* CTA Principal */}
+            {/* CTA Sutil */}
             <motion.div 
-              className="mb-8 sm:mb-10"
+              className="mb-4"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
             >
-              <div className="inline-flex items-center gap-2 mb-3 sm:mb-4">
-                <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-primary animate-pulse" />
-                <p className="text-xs sm:text-sm font-medium text-muted-foreground">
-                  Quer um sistema como este para sua barbearia?
-                </p>
-                <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-primary animate-pulse" />
-              </div>
+              <p className="text-xs sm:text-sm text-muted-foreground mb-2">
+                Quer um sistema como este para sua barbearia?
+              </p>
               <a
                 href="https://www.zapcorte.com.br"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-4 rounded-xl sm:rounded-2xl bg-gradient-to-r from-primary via-primary to-primary/80 text-primary-foreground font-semibold text-sm sm:text-base shadow-xl shadow-primary/30 hover:shadow-2xl hover:shadow-primary/40 transition-all hover:scale-105 group"
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary/80 transition-colors group"
               >
                 <span>Conhecer o ZapCorte</span>
-                <ExternalLink className="h-4 w-4 sm:h-5 sm:w-5 group-hover:translate-x-1 transition-transform" />
+                <ExternalLink className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
               </a>
             </motion.div>
 
             {/* Branding */}
-            <div className="mb-4 sm:mb-6">
-              <p className="text-sm sm:text-base font-medium text-foreground mb-2">
-                Powered by ZapCorte
-              </p>
-              <p className="text-xs sm:text-sm text-muted-foreground">
-                Sistema de Agendamento Premium
+            <div className="mb-3">
+              <p className="text-xs text-muted-foreground">
+                Powered by ZapCorte • Sistema de Agendamento Premium
               </p>
             </div>
             
             {/* Tagline */}
-            <div className="flex items-center justify-center gap-2 text-xs sm:text-sm text-muted-foreground">
+            <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
               <span>Feito com</span>
-              <span className="text-red-500 animate-pulse">❤️</span>
+              <span className="text-red-500">❤️</span>
               <span>para profissionais</span>
             </div>
           </div>

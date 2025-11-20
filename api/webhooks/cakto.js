@@ -235,7 +235,8 @@ export default async function handler(req, res) {
     
     switch (eventType) {
       case 'purchase_approved':
-        // Pagamento aprovado - atualizar usuário para premium
+      case 'subscription_created':
+        // Pagamento aprovado ou assinatura criada - atualizar usuário para premium
         result = await processPaymentApproved(webhookData);
         break;
       

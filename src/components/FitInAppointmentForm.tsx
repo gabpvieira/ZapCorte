@@ -20,9 +20,17 @@ interface Customer {
   phone: string;
 }
 
+interface Barber {
+  id: string;
+  name: string;
+  photo_url?: string;
+}
+
 interface FitInAppointmentFormProps {
   services: Service[];
   customers: Customer[];
+  barbers?: Barber[];
+  isPro?: boolean;
   onSubmit: (data: {
     customer_name: string;
     customer_phone: string;
@@ -30,6 +38,7 @@ interface FitInAppointmentFormProps {
     start_time: string;
     end_time: string;
     service_id: string;
+    barber_id?: string;
   }) => void;
   onCancel: () => void;
   loading?: boolean;
@@ -38,6 +47,8 @@ interface FitInAppointmentFormProps {
 export function FitInAppointmentForm({
   services,
   customers,
+  barbers = [],
+  isPro = false,
   onSubmit,
   onCancel,
   loading = false
@@ -49,6 +60,7 @@ export function FitInAppointmentForm({
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [serviceId, setServiceId] = useState("");
+  const [selectedBarberId, setSelectedBarberId] = useState<string>("");
 
   const handleCustomerSelect = (value: string) => {
     setSelectedCustomerId(value);
@@ -110,23 +122,23 @@ export function FitInAppointmentForm({
 
     const formattedDate = format(selectedDate, 'dd/MM/yyyy');
     
-    console.log('Chamando onSubmit com dados formatados:', {
+    const submitData: any = {
       customer_name: customerName,
       customer_phone: customerPhone,
       scheduled_date: formattedDate,
       start_time: startTime,
       end_time: endTime,
       service_id: serviceId
-    });
+    };
     
-    onSubmit({
-      customer_name: customerName,
-      customer_phone: customerPhone,
-      scheduled_date: formattedDate,
-      start_time: startTime,
-      end_time: endTime,
-      service_id: serviceId
-    });
+    // Adicionar barbeiro se selecionado (Plano PRO)
+    if (isPro && selectedBarberId) {
+      submitData.barber_id = selectedBarberId;
+    }
+    
+    console.log('Chamando onSubmit com dados formatados:', submitData);
+    
+    onSubmit(submitData);
   };
 
   return (
@@ -205,6 +217,29 @@ export function FitInAppointmentForm({
           </SelectContent>
         </Select>
       </div>
+
+      {/* Barbeiro (Plano PRO) */}
+      {isPro && barbers.length > 0 && (
+        <div>
+          <Label htmlFor="barber_id">Barbeiro (Opcional)</Label>
+          <Select value={selectedBarberId || "auto"} onValueChange={(value) => setSelectedBarberId(value === "auto" ? "" : value)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Atribuição automática" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="auto">Atribuição Automática</SelectItem>
+              {barbers.map((barber) => (
+                <SelectItem key={barber.id} value={barber.id}>
+                  {barber.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground mt-1">
+            Deixe em "Atribuição Automática" para o sistema escolher
+          </p>
+        </div>
+      )}
 
       {/* Data */}
       <div>

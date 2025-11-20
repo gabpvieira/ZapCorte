@@ -91,6 +91,7 @@ export interface Service {
   id: string
   barbershop_id: string
   name: string
+  slug: string
   description?: string
   price: number
   duration: number
@@ -128,6 +129,7 @@ export interface RecurringAppointment {
   barbershop_id: string
   customer_id: string
   service_id: string
+  barber_id?: string
   frequency: 'weekly' | 'biweekly' | 'monthly'
   day_of_week?: number
   time_of_day: string

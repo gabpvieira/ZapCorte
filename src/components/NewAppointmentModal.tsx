@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { getAvailableTimeSlots, createAppointment } from "@/lib/supabase-queries";
+import { getAvailableTimeSlotsV2, createAppointment } from "@/lib/supabase-queries";
 import WeeklyDatePicker from "@/components/WeeklyDatePicker";
 import { FitInAppointmentForm } from "@/components/FitInAppointmentForm";
 import { enviarLembreteWhatsApp } from "@/lib/notifications";
@@ -131,14 +131,24 @@ export function NewAppointmentModal({
     fetchBarbers();
   }, [barbershopId, open, isPro]);
 
-  // Carregar horários disponíveis quando serviço ou data mudam
+  // Carregar horários disponíveis quando serviço, data ou barbeiro mudam
   useEffect(() => {
     const loadTimeSlots = async () => {
       if (!barbershopId || !selectedService || !selectedDate) return;
       
       try {
         const dateString = format(selectedDate, 'yyyy-MM-dd');
-        const slots = await getAvailableTimeSlots(barbershopId, selectedService, dateString);
+        
+        // ✅ USAR getAvailableTimeSlotsV2 que decide automaticamente qual lógica usar
+        // Se Plano PRO + barberId: usa horários do barbeiro
+        // Caso contrário: usa horários da barbearia
+        const slots = await getAvailableTimeSlotsV2(
+          barbershopId,
+          selectedService,
+          dateString,
+          selectedBarberId || undefined // Passar barberId se selecionado
+        );
+        
         setTimeSlots(slots);
         setSelectedTime(null);
       } catch (error) {
@@ -148,7 +158,7 @@ export function NewAppointmentModal({
     };
 
     loadTimeSlots();
-  }, [barbershopId, selectedService, selectedDate]);
+  }, [barbershopId, selectedService, selectedDate, selectedBarberId, isPro]);
 
   // Atualização em tempo real dos horários
   useEffect(() => {
@@ -158,7 +168,13 @@ export function NewAppointmentModal({
 
     const refreshSlots = async () => {
       try {
-        const slots = await getAvailableTimeSlots(barbershopId, selectedService, dateString);
+        // ✅ USAR getAvailableTimeSlotsV2 para atualização em tempo real
+        const slots = await getAvailableTimeSlotsV2(
+          barbershopId,
+          selectedService,
+          dateString,
+          selectedBarberId || undefined
+        );
         setTimeSlots(slots);
       } catch (error) {
         console.error('Erro ao atualizar horários:', error);
@@ -207,6 +223,7 @@ export function NewAppointmentModal({
     start_time: string;
     end_time: string;
     service_id: string;
+    barber_id?: string;
   }) => {
     try {
       setSubmitting(true);
@@ -225,10 +242,10 @@ export function NewAppointmentModal({
       const scheduledAt = `${isoDate}T${data.start_time}:00-03:00`;
       
       // Determinar o barbeiro a ser atribuído
-      let finalBarberId = selectedBarberId;
+      let finalBarberId = data.barber_id || null;
       
-      // Se "Atribuição Automática" foi selecionada e é plano PRO
-      if (!selectedBarberId && isPro) {
+      // Se não foi selecionado barbeiro e é plano PRO, tentar atribuição automática
+      if (!finalBarberId && isPro) {
         const serviceDuration = services.find(s => s.id === data.service_id)?.duration || 30;
         const { findBestAvailableBarber } = await import('@/lib/barber-scheduler');
         
@@ -426,6 +443,8 @@ export function NewAppointmentModal({
           <FitInAppointmentForm
             services={services}
             customers={customers}
+            barbers={barbers}
+            isPro={isPro}
             onSubmit={handleFitInSubmit}
             onCancel={closeModal}
             loading={submitting}

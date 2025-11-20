@@ -31,6 +31,56 @@ export async function getBarbershopServices(barbershopId: string) {
   return data as Service[]
 }
 
+/**
+ * Busca serviço por slug (URL amigável) - SLUG É ÚNICO GLOBALMENTE
+ */
+export async function getServiceBySlug(slug: string) {
+  const { data, error } = await supabase
+    .from('services')
+    .select('*')
+    .eq('slug', slug)
+    .eq('is_active', true)
+    .single()
+
+  if (error) {
+    console.error('[getServiceBySlug] Erro:', error);
+    return null
+  }
+
+  return data as Service
+}
+
+/**
+ * Verifica se um slug de serviço já existe GLOBALMENTE
+ */
+export async function checkServiceSlugAvailability(
+  slug: string,
+  excludeServiceId?: string
+): Promise<boolean> {
+  let query = supabase
+    .from('services')
+    .select('id')
+    .eq('slug', slug)
+
+  if (excludeServiceId) {
+    query = query.neq('id', excludeServiceId)
+  }
+
+  const { data, error } = await query.single()
+
+  if (error && error.code === 'PGRST116') {
+    // Nenhum registro encontrado, slug está disponível
+    return true
+  }
+
+  if (error) {
+    return false
+  }
+
+  // Se encontrou um registro, slug não está disponível
+  return !data
+}
+
 // Funções para Appointments
 export async function createAppointment(appointment: Omit<Appointment, 'id' | 'created_at'>) {
   const { data, error } = await supabase
@@ -414,3 +464,408 @@ export async function checkSlugAvailability(slug: string, excludeBarbershopId?: 
   return !data
 }
 
+
+// ============================================================================
+// PLANO PRO: Funções para Múltiplos Barbeiros
+// ============================================================================
+
+/**
+ * Interface para horários disponíveis com informações do barbeiro
+ */
+export interface BarberTimeSlot {
+  time: string;
+  available: boolean;
+  barberId?: string;
+  barberName?: string;
+}
+
+/**
+ * Busca barbeiros ativos de uma barbearia (Plano PRO)
+ */
+export async function getActiveBarbersForService(
+  barbershopId: string,
+  serviceId: string
+): Promise<Array<{ id: string; name: string; photo_url: string | null; specialties: string[] | null }>> {
+  try {
+    // Buscar barbeiros que oferecem este serviço
+    const { data: barberServices, error: barberServicesError } = await supabase
+      .from('barber_services')
+      .select(`
+        barber_id,
+        barbers!inner(
+          id,
+          name,
+          photo_url,
+          specialties,
+          is_active
+        )
+      `)
+      .eq('service_id', serviceId)
+      .eq('is_available', true);
+
+    if (barberServicesError) {
+      console.error('[getActiveBarbersForService] Erro:', barberServicesError);
+      return [];
+    }
+
+    // Filtrar apenas barbeiros ativos e extrair dados
+    const activeBarbers = barberServices
+      ?.filter((bs: any) => bs.barbers?.is_active === true)
+      .map((bs: any) => ({
+        id: bs.barbers.id,
+        name: bs.barbers.name,
+        photo_url: bs.barbers.photo_url,
+        specialties: bs.barbers.specialties
+      })) || [];
+
+    return activeBarbers;
+  } catch (error) {
+    console.error('[getActiveBarbersForService] Erro inesperado:', error);
+    return [];
+  }
+}
+
+/**
+ * Busca horários disponíveis para um barbeiro específico (Plano PRO)
+ * IMPORTANTE: Ignora completamente os horários da barbearia, usa apenas horários do barbeiro
+ */
+export async function getBarberAvailableTimeSlots(
+  barbershopId: string,
+  barberId: string,
+  serviceId: string,
+  date: string
+): Promise<{ time: string; available: boolean }[]> {
+  try {
+    // 1. Calcular dia da semana no timezone brasileiro
+    const dateWithTimezone = new Date(date + 'T12:00:00-03:00');
+    const dayOfWeek = dateWithTimezone.getDay();
+
+    console.log('[getBarberAvailableTimeSlots] Iniciando busca:', {
+      barberId,
+      date,
+      dayOfWeek
+    });
+
+    // 2. Buscar disponibilidade do barbeiro para este dia
+    const { data: barberAvailability, error: availabilityError } = await supabase
+      .from('barber_availability')
+      .select('start_time, end_time, is_active')
+      .eq('barber_id', barberId)
+      .eq('day_of_week', dayOfWeek)
+      .eq('is_active', true)
+      .maybeSingle();
+
+    if (availabilityError) {
+      console.error('[getBarberAvailableTimeSlots] Erro ao buscar disponibilidade:', availabilityError);
+      return [];
+    }
+
+    // Se barbeiro não tem horário configurado para este dia, retornar vazio
+    if (!barberAvailability) {
+      console.log('[getBarberAvailableTimeSlots] Barbeiro sem horário configurado para este dia');
+      return [];
+    }
+
+    console.log('[getBarberAvailableTimeSlots] Horário do barbeiro:', barberAvailability);
+
+    // 3. Buscar duração do serviço
+    const { data: service, error: serviceError } = await supabase
+      .from('services')
+      .select('duration')
+      .eq('id', serviceId)
+      .single();
+
+    if (serviceError || !service) {
+      console.error('[getBarberAvailableTimeSlots] Erro ao buscar serviço:', serviceError);
+      return [];
+    }
+
+    // 4. Buscar agendamentos do barbeiro para este dia
+    const { data: appointments, error: appointmentsError } = await supabase
+      .from('appointments')
+      .select('scheduled_at, services(duration)')
+      .eq('barbershop_id', barbershopId)
+      .eq('barber_id', barberId)
+      .gte('scheduled_at', new Date(date + 'T00:00:00-03:00').toISOString())
+      .lte('scheduled_at', new Date(date + 'T23:59:59-03:00').toISOString())
+      .neq('status', 'cancelled');
+
+    if (appointmentsError) {
+      console.error('[getBarberAvailableTimeSlots] Erro ao buscar agendamentos:', appointmentsError);
+      return [];
+    }
+
+    console.log('[getBarberAvailableTimeSlots] Agendamentos encontrados:', appointments?.length || 0);
+
+    // 5. Definir parâmetros
+    const serviceDuration = service.duration; // minutos
+    const breakTime = 5; // 5 minutos de intervalo entre atendimentos
+    const workStart = new Date(`${date}T${barberAvailability.start_time}-03:00`);
+    const workEnd = new Date(`${date}T${barberAvailability.end_time}-03:00`);
+
+    // 6. Construir períodos ocupados
+    const busyPeriods: { start: Date; end: Date }[] = [];
+
+    appointments?.forEach((apt) => {
+      const aptStart = new Date(apt.scheduled_at);
+      const aptServiceDuration = (apt.services as any)?.duration || 30;
+      const aptEnd = new Date(aptStart.getTime() + aptServiceDuration * 60000);
+      const aptEndWithBreak = new Date(aptEnd.getTime() + breakTime * 60000);
+      busyPeriods.push({ start: aptStart, end: aptEndWithBreak });
+    });
+
+    // 7. Ordenar e mesclar períodos sobrepostos
+    busyPeriods.sort((a, b) => a.start.getTime() - b.start.getTime());
+    const mergedBusyPeriods: { start: Date; end: Date }[] = [];
+    
+    if (busyPeriods.length > 0) {
+      let current = { ...busyPeriods[0] };
+      for (let i = 1; i < busyPeriods.length; i++) {
+        const next = busyPeriods[i];
+        if (next.start <= current.end) {
+          current.end = new Date(Math.max(current.end.getTime(), next.end.getTime()));
+        } else {
+          mergedBusyPeriods.push(current);
+          current = { ...next };
+        }
+      }
+      mergedBusyPeriods.push(current);
+    }
+
+    // 8. Helper para arredondar para múltiplo de 5 minutos
+    const roundToNext5 = (d: Date) => {
+      const mins = d.getMinutes();
+      const remainder = mins % 5;
+      if (remainder !== 0) {
+        d.setMinutes(mins + (5 - remainder));
+      }
+      d.setSeconds(0, 0);
+      return d;
+    };
+
+    // 9. Gerar slots disponíveis
+    const slots: { time: string; available: boolean }[] = [];
+    let cursor = roundToNext5(new Date(workStart));
+    const stepMs = (serviceDuration + breakTime) * 60000;
+
+    // Obter hora atual no timezone brasileiro
+    const now = new Date();
+    const nowBrazil = new Date(now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+
+    while (new Date(cursor.getTime() + serviceDuration * 60000) <= workEnd) {
+      const slotStart = new Date(cursor);
+      const slotEnd = new Date(slotStart.getTime() + serviceDuration * 60000);
+
+      // Verificar se o horário já passou
+      const isPastTime = slotStart <= nowBrazil;
+
+      let available = true;
+
+      if (isPastTime) {
+        available = false;
+      } else {
+        // Verificar colisão com períodos ocupados
+        for (const busy of mergedBusyPeriods) {
+          if (slotStart < busy.end && slotEnd > busy.start) {
+            available = false;
+            break;
+          }
+        }
+      }
+
+      slots.push({ 
+        time: slotStart.toTimeString().slice(0, 5), 
+        available 
+      });
+
+      cursor = new Date(cursor.getTime() + stepMs);
+      cursor = roundToNext5(cursor);
+    }
+
+    console.log('[getBarberAvailableTimeSlots] Slots gerados:', slots.length);
+    return slots;
+
+  } catch (error) {
+    console.error('[getBarberAvailableTimeSlots] Erro inesperado:', error);
+    return [];
+  }
+}
+
+/**
+ * Busca horários disponíveis combinando TODOS os barbeiros (Plano PRO - Atribuição Automática)
+ * Retorna todos os horários onde PELO MENOS UM barbeiro está disponível
+ */
+export async function getAllBarbersAvailableTimeSlots(
+  barbershopId: string,
+  serviceId: string,
+  date: string
+): Promise<{ time: string; available: boolean; availableBarbers?: string[] }[]> {
+  try {
+    console.log('[getAllBarbersAvailableTimeSlots] 🔍 Iniciando busca de horários combinados');
+    console.log('[getAllBarbersAvailableTimeSlots] Params:', { barbershopId, serviceId, date });
+
+    // 1. Buscar todos os barbeiros ativos que oferecem este serviço
+    const activeBarbers = await getActiveBarbersForService(barbershopId, serviceId);
+    
+    if (activeBarbers.length === 0) {
+      console.log('[getAllBarbersAvailableTimeSlots] ❌ Nenhum barbeiro disponível para este serviço');
+      return [];
+    }
+
+    console.log('[getAllBarbersAvailableTimeSlots] ✅ Barbeiros encontrados:', activeBarbers.length);
+    console.log('[getAllBarbersAvailableTimeSlots] Barbeiros:', activeBarbers.map(b => ({ id: b.id, name: b.name })));
+
+    // 2. Buscar horários disponíveis de cada barbeiro
+    console.log('[getAllBarbersAvailableTimeSlots] 📅 Buscando horários de cada barbeiro...');
+    const allBarberSlots = await Promise.all(
+      activeBarbers.map(async (barber) => {
+        console.log(`[getAllBarbersAvailableTimeSlots] Buscando horários de ${barber.name}...`);
+        const slots = await getBarberAvailableTimeSlots(
+          barbershopId,
+          barber.id,
+          serviceId,
+          date
+        );
+        console.log(`[getAllBarbersAvailableTimeSlots] ${barber.name}: ${slots.length} slots (${slots.filter(s => s.available).length} disponíveis)`);
+        return { barberId: barber.id, barberName: barber.name, slots };
+      })
+    );
+
+    // 3. Criar um mapa de horários combinados
+    const timeSlotMap = new Map<string, { available: boolean; availableBarbers: string[] }>();
+
+    // Adicionar todos os horários de todos os barbeiros
+    allBarberSlots.forEach(({ barberId, barberName, slots }) => {
+      slots.forEach(slot => {
+        if (!timeSlotMap.has(slot.time)) {
+          timeSlotMap.set(slot.time, { available: false, availableBarbers: [] });
+        }
+        
+        const current = timeSlotMap.get(slot.time)!;
+        
+        // Se este barbeiro está disponível neste horário, adicionar à lista
+        if (slot.available) {
+          current.available = true;
+          current.availableBarbers.push(barberId);
+        }
+      });
+    });
+
+    // 4. Converter mapa para array e ordenar por horário
+    const combinedSlots = Array.from(timeSlotMap.entries())
+      .map(([time, data]) => ({
+        time,
+        available: data.available,
+        availableBarbers: data.availableBarbers
+      }))
+      .sort((a, b) => a.time.localeCompare(b.time));
+
+    const availableCount = combinedSlots.filter(s => s.available).length;
+    console.log('[getAllBarbersAvailableTimeSlots] ✅ Slots combinados:', combinedSlots.length, `(${availableCount} disponíveis)`);
+    console.log('[getAllBarbersAvailableTimeSlots] Horários disponíveis:', combinedSlots.filter(s => s.available).map(s => s.time).join(', '));
+    
+    return combinedSlots;
+
+  } catch (error) {
+    console.error('[getAllBarbersAvailableTimeSlots] Erro inesperado:', error);
+    return [];
+  }
+}
+
+/**
+ * Função inteligente que decide qual lógica usar baseado no plano
+ * - Plano PRO + barberId específico: usa horários do barbeiro
+ * - Plano PRO + sem barberId (atribuição automática): combina horários de todos os barbeiros
+ * - Outros casos: usa horários da barbearia
+ */
+export async function getAvailableTimeSlotsV2(
+  barbershopId: string,
+  serviceId: string,
+  date: string,
+  barberId?: string
+): Promise<{ time: string; available: boolean; availableBarbers?: string[] }[]> {
+  try {
+    // 1. Buscar plano da barbearia
+    const { data: barbershop, error: barbershopError } = await supabase
+      .from('barbershops')
+      .select('plan_type')
+      .eq('id', barbershopId)
+      .single();
+
+    if (barbershopError || !barbershop) {
+      console.error('[getAvailableTimeSlotsV2] Erro ao buscar barbearia:', barbershopError);
+      return [];
+    }
+
+    const planType = barbershop.plan_type;
+    const isPro = planType === 'pro';
+
+    console.log('[getAvailableTimeSlotsV2] Plano detectado:', planType, 'barberId:', barberId);
+
+    // 2. Decidir qual lógica usar
+    if (isPro) {
+      if (barberId) {
+        // ✅ PLANO PRO + BARBEIRO ESPECÍFICO: Usar horários do barbeiro selecionado
+        console.log('[getAvailableTimeSlotsV2] Usando horários do barbeiro específico (PRO)');
+        return await getBarberAvailableTimeSlots(barbershopId, barberId, serviceId, date);
+      } else {
+        // ✅ PLANO PRO + ATRIBUIÇÃO AUTOMÁTICA: Combinar horários de todos os barbeiros
+        console.log('[getAvailableTimeSlotsV2] Usando horários combinados de todos os barbeiros (PRO - Auto)');
+        return await getAllBarbersAvailableTimeSlots(barbershopId, serviceId, date);
+      }
+    } else {
+      // ✅ PLANO STARTER/FREEMIUM: Usar horários da barbearia
+      console.log('[getAvailableTimeSlotsV2] Usando horários da barbearia (Starter/Freemium)');
+      return await getAvailableTimeSlots(barbershopId, serviceId, date);
+    }
+
+  } catch (error) {
+    console.error('[getAvailableTimeSlotsV2] Erro inesperado:', error);
+    return [];
+  }
+}
+
+/**
+ * Valida se um horário específico está disponível para um barbeiro
+ * Útil para validação antes de criar agendamento
+ */
+export async function validateBarberTimeSlot(
+  barbershopId: string,
+  barberId: string,
+  serviceId: string,
+  scheduledAt: string
+): Promise<{ valid: boolean; reason?: string }> {
+  try {
+    const date = scheduledAt.split('T')[0];
+    const time = scheduledAt.split('T')[1].slice(0, 5);
+
+    // Buscar slots disponíveis
+    const slots = await getBarberAvailableTimeSlots(barbershopId, barberId, serviceId, date);
+
+    // Verificar se o horário solicitado está disponível
+    const requestedSlot = slots.find(slot => slot.time === time);
+
+    if (!requestedSlot) {
+      return {
+        valid: false,
+        reason: 'Horário fora do expediente do barbeiro'
+      };
+    }
+
+    if (!requestedSlot.available) {
+      return {
+        valid: false,
+        reason: 'Horário já ocupado'
+      };
+    }
+
+    return { valid: true };
+
+  } catch (error) {
+    console.error('[validateBarberTimeSlot] Erro:', error);
+    return {
+      valid: false,
+      reason: 'Erro ao validar horário'
+    };
+  }
+}

@@ -17,13 +17,21 @@ import type { RecurringAppointment, Customer, Service } from "@/lib/supabase";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
+interface Barber {
+  id: string;
+  name: string;
+  photo_url?: string;
+}
+
 interface RecurringAppointmentWithDetails extends RecurringAppointment {
   customer?: Customer;
   service?: Service;
+  barber?: Barber;
 }
 
 interface RecurringAppointmentsProps {
   barbershopId: string;
+  isPro?: boolean;
 }
 
 const frequencyLabels = {
@@ -34,16 +42,18 @@ const frequencyLabels = {
 
 const dayLabels = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 
-export function RecurringAppointments({ barbershopId }: RecurringAppointmentsProps) {
+export function RecurringAppointments({ barbershopId, isPro = false }: RecurringAppointmentsProps) {
   const [recurringAppointments, setRecurringAppointments] = useState<RecurringAppointmentWithDetails[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [services, setServices] = useState<Service[]>([]);
+  const [barbers, setBarbers] = useState<Barber[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingRecurring, setEditingRecurring] = useState<RecurringAppointment | null>(null);
   const [formData, setFormData] = useState({
     customer_id: "",
     service_id: "",
+    barber_id: "",
     frequency: "weekly" as "weekly" | "biweekly" | "monthly",
     day_of_week: "1",
     time_of_day: "14:00",
@@ -66,7 +76,8 @@ export function RecurringAppointments({ barbershopId }: RecurringAppointmentsPro
       await Promise.all([
         fetchRecurringAppointments(),
         fetchCustomers(),
-        fetchServices()
+        fetchServices(),
+        isPro ? fetchBarbers() : Promise.resolve()
       ]);
     } finally {
       setLoading(false);
@@ -80,7 +91,8 @@ export function RecurringAppointments({ barbershopId }: RecurringAppointmentsPro
         .select(`
           *,
           customer:customers(id, name, phone),
-          service:services(id, name, price, duration)
+          service:services(id, name, price, duration),
+          barber:barbers(id, name, photo_url)
         `)
         .eq("barbershop_id", barbershopId)
         .order("created_at", { ascending: false });
@@ -89,6 +101,22 @@ export function RecurringAppointments({ barbershopId }: RecurringAppointmentsPro
       setRecurringAppointments(data || []);
     } catch (error) {
       console.error("Erro ao carregar agendamentos recorrentes:", error);
+    }
+  };
+
+  const fetchBarbers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("barbers")
+        .select("id, name, photo_url")
+        .eq("barbershop_id", barbershopId)
+        .eq("is_active", true)
+        .order("display_order", { ascending: true });
+
+      if (error) throw error;
+      setBarbers(data || []);
+    } catch (error) {
+      console.error("Erro ao carregar barbeiros:", error);
     }
   };
 
@@ -127,6 +155,7 @@ export function RecurringAppointments({ barbershopId }: RecurringAppointmentsPro
     setFormData({
       customer_id: "",
       service_id: "",
+      barber_id: "",
       frequency: "weekly",
       day_of_week: "1",
       time_of_day: "14:00",
@@ -141,7 +170,7 @@ export function RecurringAppointments({ barbershopId }: RecurringAppointmentsPro
     e.preventDefault();
 
     try {
-      const recurringData = {
+      const recurringData: any = {
         barbershop_id: barbershopId,
         customer_id: formData.customer_id,
         service_id: formData.service_id,
@@ -153,6 +182,11 @@ export function RecurringAppointments({ barbershopId }: RecurringAppointmentsPro
         notes: formData.notes || null,
         is_active: true
       };
+
+      // Adicionar barbeiro se Plano PRO e selecionado
+      if (isPro && formData.barber_id) {
+        recurringData.barber_id = formData.barber_id;
+      }
 
       if (editingRecurring) {
         const { error } = await supabase
@@ -196,6 +230,7 @@ export function RecurringAppointments({ barbershopId }: RecurringAppointmentsPro
     setFormData({
       customer_id: recurring.customer_id,
       service_id: recurring.service_id,
+      barber_id: recurring.barber_id || "",
       frequency: recurring.frequency,
       day_of_week: recurring.day_of_week?.toString() || "1",
       time_of_day: recurring.time_of_day,
@@ -356,6 +391,32 @@ export function RecurringAppointments({ barbershopId }: RecurringAppointmentsPro
                 </Select>
               </div>
 
+              {/* Barbeiro (Plano PRO) */}
+              {isPro && barbers.length > 0 && (
+                <div>
+                  <Label htmlFor="barber_id">Barbeiro (Opcional)</Label>
+                  <Select
+                    value={formData.barber_id || "auto"}
+                    onValueChange={(value) => setFormData({ ...formData, barber_id: value === "auto" ? "" : value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Atribuição automática" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="auto">Atribuição Automática</SelectItem>
+                      {barbers.map((barber) => (
+                        <SelectItem key={barber.id} value={barber.id}>
+                          {barber.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Barbeiro fixo para este agendamento recorrente
+                  </p>
+                </div>
+              )}
+
               <div>
                 <Label htmlFor="frequency">Frequência *</Label>
                 <Select
@@ -504,12 +565,17 @@ export function RecurringAppointments({ barbershopId }: RecurringAppointmentsPro
                   <div className="flex items-start justify-between">
                     <div className="flex-1 space-y-2">
                       {/* Cliente e Serviço */}
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <User className="h-4 w-4 text-muted-foreground" />
                         <span className="font-semibold">{recurring.customer?.name}</span>
                         <Badge variant="outline" className="text-xs">
                           {recurring.service?.name}
                         </Badge>
+                        {recurring.barber && (
+                          <Badge variant="secondary" className="text-xs bg-purple-500/10 text-purple-600 border-purple-500/20">
+                            {recurring.barber.name}
+                          </Badge>
+                        )}
                       </div>
 
                       {/* Recorrência */}

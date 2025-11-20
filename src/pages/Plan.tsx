@@ -33,29 +33,34 @@ const Plan = () => {
     starter: {
       maxAppointmentsPerDay: 999,
       maxServices: 999,
-      name: 'Premium',
+      name: 'Starter',
       price: 'R$ 49,90/mês',
       oldPrice: 'R$ 97,00',
       features: [
+        '1 profissional',
         'Agendamentos ilimitados',
         'Serviços ilimitados',
-        'Domínio personalizado',
         'WhatsApp integrado',
-        'Suporte prioritário',
-        'Relatórios básicos'
+        'Mensagens automáticas',
+        'Gestão de clientes',
+        'Lembretes automáticos',
+        'Suporte prioritário'
       ]
     },
     pro: {
       maxAppointmentsPerDay: 999,
       maxServices: 999,
       name: 'Pro',
-      price: 'R$ 69/mês',
+      price: 'R$ 99,90/mês',
       features: [
         'Tudo do Starter',
-        'Integrações automáticas',
-        'Suporte Prioritário',
-        'Relatórios avançados',
-        'API personalizada'
+        'Até 10 barbeiros',
+        'Agenda individual por barbeiro',
+        'Cliente escolhe o barbeiro',
+        'Horários personalizados',
+        'Relatórios por profissional',
+        'WhatsApp centralizado',
+        'Suporte VIP 24/7'
       ]
     }
   };
@@ -183,12 +188,7 @@ const Plan = () => {
                     </div>
                   )}
                   
-                  {/* Badge EM BREVE para plano Pro */}
-                  {planKey === 'pro' && (
-                    <div className="absolute top-2 right-2 bg-yellow-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md">
-                      EM BREVE
-                    </div>
-                  )}
+
                   
                   <div className="plan-card-header text-center mb-4">
                     <h3 className="plan-card-title text-lg md:text-xl font-bold">{plan.name}</h3>
@@ -213,19 +213,13 @@ const Plan = () => {
                   </ul>
                   
                   {currentPlan !== planKey && planKey !== 'freemium' && (
-                    planKey === 'pro' ? (
-                      <Button className="plan-card-button w-full" disabled variant="outline">
-                        Em Breve
-                      </Button>
-                    ) : (
-                      <UpgradeButton 
-                        className="plan-card-button w-full" 
-                        variant="outline"
-                        planType={planKey as 'starter' | 'pro'}
-                      >
-                        {currentPlan === 'freemium' ? 'Assinar Agora' : 'Mudar de Plano'}
-                      </UpgradeButton>
-                    )
+                    <UpgradeButton 
+                      className="plan-card-button w-full" 
+                      variant="outline"
+                      planType={planKey as 'starter' | 'pro'}
+                    >
+                      {currentPlan === 'freemium' ? 'Assinar Agora' : 'Mudar de Plano'}
+                    </UpgradeButton>
                   )}
                   
                   {currentPlan === planKey && (

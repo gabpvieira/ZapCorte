@@ -104,8 +104,13 @@ export function useDashboardData(barbershopId: string | undefined) {
       const maxAppointmentsPerDay = planType === 'freemium' ? 5 : 999;
       const maxServices = planType === 'freemium' ? 4 : 999;
       
-      // Exibir "Premium" para plano "starter"
-      const displayPlanType = planType === 'starter' ? 'premium' : planType;
+      // Mapear nomes de exibição dos planos
+      const planDisplayNames: Record<string, string> = {
+        'freemium': 'Gratuito',
+        'starter': 'Starter',
+        'pro': 'PRO'
+      };
+      const displayPlanType = planDisplayNames[planType] || planType;
       
       setStats({
         todayAppointments: todayAppointmentsCount,
