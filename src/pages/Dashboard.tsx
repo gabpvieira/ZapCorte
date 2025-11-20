@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, User, TrendingUp, ExternalLink, AlertCircle, Eye, SquarePen, Trash2, Phone, Plus, Scissors, CalendarCheck, Zap } from "lucide-react";
+import { Calendar, Clock, User, TrendingUp, ExternalLink, AlertCircle, Eye, SquarePen, Trash2, Phone, Plus, Scissors, CalendarCheck, Zap, Copy } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
@@ -589,17 +589,41 @@ const Dashboard = () => {
     );
   }
 
+  // Função para copiar link
+  const copyBarbershopLink = async () => {
+    const link = `${window.location.origin}/barbershop/${barbershop.slug}`;
+    try {
+      await navigator.clipboard.writeText(link);
+      toast({
+        title: "Link copiado!",
+        description: "O link da sua barbearia foi copiado para a área de transferência.",
+      });
+    } catch (error) {
+      toast({
+        title: "Erro ao copiar",
+        description: "Não foi possível copiar o link. Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <DashboardLayout
       title="Dashboard"
       subtitle="Bem-vindo de volta!"
       action={
-        <Button asChild>
-          <Link to={`/barbershop/${barbershop.slug}`}>
-            <ExternalLink className="mr-2 h-4 w-4" />
-            Ver Meu Site
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={copyBarbershopLink}>
+            <Copy className="mr-2 h-4 w-4" />
+            Copiar Link
+          </Button>
+          <Button asChild>
+            <Link to={`/barbershop/${barbershop.slug}`}>
+              <ExternalLink className="mr-2 h-4 w-4" />
+              Ver Meu Site
+            </Link>
+          </Button>
+        </div>
       }
     >
       <div className="space-y-6 md:space-y-8">
