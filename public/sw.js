@@ -1,8 +1,8 @@
 // Service Worker para Web Push Notifications
 // ZapCorte - Sistema de Notificações Nativo
 
-const CACHE_NAME = 'zapcorte-v2.3'; // Incrementar versão para forçar atualização
-const CACHE_VERSION = '2.3.0';
+const CACHE_NAME = 'zapcorte-v2.4.0'; // Incrementar versão para forçar atualização
+const CACHE_VERSION = '2.4.0';
 
 // Instalação do Service Worker
 self.addEventListener('install', (event) => {

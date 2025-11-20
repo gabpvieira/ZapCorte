@@ -6,12 +6,23 @@
 (function() {
   'use strict';
   
-  const APP_VERSION = '2.3.0';
+  const APP_VERSION = '2.4.0';
   const VERSION_KEY = 'zapcorte_version';
   const LAST_CHECK_KEY = 'zapcorte_last_check';
   const UPDATE_IN_PROGRESS_KEY = 'zapcorte_updating';
   
-  console.log('[Update Manager] Iniciando verificação...');
+  // Verificar se está rodando como PWA instalado
+  const isPWA = window.matchMedia('(display-mode: standalone)').matches || 
+                window.navigator.standalone === true ||
+                document.referrer.includes('android-app://');
+  
+  // Se não for PWA, não fazer nada
+  if (!isPWA) {
+    console.log('[Update Manager] Não é PWA, pulando verificação de atualização');
+    return;
+  }
+  
+  console.log('[Update Manager] PWA detectado, iniciando verificação...');
   
   // Verificar se já está atualizando (evitar loop)
   const isUpdating = sessionStorage.getItem(UPDATE_IN_PROGRESS_KEY);

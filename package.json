@@ -1,7 +1,7 @@
 {
   "name": "vite_react_shadcn_ts",
   "private": true,
-  "version": "2.3.0",
+  "version": "2.4.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,7 +11,7 @@
     "preview": "vite preview",
     "generate-icons": "node scripts/generate-icons.js",
     "pwa:check": "node -e \"console.log('Verificando PWA...'); import('./src/lib/serviceWorker.ts').then(() => console.log('✅ Service Worker OK'))\"",
-    "version:update": "node scripts/update-version.js"
+    "version:update": "node scripts/update-version.cjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
