@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { motion } from "framer-motion";
 import logotipo from "@/assets/zapcorte-icon.png";
 import { DashboardSidebar } from "./DashboardSidebar";
+import { NotificationMenu } from "./NotificationMenu";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -65,11 +66,15 @@ export const DashboardLayout = ({
                       </p>
                     )}
                   </div>
-                  {action && (
-                    <div className="dashboard-header-actions flex items-center gap-2 w-full md:w-auto">
-                      {action}
-                    </div>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {/* Menu de Notificações */}
+                    <NotificationMenu />
+                    {action && (
+                      <div className="dashboard-header-actions flex items-center gap-2 w-full md:w-auto">
+                        {action}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
