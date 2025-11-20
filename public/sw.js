@@ -8,7 +8,7 @@ const CACHE_VERSION = '2.3.0';
 self.addEventListener('install', (event) => {
   console.log('[SW] Service Worker instalado - Versão:', CACHE_VERSION);
   // skipWaiting força a ativação imediata do novo service worker
-  self.skipWaiting();
+  event.waitUntil(self.skipWaiting());
 });
 
 // Ativação do Service Worker

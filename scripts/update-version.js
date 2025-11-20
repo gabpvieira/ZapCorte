@@ -27,6 +27,11 @@ const files = [
     replacement: `export const APP_VERSION = '${newVersion}'`
   },
   {
+    path: 'public/update-manager.js',
+    pattern: /const APP_VERSION = '[^']+'/,
+    replacement: `const APP_VERSION = '${newVersion}'`
+  },
+  {
     path: 'public/sw.js',
     patterns: [
       {
