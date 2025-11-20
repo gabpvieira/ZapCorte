@@ -45,6 +45,8 @@ interface NewAppointmentModalProps {
   services: Service[];
   onSuccess: () => void;
   isPro: boolean;
+  initialDate?: Date | null;
+  initialTime?: string;
 }
 
 export function NewAppointmentModal({
@@ -53,7 +55,9 @@ export function NewAppointmentModal({
   barbershopId,
   services,
   onSuccess,
-  isPro
+  isPro,
+  initialDate = null,
+  initialTime = ""
 }: NewAppointmentModalProps) {
   const { toast } = useToast();
   
@@ -76,6 +80,18 @@ export function NewAppointmentModal({
   const [barbers, setBarbers] = useState<Barber[]>([]);
   const [selectedBarberId, setSelectedBarberId] = useState<string | null>(null);
   const [loadingBarbers, setLoadingBarbers] = useState(false);
+
+  // Aplicar valores iniciais quando o modal abrir
+  useEffect(() => {
+    if (open) {
+      if (initialDate) {
+        setSelectedDate(initialDate);
+      }
+      if (initialTime) {
+        setSelectedTime(initialTime);
+      }
+    }
+  }, [open, initialDate, initialTime]);
 
   // Buscar clientes quando o modal abre
   useEffect(() => {

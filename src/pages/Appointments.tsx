@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Edit, Trash2, Calendar, Clock, Phone, User, Filter, Eye, RefreshCw, X, CheckCircle, List, Zap } from "lucide-react";
+import { Plus, Edit, Trash2, Calendar, Clock, Phone, User, Filter, Eye, RefreshCw, X, CheckCircle, List, Zap, Scissors } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -685,7 +685,7 @@ const Appointments = () => {
     }
   };
 
-  // Nova função para salvar alterações (status + observações)
+  // Função para salvar alterações de status
   const saveAppointmentChanges = async (appointment: Appointment | null) => {
     if (!appointment) return;
 
@@ -702,42 +702,73 @@ const Appointments = () => {
         .eq("id", appointment.id)
         .single();
 
-      if (fetchError) throw fetchError;
+      if (fetchError) {
+        console.error('Erro ao buscar dados originais:', fetchError);
+        throw fetchError;
+      }
 
       const statusChanged = originalData.status !== appointment.status;
-      const wasCancelled = appointment.status === 'cancelled' && statusChanged;
+      const newStatus = appointment.status;
 
-      // Atualizar no banco
+      // Atualizar no banco (sem notes, pois a coluna não existe)
       const { error } = await supabase
         .from("appointments")
         .update({ 
-          status: appointment.status,
-          notes: appointment.notes || null
+          status: newStatus
         })
         .eq("id", appointment.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao atualizar agendamento:', error);
+        throw error;
+      }
 
-      // Se foi cancelado, enviar mensagem WhatsApp
-      if (wasCancelled) {
+      // Enviar mensagens WhatsApp baseado na mudança de status
+      if (statusChanged && originalData) {
+        const serviceName = originalData.service?.name || 'Serviço';
+        const barbershopSlug = originalData.barbershop?.slug || '';
+
         try {
-          const serviceName = originalData.service?.name || 'Serviço';
-          const barbershopSlug = originalData.barbershop?.slug || '';
+          if (newStatus === 'cancelled') {
+            // Enviar mensagem de cancelamento
+            const { enviarCancelamentoWhatsApp } = await import('@/lib/notifications');
+            await enviarCancelamentoWhatsApp({
+              barbershopId: originalData.barbershop_id,
+              barbershopSlug: barbershopSlug,
+              customerName: originalData.customer_name,
+              customerPhone: originalData.customer_phone,
+              scheduledAt: originalData.scheduled_at,
+              serviceName: serviceName,
+              appointmentId: appointment.id,
+            });
 
-          const { enviarCancelamentoWhatsApp } = await import('@/lib/notifications');
-          await enviarCancelamentoWhatsApp({
-            barbershopId: originalData.barbershop_id,
-            barbershopSlug: barbershopSlug,
-            customerName: originalData.customer_name,
-            customerPhone: originalData.customer_phone,
-            scheduledAt: originalData.scheduled_at,
-            serviceName: serviceName,
-          });
+            toast({
+              title: "Alterações Salvas! ✅",
+              description: "Agendamento cancelado e cliente notificado via WhatsApp.",
+            });
+          } else if (newStatus === 'confirmed') {
+            // Enviar mensagem de confirmação
+            const { enviarLembreteWhatsApp } = await import('@/lib/notifications');
+            await enviarLembreteWhatsApp({
+              barbershopId: originalData.barbershop_id,
+              customerName: originalData.customer_name,
+              customerPhone: originalData.customer_phone,
+              scheduledAt: originalData.scheduled_at,
+              serviceName: serviceName,
+              tipo: 'confirmacao',
+              appointmentId: appointment.id,
+            });
 
-          toast({
-            title: "Alterações Salvas! ✅",
-            description: "Agendamento cancelado e cliente notificado via WhatsApp.",
-          });
+            toast({
+              title: "Alterações Salvas! ✅",
+              description: "Agendamento confirmado e cliente notificado via WhatsApp.",
+            });
+          } else {
+            toast({
+              title: "Alterações Salvas! ✅",
+              description: "As alterações foram salvas com sucesso.",
+            });
+          }
         } catch (whatsappError) {
           console.error('Erro ao enviar WhatsApp:', whatsappError);
           toast({
@@ -755,6 +786,7 @@ const Appointments = () => {
       fetchAppointments();
       closeViewModal();
     } catch (error) {
+      console.error('Erro geral ao salvar:', error);
       toast({
         title: "Erro",
         description: "Não foi possível salvar as alterações.",
@@ -1781,162 +1813,207 @@ const Appointments = () => {
     </Tabs>
 
       {/* Modal de Visualização Otimizado */}
+      {/* Modal de Visualização - Design Minimalista Moderno */}
       <Dialog open={viewModalOpen} onOpenChange={setViewModalOpen}>
-        <DialogContent className="max-w-[95vw] sm:max-w-md max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-lg">Detalhes do Agendamento</DialogTitle>
-          </DialogHeader>
-          
+        <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-lg max-h-[calc(100vh-2rem)] p-0 gap-0 overflow-hidden">
           {selectedAppointment && (
-            <div className="space-y-4">
-              {/* Info Cards */}
-              <div className="space-y-3">
-                <div className="bg-muted/50 rounded-lg p-3">
-                  <label className="text-xs text-muted-foreground">Cliente</label>
-                  <p className="font-semibold">{selectedAppointment.customer_name}</p>
-                </div>
+            <div className="flex flex-col h-full max-h-[calc(100vh-2rem)]">
+              {/* Header Fixo */}
+              <div className="flex-shrink-0 px-6 py-4 border-b">
+                <DialogHeader className="space-y-1">
+                  <DialogTitle className="text-xl font-bold">Agendamento</DialogTitle>
+                  <p className="text-sm text-muted-foreground">
+                    {format(parseISO(selectedAppointment.scheduled_at), "EEEE, dd 'de' MMMM", { locale: ptBR })}
+                  </p>
+                </DialogHeader>
+              </div>
 
-                <div className="bg-muted/50 rounded-lg p-3">
-                  <label className="text-xs text-muted-foreground">Telefone</label>
-                  <a href={`tel:${selectedAppointment.customer_phone}`} className="font-semibold text-primary hover:underline flex items-center gap-1">
-                    <Phone className="h-3.5 w-3.5" />
-                    {formatPhone(selectedAppointment.customer_phone)}
-                  </a>
-                </div>
-
-                <div className="flex gap-3">
-                  <div className="bg-muted/50 rounded-lg p-3 flex-1 min-w-0">
-                    <label className="text-xs text-muted-foreground block mb-1">Data</label>
-                    <p className="font-semibold text-sm truncate">
-                      {formatDate(selectedAppointment.scheduled_at)}
-                    </p>
-                  </div>
-                  <div className="bg-muted/50 rounded-lg p-3 flex-shrink-0 w-24">
-                    <label className="text-xs text-muted-foreground block mb-1">Horário</label>
-                    <p className="font-semibold text-sm text-center">{formatTime(selectedAppointment.scheduled_at)}</p>
-                  </div>
-                </div>
-
-                {selectedAppointment.service && (
-                  <div className="bg-muted/50 rounded-lg p-3">
-                    <label className="text-xs text-muted-foreground">Serviço</label>
-                    <p className="font-semibold">{selectedAppointment.service.name}</p>
-                    <p className="text-sm text-primary font-semibold">R$ {selectedAppointment.service.price.toFixed(2)}</p>
-                  </div>
-                )}
-
-                {/* Barbeiro - Apenas para PRO */}
-                {planLimits.features.multipleBarbers && selectedAppointment.barber && (
-                  <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 border border-blue-200 dark:border-blue-800">
-                    <label className="text-xs text-muted-foreground">Barbeiro Responsável</label>
-                    <div className="flex items-center gap-2 mt-1">
-                      <div className="h-8 w-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-semibold text-sm">
-                        {selectedAppointment.barber.name.charAt(0).toUpperCase()}
+              {/* Conteúdo Scrollável */}
+              <div className="flex-1 overflow-y-auto px-6 py-4">
+                <div className="space-y-4">
+                  {/* Cliente e Telefone - Cards Lado a Lado */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Cliente</Label>
+                      <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/30 border">
+                        <User className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                        <p className="font-medium text-sm truncate">{selectedAppointment.customer_name}</p>
                       </div>
-                      <div>
-                        <p className="font-semibold text-blue-900 dark:text-blue-100">{selectedAppointment.barber.name}</p>
-                        {selectedAppointment.barber.phone && (
-                          <p className="text-xs text-blue-700 dark:text-blue-300">{selectedAppointment.barber.phone}</p>
-                        )}
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Telefone</Label>
+                      <a 
+                        href={`tel:${selectedAppointment.customer_phone}`}
+                        className="flex items-center gap-2 p-3 rounded-lg bg-muted/30 border hover:bg-muted/50 transition-colors"
+                      >
+                        <Phone className="h-4 w-4 text-primary flex-shrink-0" />
+                        <span className="font-medium text-sm text-primary truncate">{formatPhone(selectedAppointment.customer_phone)}</span>
+                      </a>
+                    </div>
+                  </div>
+
+                  {/* Data e Horário */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Data</Label>
+                      <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/30 border">
+                        <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                        <p className="font-medium text-sm">{formatDate(selectedAppointment.scheduled_at)}</p>
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Horário</Label>
+                      <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/30 border">
+                        <Clock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                        <p className="font-medium text-sm">{formatTime(selectedAppointment.scheduled_at)}</p>
                       </div>
                     </div>
                   </div>
-                )}
+
+                  {/* Serviço */}
+                  {selectedAppointment.service && (
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Serviço</Label>
+                      <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Scissors className="h-4 w-4 text-primary flex-shrink-0" />
+                            <p className="font-medium text-sm">{selectedAppointment.service.name}</p>
+                          </div>
+                          <p className="text-sm font-bold text-primary">R$ {selectedAppointment.service.price.toFixed(2)}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Barbeiro - Apenas para PRO */}
+                  {planLimits.features.multipleBarbers && selectedAppointment.barber && (
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Barbeiro Responsável</Label>
+                      <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 text-white flex items-center justify-center font-bold text-base shadow-md">
+                            {selectedAppointment.barber.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-sm text-blue-900 dark:text-blue-100 truncate">
+                              {selectedAppointment.barber.name}
+                            </p>
+                            {selectedAppointment.barber.phone && (
+                              <p className="text-xs text-blue-700 dark:text-blue-300 truncate">
+                                {selectedAppointment.barber.phone}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Status - Select Moderno */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Status</Label>
+                    <Select
+                      value={selectedAppointment.status}
+                      onValueChange={(value) => {
+                        setSelectedAppointment({
+                          ...selectedAppointment,
+                          status: value as "pending" | "confirmed" | "cancelled"
+                        });
+                      }}
+                      disabled={statusUpdateLoading}
+                    >
+                      <SelectTrigger className="h-11 border-2">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pending">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-yellow-500" />
+                            Pendente
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="confirmed">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-green-500" />
+                            Confirmado
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="cancelled">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-red-500" />
+                            Cancelado
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
               </div>
 
-              {/* Status */}
-              <div>
-                <Label className="text-xs text-muted-foreground">Status</Label>
-                <Select
-                  value={selectedAppointment.status}
-                  onValueChange={(value) => {
-                    // Atualizar apenas localmente
-                    setSelectedAppointment({
-                      ...selectedAppointment,
-                      status: value as "pending" | "confirmed" | "cancelled"
-                    });
-                  }}
-                  disabled={statusUpdateLoading}
-                >
-                  <SelectTrigger className="mt-1 h-9">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="pending">Pendente</SelectItem>
-                    <SelectItem value="confirmed">Confirmado</SelectItem>
-                    <SelectItem value="cancelled">Cancelado</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Observações */}
-              <div>
-                <Label className="text-xs text-muted-foreground">Observações</Label>
-                <Textarea
-                  value={selectedAppointment.notes || ''}
-                  onChange={(e) => {
-                    // Atualizar apenas localmente
-                    setSelectedAppointment({
-                      ...selectedAppointment,
-                      notes: e.target.value
-                    });
-                  }}
-                  placeholder="Adicione observações..."
-                  className="mt-1 text-sm"
-                  rows={3}
-                  disabled={statusUpdateLoading}
-                />
+              {/* Footer Fixo - Ações */}
+              <div className="flex-shrink-0 px-6 py-4 border-t bg-muted/20">
+                <div className="flex flex-col-reverse sm:flex-row gap-2">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setViewModalOpen(false)}
+                    className="flex-1 sm:flex-initial"
+                  >
+                    Fechar
+                  </Button>
+                  
+                  <div className="flex gap-2 flex-1">
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button 
+                          variant="destructive" 
+                          className="flex-1"
+                        >
+                          <Trash2 className="h-4 w-4 sm:mr-2" />
+                          <span className="hidden sm:inline">Excluir</span>
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-md">
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Tem certeza que deseja excluir este agendamento? Esta ação não pode ser desfeita.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => deleteAppointment(selectedAppointment?.id)}
+                          >
+                            Excluir
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                    
+                    <Button 
+                      onClick={() => saveAppointmentChanges(selectedAppointment)}
+                      disabled={statusUpdateLoading}
+                      className="flex-1"
+                    >
+                      {statusUpdateLoading ? (
+                        <>
+                          <div className="h-4 w-4 sm:mr-2 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                          <span className="hidden sm:inline">Salvando...</span>
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle className="h-4 w-4 sm:mr-2" />
+                          <span className="hidden sm:inline">Salvar</span>
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
               </div>
             </div>
           )}
-
-          <DialogFooter className="flex-col sm:flex-row gap-2">
-            <Button variant="outline" onClick={() => setViewModalOpen(false)} className="w-full sm:w-auto">
-              Fechar
-            </Button>
-            <Button 
-              onClick={() => saveAppointmentChanges(selectedAppointment)}
-              disabled={statusUpdateLoading}
-              className="w-full sm:w-auto"
-            >
-              {statusUpdateLoading ? (
-                <>
-                  <div className="h-4 w-4 mr-2 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Salvando...
-                </>
-              ) : (
-                <>
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                  Salvar Alterações
-                </>
-              )}
-            </Button>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive" className="w-full sm:w-auto">
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Excluir
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent className="max-w-[90vw] sm:max-w-md">
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Tem certeza que deseja excluir este agendamento? Esta ação não pode ser desfeita.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Voltar</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={() => deleteAppointment(selectedAppointment?.id)}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  >
-                    Excluir
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
 

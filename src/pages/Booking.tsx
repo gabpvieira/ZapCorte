@@ -568,7 +568,7 @@ const Booking = () => {
                         value={customerName}
                         onChange={(e) => setCustomerName(e.target.value)}
                         required
-                        className="h-11 sm:h-12 border-border/50 focus:border-primary transition-all"
+                        className="h-11 sm:h-12 border border-border/50 focus-visible:ring-0 focus-visible:border-primary/60 transition-all"
                         style={{ fontSize: '16px', WebkitTextSizeAdjust: '100%' }}
                       />
                     </div>
@@ -581,9 +581,25 @@ const Booking = () => {
                         type="tel"
                         placeholder="(11) 99999-9999"
                         value={customerPhone}
-                        onChange={(e) => setCustomerPhone(e.target.value)}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/\D/g, ''); // Remove tudo que não é número
+                          let formatted = '';
+                          
+                          if (value.length > 0) {
+                            formatted = '(' + value.substring(0, 2);
+                          }
+                          if (value.length >= 3) {
+                            formatted += ') ' + value.substring(2, 7);
+                          }
+                          if (value.length >= 8) {
+                            formatted += '-' + value.substring(7, 11);
+                          }
+                          
+                          setCustomerPhone(formatted);
+                        }}
                         required
-                        className="h-11 sm:h-12 border-border/50 focus:border-primary transition-all"
+                        maxLength={15}
+                        className="h-11 sm:h-12 border border-border/50 focus-visible:ring-0 focus-visible:border-primary/60 transition-all"
                         style={{ fontSize: '16px', WebkitTextSizeAdjust: '100%' }}
                       />
                       <p className="text-xs text-muted-foreground">

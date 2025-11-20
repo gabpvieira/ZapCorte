@@ -216,7 +216,7 @@ export async function enviarLembreteWhatsApp({
     // Buscar dados da barbearia e verificar se WhatsApp está conectado
     const { data: barbershop, error: barbershopError } = await supabase
       .from('barbershops')
-      .select('whatsapp_session_id, whatsapp_connected, name, user_id, confirmation_message, reminder_message, reschedule_message')
+      .select('whatsapp_session_id, whatsapp_connected, name, user_id, confirmation_message, reminder_message, reschedule_message, plan_type')
       .eq('id', barbershopId)
       .single();
 
@@ -230,8 +230,9 @@ export async function enviarLembreteWhatsApp({
       return false;
     }
 
-    // Buscar nome do barbeiro se appointmentId foi fornecido
-    const barbeiroNome = appointmentId ? await getBarberName(appointmentId) : 'Qualquer barbeiro disponível';
+    // Buscar nome do barbeiro APENAS se for plano PRO e appointmentId foi fornecido
+    const isPro = barbershop.plan_type === 'pro';
+    const barbeiroNome = (isPro && appointmentId) ? await getBarberName(appointmentId) : null;
 
     // Formatar data e hora
     const date = new Date(scheduledAt);
@@ -256,7 +257,7 @@ export async function enviarLembreteWhatsApp({
 
     // Mensagens padrão caso não haja personalização
     const mensagensPadrao = {
-      confirmacao: `✅ *Agendamento Confirmado!*
+      confirmacao: barbeiroNome ? `✅ *Agendamento Confirmado!*
 
 Olá *${primeiroNome}*! 
 
@@ -268,10 +269,23 @@ Seu agendamento foi *confirmado*:
 ✂️ *Serviço:* ${serviceName}
 🏪 *Local:* ${barbershop.name}
 
-${barbeiroNome !== 'Qualquer barbeiro disponível' ? `${barbeiroNome} te espera! 💈` : 'Nos vemos em breve! 💈'}
+${barbeiroNome} te espera! 💈
+
+_Mensagem enviada automaticamente pelo ZapCorte_` : `✅ *Agendamento Confirmado!*
+
+Olá *${primeiroNome}*! 
+
+Seu agendamento foi *confirmado*:
+
+📅 *Data:* ${diaSemana}, ${dataFormatada}
+� *Hoorário:* ${horaFormatada}
+✂️ *Serviço:* ${serviceName}
+🏪 *Local:* ${barbershop.name}
+
+Nos vemos em breve! 💈
 
 _Mensagem enviada automaticamente pelo ZapCorte_`,
-      lembrete: `⏰ *Lembrete de Agendamento*
+      lembrete: barbeiroNome ? `⏰ *Lembrete de Agendamento*
 
 Olá *${primeiroNome}*!
 
@@ -283,10 +297,23 @@ Este é um lembrete do seu agendamento:
 ✂️ *Serviço:* ${serviceName}
 🏪 *Local:* ${barbershop.name}
 
-${barbeiroNome !== 'Qualquer barbeiro disponível' ? `${barbeiroNome} está te esperando! 💈` : 'Te esperamos! 💈'}
+${barbeiroNome} está te esperando! 💈
+
+_Mensagem enviada automaticamente pelo ZapCorte_` : `⏰ *Lembrete de Agendamento*
+
+Olá *${primeiroNome}*!
+
+Este é um lembrete do seu agendamento:
+
+� *Data:* o${diaSemana}, ${dataFormatada}
+� *NHorário:* ${horaFormatada}
+✂️ *Serviço:* ${serviceName}
+🏪 *Local:* ${barbershop.name}
+
+Te esperamos! 💈
 
 _Mensagem enviada automaticamente pelo ZapCorte_`,
-      cancelamento: `❌ *Agendamento Cancelado*
+      cancelamento: barbeiroNome ? `❌ *Agendamento Cancelado*
 
 Olá *${primeiroNome}*, informamos que seu agendamento foi cancelado:
 
@@ -295,10 +322,20 @@ Olá *${primeiroNome}*, informamos que seu agendamento foi cancelado:
 🕐 *Horário:* ${horaFormatada}
 ✂️ *Serviço:* ${serviceName}
 
-${barbeiroNome !== 'Qualquer barbeiro disponível' ? `Para reagendar com ${barbeiroNome} ou outro profissional, entre em contato conosco.` : 'Para reagendar, entre em contato conosco.'}
+Para reagendar com ${barbeiroNome} ou outro profissional, entre em contato conosco.
+
+_Aviso automático - ZapCorte_` : `❌ *Agendamento Cancelado*
+
+Olá *${primeiroNome}*, informamos que seu agendamento foi cancelado:
+
+📅 *Data:* ${diaSemana}, ${dataFormatada}
+🕐 *Horário:* ${horaFormatada}
+✂️ *Serviço:* ${serviceName}
+
+Para reagendar, entre em contato conosco.
 
 _Aviso automático - ZapCorte_`,
-      reagendamento: `🔄 *Agendamento Reagendado!*
+      reagendamento: barbeiroNome ? `🔄 *Agendamento Reagendado!*
 
 Olá *${primeiroNome}*!
 
@@ -310,7 +347,20 @@ Seu agendamento foi reagendado com sucesso:
 ✂️ *Serviço:* ${serviceName}
 🏪 *Local:* ${barbershop.name}
 
-${barbeiroNome !== 'Qualquer barbeiro disponível' ? `${barbeiroNome} te espera no novo horário! 💈` : 'Te esperamos no novo horário! 💈'}
+${barbeiroNome} te espera no novo horário! 💈
+
+_Mensagem enviada automaticamente pelo ZapCorte_` : `🔄 *Agendamento Reagendado!*
+
+Olá *${primeiroNome}*!
+
+Seu agendamento foi reagendado com sucesso:
+
+📅 *Nova Data:* ${diaSemana}, ${dataFormatada}
+🕐 *Novo Horário:* ${horaFormatada}
+✂️ *Serviço:* ${serviceName}
+🏪 *Local:* ${barbershop.name}
+
+Te esperamos no novo horário! 💈
 
 _Mensagem enviada automaticamente pelo ZapCorte_`
     };
@@ -398,7 +448,7 @@ export async function enviarCancelamentoWhatsApp({
     // Buscar dados da barbearia e verificar se WhatsApp está conectado
     const { data: barbershop, error: barbershopError } = await supabase
       .from('barbershops')
-      .select('whatsapp_session_id, whatsapp_connected, name')
+      .select('whatsapp_session_id, whatsapp_connected, name, plan_type')
       .eq('id', barbershopId)
       .single();
 
@@ -412,8 +462,9 @@ export async function enviarCancelamentoWhatsApp({
       return false;
     }
 
-    // Buscar nome do barbeiro se appointmentId foi fornecido
-    const barbeiroNome = appointmentId ? await getBarberName(appointmentId) : 'Qualquer barbeiro disponível';
+    // Buscar nome do barbeiro APENAS se for plano PRO e appointmentId foi fornecido
+    const isPro = barbershop.plan_type === 'pro';
+    const barbeiroNome = (isPro && appointmentId) ? await getBarberName(appointmentId) : null;
 
     // Formatar data e hora
     const date = new Date(scheduledAt);
@@ -427,17 +478,28 @@ export async function enviarCancelamentoWhatsApp({
     const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://zapcorte.com';
     const linkBarbeiro = `${baseUrl}/barbershop/${barbershopSlug}`;
 
-    // Mensagem de cancelamento com link e nome do barbeiro
-    const mensagem = `❌ *Agendamento Cancelado*
+    // Mensagem de cancelamento com link (e nome do barbeiro apenas se PRO)
+    const mensagem = barbeiroNome ? `❌ *Agendamento Cancelado*
 
 Olá *${primeiroNome}*, informamos que seu agendamento foi cancelado:
 
-👤 *Barbeiro:* ${barbeiroNome}
+� *DBarbeiro:* ${barbeiroNome}
+� **Data:* ${dataFormatada}
+🕐 *Horário:* ${horaFormatada}
+✂️ *Serviço:* ${serviceName}
+
+Para reagendar com *${barbeiroNome}* ou outro profissional, clique no link abaixo: 👇
+${linkBarbeiro}
+
+_Aviso automático - ZapCorte_` : `❌ *Agendamento Cancelado*
+
+Olá *${primeiroNome}*, informamos que seu agendamento foi cancelado:
+
 📅 *Data:* ${dataFormatada}
 🕐 *Horário:* ${horaFormatada}
 ✂️ *Serviço:* ${serviceName}
 
-${barbeiroNome !== 'Qualquer barbeiro disponível' ? `Para reagendar com *${barbeiroNome}* ou outro profissional, clique no link abaixo: 👇` : 'Para reagendar, clique no link abaixo: 👇'}
+Para reagendar, clique no link abaixo: 👇
 ${linkBarbeiro}
 
 _Aviso automático - ZapCorte_`;

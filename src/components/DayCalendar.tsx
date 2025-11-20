@@ -245,7 +245,11 @@ export function DayCalendar({ appointments, onAppointmentClick, onTimeSlotClick,
               {/* Área de Agendamentos */}
               <div 
                 className="flex-1 relative cursor-pointer hover:bg-muted/30 transition-colors"
-                onClick={() => onTimeSlotClick?.(`${String(hour).padStart(2, '0')}:00`)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onTimeSlotClick?.(`${String(hour).padStart(2, '0')}:00`);
+                }}
               />
             </div>
           ))}
@@ -292,7 +296,7 @@ export function DayCalendar({ appointments, onAppointmentClick, onTimeSlotClick,
                 >
                   {/* Layout Otimizado - Nome + Horário na mesma linha, Serviço abaixo */}
                   <div className="flex flex-col h-full justify-center gap-0.5">
-                    {/* Linha 1: Nome + Horário */}
+                    {/* Linha 1: Nome + Horário (Início - Fim) */}
                     <div className="flex items-center justify-between gap-2">
                       <div className={cn(
                         "font-semibold text-xs leading-tight truncate flex-1",
@@ -304,7 +308,7 @@ export function DayCalendar({ appointments, onAppointmentClick, onTimeSlotClick,
                         "text-[10px] font-medium tabular-nums opacity-75 flex-shrink-0",
                         colors.text
                       )}>
-                        {format(parseISO(appointment.scheduled_at), 'HH:mm')}
+                        {format(parseISO(appointment.scheduled_at), 'HH:mm')} - {format(new Date(parseISO(appointment.scheduled_at).getTime() + (appointment.service_duration || 30) * 60000), 'HH:mm')}
                       </div>
                     </div>
                     

@@ -306,7 +306,7 @@ const Barbershop = () => {
               Nossos Serviços
             </h2>
             <p className="text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto">
-              Escolha o serviço perfeito para você e agende seu horário
+              Escolha o serviço ideal para você e agende seu horário
             </p>
           </motion.div>
 

@@ -257,7 +257,7 @@ export function MultiBarberCalendar({
                         {appointment.customer_name}
                       </div>
                       <div className={cn("text-[10px] font-medium tabular-nums opacity-75 flex-shrink-0", colors.text)}>
-                        {format(start, 'HH:mm')}
+                        {format(start, 'HH:mm')} - {format(new Date(start.getTime() + duration * 60000), 'HH:mm')}
                       </div>
                     </div>
                     {appointment.service_name && (
