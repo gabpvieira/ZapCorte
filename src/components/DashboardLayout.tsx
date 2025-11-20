@@ -9,13 +9,17 @@ interface DashboardLayoutProps {
   title?: string;
   subtitle?: string;
   action?: ReactNode;
+  showNotifications?: boolean;
+  barbershopId?: string;
 }
 
 export const DashboardLayout = ({ 
   children, 
   title, 
   subtitle, 
-  action 
+  action,
+  showNotifications = false,
+  barbershopId
 }: DashboardLayoutProps) => {
   const contentVariants = {
     initial: { opacity: 0, y: 20 },
@@ -67,8 +71,8 @@ export const DashboardLayout = ({
                     )}
                   </div>
                   <div className="flex items-center gap-2">
-                    {/* Menu de Notificações */}
-                    <NotificationMenu />
+                    {/* Menu de Notificações - Apenas no Dashboard */}
+                    {showNotifications && <NotificationMenu barbershopId={barbershopId} />}
                     {action && (
                       <div className="dashboard-header-actions flex items-center gap-2 w-full md:w-auto">
                         {action}

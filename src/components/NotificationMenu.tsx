@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Bell, Calendar, X, CheckCircle, AlertCircle, Clock } from "lucide-react";
+import { Bell, Calendar, X, CheckCircle, Clock, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -8,63 +8,15 @@ import {
 } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useNotifications } from "@/hooks/useNotifications";
 
-interface Notification {
-  id: string;
-  type: "new_appointment" | "cancelled" | "confirmed" | "reminder";
-  title: string;
-  message: string;
-  time: Date;
-  read: boolean;
+interface NotificationMenuProps {
+  barbershopId?: string;
 }
 
-// Dados mockados para demonstração visual
-const mockNotifications: Notification[] = [
-  {
-    id: "1",
-    type: "new_appointment",
-    title: "Novo Agendamento",
-    message: "João Silva agendou Corte + Barba para hoje às 14:00",
-    time: new Date(Date.now() - 1000 * 60 * 5), // 5 minutos atrás
-    read: false,
-  },
-  {
-    id: "2",
-    type: "confirmed",
-    title: "Agendamento Confirmado",
-    message: "Pedro Santos confirmou o agendamento de amanhã às 10:00",
-    time: new Date(Date.now() - 1000 * 60 * 30), // 30 minutos atrás
-    read: false,
-  },
-  {
-    id: "3",
-    type: "cancelled",
-    title: "Agendamento Cancelado",
-    message: "Carlos Oliveira cancelou o agendamento de hoje às 16:00",
-    time: new Date(Date.now() - 1000 * 60 * 60), // 1 hora atrás
-    read: true,
-  },
-  {
-    id: "4",
-    type: "reminder",
-    title: "Lembrete",
-    message: "Você tem 3 agendamentos para amanhã",
-    time: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 horas atrás
-    read: true,
-  },
-  {
-    id: "5",
-    type: "new_appointment",
-    title: "Novo Agendamento",
-    message: "Maria Costa agendou Corte Feminino para sexta-feira às 15:00",
-    time: new Date(Date.now() - 1000 * 60 * 60 * 3), // 3 horas atrás
-    read: true,
-  },
-];
-
-const getNotificationIcon = (type: Notification["type"]) => {
+const getNotificationIcon = (type: "new_appointment" | "cancelled" | "confirmed" | "reminder") => {
   switch (type) {
     case "new_appointment":
       return <Calendar className="h-4 w-4 text-blue-500" />;
@@ -79,7 +31,7 @@ const getNotificationIcon = (type: Notification["type"]) => {
   }
 };
 
-const getNotificationColor = (type: Notification["type"]) => {
+const getNotificationColor = (type: "new_appointment" | "cancelled" | "confirmed" | "reminder") => {
   switch (type) {
     case "new_appointment":
       return "bg-blue-500/10 border-blue-500/20";
@@ -94,25 +46,16 @@ const getNotificationColor = (type: Notification["type"]) => {
   }
 };
 
-export const NotificationMenu = () => {
-  const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
+export const NotificationMenu = ({ barbershopId }: NotificationMenuProps) => {
   const [open, setOpen] = useState(false);
-
-  const unreadCount = notifications.filter((n) => !n.read).length;
-
-  const markAsRead = (id: string) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
-    );
-  };
-
-  const markAllAsRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-  };
-
-  const clearAll = () => {
-    setNotifications([]);
-  };
+  const {
+    notifications,
+    loading,
+    unreadCount,
+    markAsRead,
+    markAllAsRead,
+    clearAll,
+  } = useNotifications(barbershopId);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -164,7 +107,11 @@ export const NotificationMenu = () => {
         </div>
 
         <ScrollArea className="h-[400px]">
-          {notifications.length === 0 ? (
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : notifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
               <Bell className="h-12 w-12 text-muted-foreground/50 mb-4" />
               <p className="text-sm text-muted-foreground">
@@ -205,7 +152,7 @@ export const NotificationMenu = () => {
                         {notification.message}
                       </p>
                       <p className="text-xs text-muted-foreground mt-2">
-                        {formatDistanceToNow(notification.time, {
+                        {formatDistanceToNow(parseISO(notification.created_at), {
                           addSuffix: true,
                           locale: ptBR,
                         })}

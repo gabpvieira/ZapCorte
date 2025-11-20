@@ -43,8 +43,6 @@ import { useReminderScheduler } from "@/hooks/useReminderScheduler";
 import ScrollToTop from "@/components/ScrollToTop";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { PWAUpdateNotification, PWAUpdateSuccess } from "@/components/PWAUpdateNotification";
-import { UpdateScreen } from "@/components/UpdateScreen";
-import { useAppVersion } from "@/hooks/useAppVersion";
 
 const queryClient = new QueryClient();
 
@@ -74,7 +72,6 @@ const AppContent = () => {
   const location = useLocation();
   const { user, loading } = useAuth();
   const [forceRender, setForceRender] = React.useState(false);
-  const { currentVersion, needsUpdate, isUpdating } = useAppVersion();
   
   // Inicializar o scheduler de lembretes
   useReminderScheduler();
@@ -102,11 +99,6 @@ const AppContent = () => {
       });
     }
   }, [isHomePage]);
-
-  // Mostrar tela de atualização se necessário
-  if (isUpdating) {
-    return <UpdateScreen version={currentVersion} onComplete={() => {}} />;
-  }
 
   return (
     <>

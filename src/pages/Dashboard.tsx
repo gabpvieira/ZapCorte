@@ -570,6 +570,7 @@ const Dashboard = () => {
       <DashboardLayout
         title="Dashboard"
         subtitle="Configuração Necessária"
+        showNotifications={false}
       >
         <Card className="border-2 border-yellow-500">
           <CardContent className="p-6">
@@ -611,6 +612,8 @@ const Dashboard = () => {
     <DashboardLayout
       title="Dashboard"
       subtitle="Bem-vindo de volta!"
+      showNotifications={true}
+      barbershopId={barbershop?.id}
       action={
         <div className="flex gap-2">
           <Button variant="outline" onClick={copyBarbershopLink}>
