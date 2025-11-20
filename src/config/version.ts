@@ -17,9 +17,9 @@ export const BUILD_DATE = new Date().toISOString();
 // Changelog - Últimas atualizações
 export const CHANGELOG = {
   '2.4.1': [
-    'Plano PRO: Horário de almoço agora é respeitado nos agendamentos',
-    'Correção na disponibilidade de horários dos barbeiros',
-    'Melhoria na validação de horários disponíveis'
+    'Correção: Horários após intervalo de almoço no Plano PRO',
+    'Correção: Dados do barbeiro não carregavam no modal de edição',
+    'Melhoria: Otimização no cálculo de horários disponíveis'
   ],
   '2.4.0': [
     'Sistema de notificações reais integrado com Supabase',
