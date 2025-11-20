@@ -109,12 +109,11 @@ export async function createAppointment(appointment: Omit<Appointment, 'id' | 'c
 
       if (barberData?.player_id) {
         await (await import('@/lib/notifications')).notificarNovoAgendamento({
-          playerId: barberData.player_id,
+          barbershopId: appointment.barbershop_id,
           customerName: appointment.customer_name,
           scheduledAt: appointment.scheduled_at,
           customerPhone: appointment.customer_phone,
           serviceName: data.service?.name,
-          barbershopId: appointment.barbershop_id,
         });
       }
 
@@ -318,11 +317,11 @@ export async function getAvailableTimeSlots(
     return d;
   };
 
-  // 5. Gerar timeline com passo dinâmico: (serviço + pausa)
+  // 5. Gerar timeline com passo de 5 minutos para máxima flexibilidade
   const slots: { time: string; available: boolean }[] = [];
   let cursor = roundToNext5(new Date(workStart));
 
-  const stepMs = (serviceDuration + breakTime) * 60000;
+  const stepMs = 5 * 60000; // Passo de 5 minutos
   
   // Obter hora atual no timezone brasileiro
   const now = new Date();
@@ -356,7 +355,8 @@ export async function getAvailableTimeSlots(
         const lunchStart = new Date(`${date}T${barbershop.lunch_break.start}-03:00`);
         const lunchEnd = new Date(`${date}T${barbershop.lunch_break.end}-03:00`);
         
-        // Se o serviço começa antes do fim do almoço E termina depois do início do almoço
+        // O serviço NÃO pode começar durante o almoço nem terminar durante o almoço
+        // Mas PODE começar exatamente quando o almoço termina
         if (slotStart < lunchEnd && slotEnd > lunchStart) {
           available = false;
         }
@@ -365,9 +365,8 @@ export async function getAvailableTimeSlots(
 
     slots.push({ time: slotStart.toTimeString().slice(0, 5), available });
 
-    // Avançar pelo passo total (serviço + pausa)
+    // Avançar pelo passo de 5 minutos
     cursor = new Date(cursor.getTime() + stepMs);
-    cursor = roundToNext5(cursor);
   }
 
   return slots;
@@ -654,10 +653,10 @@ export async function getBarberAvailableTimeSlots(
       return d;
     };
 
-    // 9. Gerar slots disponíveis
+    // 9. Gerar slots disponíveis com passo de 5 minutos
     const slots: { time: string; available: boolean }[] = [];
     let cursor = roundToNext5(new Date(workStart));
-    const stepMs = (serviceDuration + breakTime) * 60000;
+    const stepMs = 5 * 60000; // Passo de 5 minutos para máxima flexibilidade
 
     // Obter hora atual no timezone brasileiro
     const now = new Date();
@@ -688,7 +687,8 @@ export async function getBarberAvailableTimeSlots(
           const lunchStart = new Date(`${date}T${barbershop.lunch_break.start}-03:00`);
           const lunchEnd = new Date(`${date}T${barbershop.lunch_break.end}-03:00`);
           
-          // Se o serviço começa antes do fim do almoço E termina depois do início do almoço
+          // O serviço NÃO pode começar durante o almoço nem terminar durante o almoço
+          // Mas PODE começar exatamente quando o almoço termina
           if (slotStart < lunchEnd && slotEnd > lunchStart) {
             available = false;
             console.log('[getBarberAvailableTimeSlots] Horário bloqueado por intervalo de almoço:', slotStart.toTimeString().slice(0, 5));
@@ -702,7 +702,6 @@ export async function getBarberAvailableTimeSlots(
       });
 
       cursor = new Date(cursor.getTime() + stepMs);
-      cursor = roundToNext5(cursor);
     }
 
     console.log('[getBarberAvailableTimeSlots] Slots gerados:', slots.length);

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,16 +32,42 @@ const SPECIALTY_OPTIONS = [
 export function BarberForm({ open, onOpenChange, barber, onSave }: BarberFormProps) {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [photoPreview, setPhotoPreview] = useState<string | null>(barber?.photo_url || null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   
   const [formData, setFormData] = useState({
-    name: barber?.name || '',
-    email: barber?.email || '',
-    phone: barber?.phone || '',
-    bio: barber?.bio || '',
-    specialties: barber?.specialties || [],
-    photo_url: barber?.photo_url || ''
+    name: '',
+    email: '',
+    phone: '',
+    bio: '',
+    specialties: [] as string[],
+    photo_url: ''
   });
+
+  // Atualizar formData quando barber mudar
+  useEffect(() => {
+    if (barber) {
+      setFormData({
+        name: barber.name || '',
+        email: barber.email || '',
+        phone: barber.phone || '',
+        bio: barber.bio || '',
+        specialties: barber.specialties || [],
+        photo_url: barber.photo_url || ''
+      });
+      setPhotoPreview(barber.photo_url || null);
+    } else {
+      // Resetar formulário para novo barbeiro
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        bio: '',
+        specialties: [],
+        photo_url: ''
+      });
+      setPhotoPreview(null);
+    }
+  }, [barber, open]);
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
