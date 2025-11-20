@@ -6,7 +6,7 @@
 (function() {
   'use strict';
   
-  const APP_VERSION = '2.4.1';
+  const APP_VERSION = '2.4.3';
   const VERSION_KEY = 'zapcorte_version';
   const LAST_CHECK_KEY = 'zapcorte_last_check';
   const UPDATE_IN_PROGRESS_KEY = 'zapcorte_updating';
@@ -60,14 +60,16 @@
     `;
     
     splash.innerHTML = `
-      <div style="text-align: center; padding: 20px;">
-        <img src="/zapcorte-icon.png" alt="ZapCorte" style="width: 80px; height: 80px; margin-bottom: 20px; border-radius: 16px;">
-        <h1 style="color: #fff; font-size: 24px; margin-bottom: 10px; font-weight: 600;">Atualizando ZapCorte</h1>
-        <p style="color: #a0a0a0; font-size: 14px; margin-bottom: 30px;">Versão ${APP_VERSION}</p>
-        <div style="width: 200px; height: 4px; background: rgba(139, 92, 246, 0.2); border-radius: 2px; overflow: hidden; margin: 0 auto;">
+      <div style="text-align: center; padding: 20px; max-width: 300px;">
+        <div style="margin-bottom: 30px;">
+          <img src="/zapcorte-icon.png" alt="ZapCorte" style="width: 96px; height: 96px; margin: 0 auto; display: block; border-radius: 20px; box-shadow: 0 8px 24px rgba(139, 92, 246, 0.3);">
+        </div>
+        <h1 style="color: #fff; font-size: 26px; margin-bottom: 12px; font-weight: 600; letter-spacing: -0.5px;">Atualizando ZapCorte</h1>
+        <p style="color: #a0a0a0; font-size: 14px; margin-bottom: 40px; font-weight: 500;">Versão ${APP_VERSION}</p>
+        <div style="width: 240px; height: 4px; background: rgba(139, 92, 246, 0.2); border-radius: 2px; overflow: hidden; margin: 0 auto;">
           <div id="progress-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #8b5cf6, #a78bfa); transition: width 0.3s ease;"></div>
         </div>
-        <p id="status-text" style="color: #a0a0a0; font-size: 12px; margin-top: 20px;">Preparando atualização...</p>
+        <p id="status-text" style="color: #a0a0a0; font-size: 13px; margin-top: 24px; font-weight: 400;">Preparando atualização...</p>
       </div>
     `;
     
