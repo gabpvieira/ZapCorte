@@ -1,7 +1,7 @@
 {
   "name": "vite_react_shadcn_ts",
   "private": true,
-  "version": "0.0.0",
+  "version": "2.3.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,7 +10,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "generate-icons": "node scripts/generate-icons.js",
-    "pwa:check": "node -e \"console.log('Verificando PWA...'); import('./src/lib/serviceWorker.ts').then(() => console.log('✅ Service Worker OK'))\""
+    "pwa:check": "node -e \"console.log('Verificando PWA...'); import('./src/lib/serviceWorker.ts').then(() => console.log('✅ Service Worker OK'))\"",
+    "version:update": "node scripts/update-version.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
