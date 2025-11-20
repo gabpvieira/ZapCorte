@@ -34,6 +34,7 @@ interface RecurringAppointment {
   barbershop_id: string
   customer_id: string
   service_id: string
+  barber_id?: string
   frequency: 'weekly' | 'biweekly' | 'monthly'
   day_of_week?: number
   time_of_day: string
@@ -154,18 +155,27 @@ async function createAppointmentFromRecurring(
     const dateString = format(date, 'yyyy-MM-dd')
     const scheduledAt = `${dateString}T${recurring.time_of_day}:00-03:00`
     
+    // Preparar dados do agendamento
+    const appointmentData: any = {
+      barbershop_id: recurring.barbershop_id,
+      service_id: recurring.service_id,
+      customer_name: customer.name,
+      customer_phone: customer.phone,
+      scheduled_at: scheduledAt,
+      status: 'confirmed',
+      recurring_appointment_id: recurring.id
+    }
+    
+    // Adicionar barbeiro se especificado (Plano PRO)
+    if (recurring.barber_id) {
+      appointmentData.barber_id = recurring.barber_id
+      console.log(`  👤 Barbeiro atribuído: ${recurring.barber_id}`)
+    }
+    
     // Criar agendamento
     const { data: appointment, error: appointmentError } = await supabase
       .from('appointments')
-      .insert([{
-        barbershop_id: recurring.barbershop_id,
-        service_id: recurring.service_id,
-        customer_name: customer.name,
-        customer_phone: customer.phone,
-        scheduled_at: scheduledAt,
-        status: 'confirmed',
-        recurring_appointment_id: recurring.id
-      }])
+      .insert([appointmentData])
       .select()
       .single()
     

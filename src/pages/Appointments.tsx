@@ -128,6 +128,7 @@ const Appointments = () => {
   const { toast } = useToast();
   const { barbershop } = useUserData();
   const planLimits = usePlanLimits(barbershop);
+  const isPro = barbershop?.plan_type === 'pro';
 
   useEffect(() => {
     if (barbershop?.id) {
@@ -1775,7 +1776,7 @@ const Appointments = () => {
 
       {/* Visualização de Agendamentos Recorrentes */}
       <TabsContent value="recurring" className="mt-0">
-        {barbershop?.id && <RecurringAppointments barbershopId={barbershop.id} />}
+        {barbershop?.id && <RecurringAppointments barbershopId={barbershop.id} isPro={isPro} />}
       </TabsContent>
     </Tabs>
 
