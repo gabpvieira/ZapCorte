@@ -6,7 +6,7 @@
 (function() {
   'use strict';
   
-  const APP_VERSION = '2.4.0';
+  const APP_VERSION = '2.4.1';
   const VERSION_KEY = 'zapcorte_version';
   const LAST_CHECK_KEY = 'zapcorte_last_check';
   const UPDATE_IN_PROGRESS_KEY = 'zapcorte_updating';

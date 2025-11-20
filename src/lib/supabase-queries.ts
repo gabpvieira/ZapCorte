@@ -546,6 +546,17 @@ export async function getBarberAvailableTimeSlots(
       dayOfWeek
     });
 
+    // 1.1. Buscar lunch_break da barbearia
+    const { data: barbershop, error: barbershopError } = await supabase
+      .from('barbershops')
+      .select('lunch_break')
+      .eq('id', barbershopId)
+      .single();
+
+    if (barbershopError) {
+      console.error('[getBarberAvailableTimeSlots] Erro ao buscar barbearia:', barbershopError);
+    }
+
     // 2. Buscar disponibilidade do barbeiro para este dia
     const { data: barberAvailability, error: availabilityError } = await supabase
       .from('barber_availability')
@@ -669,6 +680,18 @@ export async function getBarberAvailableTimeSlots(
           if (slotStart < busy.end && slotEnd > busy.start) {
             available = false;
             break;
+          }
+        }
+
+        // Verificar se o horário colide com o intervalo de almoço da barbearia
+        if (available && barbershop?.lunch_break?.enabled) {
+          const lunchStart = new Date(`${date}T${barbershop.lunch_break.start}-03:00`);
+          const lunchEnd = new Date(`${date}T${barbershop.lunch_break.end}-03:00`);
+          
+          // Se o serviço começa antes do fim do almoço E termina depois do início do almoço
+          if (slotStart < lunchEnd && slotEnd > lunchStart) {
+            available = false;
+            console.log('[getBarberAvailableTimeSlots] Horário bloqueado por intervalo de almoço:', slotStart.toTimeString().slice(0, 5));
           }
         }
       }

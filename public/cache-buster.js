@@ -6,7 +6,7 @@
 (function() {
   'use strict';
   
-  const CACHE_VERSION = 'v2.4.0';
+  const CACHE_VERSION = 'v2.4.1';
   const CACHE_KEY = 'zapcorte_cache_version';
   
   // Verificar versão do cache

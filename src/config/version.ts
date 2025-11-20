@@ -10,12 +10,17 @@
  * - PATCH: Correções de bugs
  */
 
-export const APP_VERSION = '2.4.0';
+export const APP_VERSION = '2.4.1';
 export const APP_NAME = 'ZapCorte';
 export const BUILD_DATE = new Date().toISOString();
 
 // Changelog - Últimas atualizações
 export const CHANGELOG = {
+  '2.4.1': [
+    'Plano PRO: Horário de almoço agora é respeitado nos agendamentos',
+    'Correção na disponibilidade de horários dos barbeiros',
+    'Melhoria na validação de horários disponíveis'
+  ],
   '2.4.0': [
     'Sistema de notificações reais integrado com Supabase',
     'Notificações de agendamentos, cancelamentos e confirmações',
