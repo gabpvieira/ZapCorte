@@ -15,7 +15,8 @@ import {
   Users,
   Bell,
   UserCog,
-  BarChart3
+  BarChart3,
+  HelpCircle
 } from "lucide-react";
 import logotipo from "@/assets/zapcorte-icon.png";
 import { Button } from "@/components/ui/button";
@@ -81,6 +82,12 @@ const sidebarItems: SidebarItem[] = [
     label: "Plano & Conta",
     icon: CreditCard,
     href: "/dashboard/plan"
+  },
+  {
+    id: "help",
+    label: "Central de Ajuda",
+    icon: HelpCircle,
+    href: "/dashboard/help"
   }
 ];
 

@@ -232,7 +232,13 @@ export async function enviarLembreteWhatsApp({
 
     // Buscar nome do barbeiro APENAS se for plano PRO e appointmentId foi fornecido
     const isPro = barbershop.plan_type === 'pro';
-    const barbeiroNome = (isPro && appointmentId) ? await getBarberName(appointmentId) : null;
+    let barbeiroNome: string | null = null;
+    
+    if (isPro && appointmentId) {
+      const nome = await getBarberName(appointmentId, barbershopId);
+      // Só usar o nome se não for a mensagem padrão
+      barbeiroNome = (nome && nome !== 'Qualquer barbeiro disponível') ? nome : null;
+    }
 
     // Formatar data e hora
     const date = new Date(scheduledAt);
@@ -464,7 +470,13 @@ export async function enviarCancelamentoWhatsApp({
 
     // Buscar nome do barbeiro APENAS se for plano PRO e appointmentId foi fornecido
     const isPro = barbershop.plan_type === 'pro';
-    const barbeiroNome = (isPro && appointmentId) ? await getBarberName(appointmentId) : null;
+    let barbeiroNome: string | null = null;
+    
+    if (isPro && appointmentId) {
+      const nome = await getBarberName(appointmentId, barbershopId);
+      // Só usar o nome se não for a mensagem padrão
+      barbeiroNome = (nome && nome !== 'Qualquer barbeiro disponível') ? nome : null;
+    }
 
     // Formatar data e hora
     const date = new Date(scheduledAt);

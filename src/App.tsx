@@ -36,6 +36,7 @@ import AdminRevenue from "./pages/admin/AdminRevenue";
 import AdminSettings from "./pages/admin/AdminSettings";
 import Barbers from "./pages/Barbers";
 import Reports from "./pages/Reports";
+import Help from "./pages/Help";
 
 import { useEffect } from "react";
 import { supabase } from "@/lib/supabase";
@@ -250,7 +251,14 @@ const AppContent = () => {
             </ProtectedRoute>
           } 
         />
-
+        <Route 
+          path="/dashboard/help" 
+          element={
+            <ProtectedRoute>
+              <Help />
+            </ProtectedRoute>
+          } 
+        />
 
         {/* Legacy paths - protegidas */}
         <Route 

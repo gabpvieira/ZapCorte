@@ -88,51 +88,53 @@ const Dashboard = () => {
   const [loadingBarbers, setLoadingBarbers] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   
+  // Função para buscar agendamentos do calendário
+  const fetchCalendarAppointments = async () => {
+    if (!barbershop?.id) return;
+    
+    try {
+      const startOfDay = new Date(calendarDate);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(calendarDate);
+      endOfDay.setHours(23, 59, 59, 999);
+      
+      const { data, error } = await supabase
+        .from("appointments")
+        .select(`
+          *,
+          services (name, duration),
+          barbers (id, name)
+        `)
+        .eq("barbershop_id", barbershop.id)
+        .gte("scheduled_at", startOfDay.toISOString())
+        .lte("scheduled_at", endOfDay.toISOString())
+        .order("scheduled_at", { ascending: true });
+      
+      if (error) throw error;
+      
+      setCalendarAppointments(data?.map(apt => ({
+        ...apt,
+        service_name: apt.services?.name,
+        service_duration: apt.services?.duration,
+        barber_id: apt.barbers?.id,
+        barber_name: apt.barbers?.name
+      })) || []);
+    } catch (error) {
+      console.error("Erro ao buscar agendamentos:", error);
+      setCalendarAppointments([]);
+    }
+  };
+
   // Buscar agendamentos do dia selecionado
   useEffect(() => {
     let mounted = true;
     
-    const fetchCalendarAppointments = async () => {
-      if (!barbershop?.id || !mounted) return;
-      
-      try {
-        const startOfDay = new Date(calendarDate);
-        startOfDay.setHours(0, 0, 0, 0);
-        const endOfDay = new Date(calendarDate);
-        endOfDay.setHours(23, 59, 59, 999);
-        
-        const { data, error } = await supabase
-          .from("appointments")
-          .select(`
-            *,
-            services (name, duration),
-            barbers (id, name)
-          `)
-          .eq("barbershop_id", barbershop.id)
-          .gte("scheduled_at", startOfDay.toISOString())
-          .lte("scheduled_at", endOfDay.toISOString())
-          .order("scheduled_at", { ascending: true });
-        
-        if (error) throw error;
-        
-        if (mounted) {
-          setCalendarAppointments(data?.map(apt => ({
-            ...apt,
-            service_name: apt.services?.name,
-            service_duration: apt.services?.duration,
-            barber_id: apt.barbers?.id,
-            barber_name: apt.barbers?.name
-          })) || []);
-        }
-      } catch (error) {
-        console.error("Erro ao buscar agendamentos:", error);
-        if (mounted) {
-          setCalendarAppointments([]);
-        }
-      }
+    const loadAppointments = async () => {
+      if (!mounted) return;
+      await fetchCalendarAppointments();
     };
     
-    fetchCalendarAppointments();
+    loadAppointments();
     
     return () => {
       mounted = false;
@@ -225,6 +227,7 @@ const Dashboard = () => {
               customerPhone: originalData.customer_phone,
               scheduledAt: scheduledAt.toISOString(),
               serviceName: serviceName,
+              appointmentId: selectedAppointment.id,
             });
 
             const { showToast } = await import('@/lib/toast-helper');
@@ -239,6 +242,7 @@ const Dashboard = () => {
               scheduledAt: scheduledAt.toISOString(),
               serviceName: serviceName,
               tipo: 'confirmacao',
+              appointmentId: selectedAppointment.id,
             });
 
             const { showToast } = await import('@/lib/toast-helper');
@@ -259,7 +263,11 @@ const Dashboard = () => {
         showToast.success('Alterações salvas', 'Todas as alterações foram salvas com sucesso.');
       }
 
-      refetchDashboard();
+      // Atualizar dados do dashboard e calendário
+      await Promise.all([
+        refetchDashboard(),
+        fetchCalendarAppointments()
+      ]);
       closeViewModal();
       
     } catch (error) {
@@ -284,7 +292,11 @@ const Dashboard = () => {
       const { showToast } = await import('@/lib/toast-helper');
       showToast.success('Agendamento excluído', 'O agendamento foi removido com sucesso.');
       
-      refetchDashboard();
+      // Atualizar dados do dashboard e calendário
+      await Promise.all([
+        refetchDashboard(),
+        fetchCalendarAppointments()
+      ]);
       closeViewModal();
       
     } catch (error) {
@@ -475,8 +487,11 @@ const Dashboard = () => {
 
       closeNewAppointmentModal();
       // Aguardar e forçar atualização
-      setTimeout(() => {
-        refetchDashboard();
+      setTimeout(async () => {
+        await Promise.all([
+          refetchDashboard(),
+          fetchCalendarAppointments()
+        ]);
       }, 300);
     } catch (error) {
       toast({
@@ -657,19 +672,18 @@ const Dashboard = () => {
         </motion.a>
 
         {/* Atalhos Rápidos Premium */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="grid gap-4 grid-cols-1 md:grid-cols-3"
-        >
+        <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
           {/* Novo Agendamento */}
           <motion.div
-            whileHover={{ scale: 1.02 }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            whileHover={{ y: -4, transition: { duration: 0.2 } }}
             whileTap={{ scale: 0.98 }}
+            className="relative"
           >
             <Card 
-              className="cursor-pointer border-2 hover:border-primary transition-all hover:shadow-xl bg-gradient-to-br from-primary/5 to-primary/10"
+              className="cursor-pointer border-2 hover:border-primary transition-colors hover:shadow-xl bg-gradient-to-br from-primary/5 to-primary/10 h-full"
               onClick={openNewAppointmentModal}
             >
               <CardContent className="p-6">
@@ -688,11 +702,15 @@ const Dashboard = () => {
 
           {/* Ver Agendamentos */}
           <motion.div
-            whileHover={{ scale: 1.02 }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            whileHover={{ y: -4, transition: { duration: 0.2 } }}
             whileTap={{ scale: 0.98 }}
+            className="relative"
           >
             <Card 
-              className="cursor-pointer border-2 hover:border-blue-500 transition-all hover:shadow-xl bg-gradient-to-br from-blue-500/5 to-blue-500/10"
+              className="cursor-pointer border-2 hover:border-blue-500 transition-colors hover:shadow-xl bg-gradient-to-br from-blue-500/5 to-blue-500/10 h-full"
               onClick={() => navigate('/appointments')}
             >
               <CardContent className="p-6">
@@ -711,11 +729,15 @@ const Dashboard = () => {
 
           {/* Meus Serviços */}
           <motion.div
-            whileHover={{ scale: 1.02 }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            whileHover={{ y: -4, transition: { duration: 0.2 } }}
             whileTap={{ scale: 0.98 }}
+            className="relative"
           >
             <Card 
-              className="cursor-pointer border-2 hover:border-purple-500 transition-all hover:shadow-xl bg-gradient-to-br from-purple-500/5 to-purple-500/10"
+              className="cursor-pointer border-2 hover:border-purple-500 transition-colors hover:shadow-xl bg-gradient-to-br from-purple-500/5 to-purple-500/10 h-full"
               onClick={() => navigate('/services')}
             >
               <CardContent className="p-6">
@@ -731,7 +753,7 @@ const Dashboard = () => {
               </CardContent>
             </Card>
           </motion.div>
-        </motion.div>
+        </div>
 
         {/* Stats - Grid 2x2 Mobile */}
         <div className="stats-grid grid gap-3 sm:gap-4 md:gap-6 grid-cols-2 md:grid-cols-4">
